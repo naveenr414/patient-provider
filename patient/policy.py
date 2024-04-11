@@ -1,59 +1,122 @@
 import random 
 import numpy as np 
+import gurobipy as gp
+from gurobipy import GRB
 
-def random_policy(patient,provider_capacities):
+
+def random_policy(patient,provider_capacities,provider_max_capacities):
+    """Randomly give a menu of available providers
+    
+    Arguments:
+        patient: Patient object with information on their utilities
+        provider_capacities: List of integers, how much space each provider has
+        
+    Returns: List of integers, which providers to show them """
+
     available_providers = [i for i in range(len(provider_capacities)) if random.random() < 0.5]
     return available_providers
 
-def greedy_policy(patient,provider_capacities):
+def greedy_policy(patient,provider_capacities,provider_max_capacities):
+    """A policy which shows all providers
+    
+    Arguments:
+        patient: Patient object with information on their utilities
+        provider_capacities: List of integers, how much space each provider has
+        
+    Returns: List of integers, which providers to show them """
+
     return list(range(len(provider_capacities)))
 
-def brute_force_discount(patient,provider_capacities):
-    num_providers = len(provider_capacities)
-
-    def discount_function(x):
-        return np.exp(-(1-x/2))
-
-    max_rep = []
-    max_prob = 0
-
-    for i in range(2**num_providers):
-        binary_rep = [int(j) for j in bin(i)[2:].zfill(num_providers)]
-        lst_rep = [i for i in range(len(binary_rep)) if binary_rep[i]]
-        prob_match = 0
-
-        for j in range(num_providers):
-            if binary_rep[j]*provider_capacities[j] > 0:
-                prob_match += patient.get_match_prob_provider(j,lst_rep)*(1-discount_function(2-provider_capacities[j]))
+def max_patient_utility(patient,provider_capacities,provider_max_capacities):
+    """Leverage the Linear Program from the Davis paper to greedily optimize
+        Combining this with a discount function 
+    
+    Arguments:
+        patient: Patient object with information on their utilities
+        provider_capacities: List of integers, how much space each provider has
         
-        if prob_match > max_prob:
-            max_prob = prob_match 
-            max_rep = lst_rep 
+    Returns: List of integers, which providers to show them """
+
+    utilities = patient.provider_rewards
+    utilities = [utilities[i]*int(provider_capacities[i]>0) for i in range(len(provider_capacities))]
+    def discount_function(x,max_capacity):
+        return np.exp(-(1-x/max_capacity))      
+
+    utilities = [utilities[i]*(discount_function(provider_capacities[i],provider_max_capacities[i])) for i in range(len(provider_max_capacities))]  
+
+    exit_option = patient.exit_option
+    N = len(provider_capacities)
+
+    model = gp.Model("LP")
+    model.setParam('OutputFlag', 0)
+    w = model.addVars(N+1, name="w")
+    objective_expr = gp.LinExpr()
+    for j in range(1, N+1):
+        objective_expr += utilities[j-1] * w[j]
+    model.setObjective(objective_expr, GRB.MAXIMIZE)
+
+    sum_expr = gp.LinExpr()
+    for j in range(1, N+1):
+        sum_expr += w[j]
+    model.addConstr(sum_expr + w[0] == 1)
+
+    for j in range(1, N+1):
+        if utilities[j-1]>0:
+            model.addConstr(w[j] / utilities[j-1] <= w[0]/exit_option)
+        else:
+            model.addConstr(w[j]  <= 0)
+    model.optimize()
+
+    w_vals = [round((w[j].x*exit_option)/(utilities[j-1]*w[0].x)) if utilities[j-1]*w[0].x > 0 else 0 for j in range(1,N+1)]
+
+    menu = [i for i in range(len(w_vals)) if w_vals[i] == 1]
+
+    return menu 
+
+def max_match_prob(patient,provider_capacities,provider_max_capacities):
+    """Leverage the Linear Program from the Davis paper to greedily optimize
+        Maximize for the number of matches
+        Combining this with a discount function 
     
-    return max_rep 
+    Arguments:
+        patient: Patient object with information on their utilities
+        provider_capacities: List of integers, how much space each provider has
+        
+    Returns: List of integers, which providers to show them """
 
-def brute_force_discount_lamb(patient,provider_capacities):
-    num_providers = len(provider_capacities)
-    lamb = 0.5
+    utilities = patient.provider_rewards
+    utilities = [utilities[i]*int(provider_capacities[i]>0) for i in range(len(provider_capacities))]
+    def discount_function(x,max_capacity):
+        return np.exp(-(1-x/max_capacity))      
 
-    def discount_function(x):
-        return np.exp(-(1-x/2))
+    utilities = [utilities[i]*(discount_function(provider_capacities[i],provider_max_capacities[i])) for i in range(len(provider_max_capacities))]  
 
-    max_rep = []
-    max_prob = 0
+    exit_option = patient.exit_option
+    N = len(provider_capacities)
 
-    for i in range(2**num_providers):
-        binary_rep = [int(j) for j in bin(i)[2:].zfill(num_providers)]
-        lst_rep = [i for i in range(len(binary_rep)) if binary_rep[i]]
-        prob_match = 0
+    model = gp.Model("LP")
+    model.setParam('OutputFlag', 0)
+    w = model.addVars(N+1, name="w")
+    objective_expr = gp.LinExpr()
+    for j in range(1, N+1):
+        objective_expr += w[j]
+    model.setObjective(objective_expr, GRB.MAXIMIZE)
 
-        for j in range(num_providers):
-            if binary_rep[j]*provider_capacities[j] > 0:
-                prob_match += patient.get_match_prob_provider(j,lst_rep)*(1-discount_function(2-provider_capacities[j]))
-        prob_match -= lamb * patient.discount*np.max(patient.provider_rewards)/(patient.get_all_probabilities(lst_rep))
+    sum_expr = gp.LinExpr()
+    for j in range(1, N+1):
+        sum_expr += w[j]
+    model.addConstr(sum_expr + w[0] == 1)
 
-        if prob_match > max_prob:
-            max_prob = prob_match 
-            max_rep = lst_rep 
+    for j in range(1, N+1):
+        if utilities[j-1]>0:
+            model.addConstr(w[j] / utilities[j-1] <= w[0]/exit_option)
+        else:
+            model.addConstr(w[j]  <= 0)
+    model.optimize()
+
+    w_vals = [round((w[j].x*exit_option)/(utilities[j-1]*w[0].x)) if utilities[j-1]*w[0].x > 0 else 0 for j in range(1,N+1)]
+
+    menu = [i for i in range(len(w_vals)) if w_vals[i] == 1]
+    optimal_value = model.objVal
     
-    return max_rep 
+    return menu 
