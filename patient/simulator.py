@@ -46,9 +46,11 @@ class Simulator():
     """Simulator class that allows for evaluation of policies
         Both with and without re-entry"""
 
-    def __init__(self,num_patients,num_providers):
+    def __init__(self,num_patients,num_providers,provider_capacity):
         self.num_patients = num_patients 
         self.num_providers = num_providers
+        self.provider_max_capacity = provider_capacity
+        self.current_time_step = 0
 
         self.patients = []
         for i in range(num_patients):
@@ -57,7 +59,7 @@ class Simulator():
             exit_option = np.random.random() 
             self.patients.append(Patient(utilities,exit_option,discount,i))
         
-        self.provider_max_capacities = [2 for i in range(self.num_providers)]
+        self.provider_max_capacities = [provider_capacity for i in range(self.num_providers)]
         self.provider_capacities = deepcopy(self.provider_max_capacities)
 
 
@@ -72,17 +74,20 @@ class Simulator():
 
         all_matches = []
         utilities = []
+        provider_gap = []
+
+        all_scores = {'matches': [], 'patient_utilities': [], 'provider_gaps': []}
 
         for seed in seed_list:
             np.random.seed(seed)
             random.seed(seed)
-            self.__init__(self.num_patients,self.num_providers)
+            self.__init__(self.num_patients,self.num_providers,self.provider_max_capacity)
 
             self.provider_capacities = deepcopy(self.provider_max_capacities)
             num_matches = 0
             curr_utilities = []
             for i in range(self.num_patients):
-                menu = policy(self.patients[i],self.provider_capacities,self.provider_max_capacities)
+                menu = policy(self.patients[i],self)
                 menu = [i for i in menu if self.provider_capacities[i] > 0]
                 outcome = self.patients[i].get_random_outcome(menu)
 
@@ -96,7 +101,12 @@ class Simulator():
                     curr_utilities.append(self.patients[i].provider_rewards[outcome])
             all_matches.append(num_matches)
             utilities.append(curr_utilities)
-        return {'matches': all_matches, 'patient_utilities': utilities}
+            
+            provider_usage = 1-np.array(self.provider_capacities)/self.provider_max_capacities
+            provider_gap.append(np.max(provider_usage)-np.min(provider_usage))
+
+        all_scores = {'matches': all_matches, 'patient_utilities': utilities, 'provider_gaps': provider_gap}
+        return all_scores 
 
     def simulate_with_renetry(self,policy,seed_list=[42]):
         """Evaluate a policy with re-entry
@@ -109,7 +119,7 @@ class Simulator():
             'waittimes' is the list of waittimes for each patient for each seed"""
 
 
-        all_scores = {'matches': [], 'waittimes': [],'patient_utilities': []}
+        all_scores = {'matches': [], 'waittimes': [],'patient_utilities': [], 'provider_gaps': []}
 
         for seed in seed_list:
             np.random.seed(seed)
@@ -121,11 +131,12 @@ class Simulator():
             waittimes = []
             patient_utilities = []
             for i in range(self.num_patients):
+                self.current_time_step = i
                 curr_patients.append(self.patients[i])
                 new_curr_patients = []
 
                 for p in curr_patients:
-                    menu = policy(self.patients[i],self.provider_capacities,self.provider_max_capacities)
+                    menu = policy(self.patients[i],self)
                     menu = [i for i in menu if self.provider_capacities[i] > 0]
                     outcome = p.get_random_outcome(menu,reenter=True)
 
@@ -147,5 +158,9 @@ class Simulator():
             all_scores['matches'].append(num_matches)
             all_scores['waittimes'].append(waittimes)
             all_scores['patient_utilities'].append(patient_utilities)
+            
+            provider_usage = 1-np.array(self.provider_capacities)/self.provider_max_capacities
+            all_scores['provider_gaps'].append(np.max(provider_usage)-np.min(provider_usage))
+
         all_scores['patient_utilities'] = np.array(all_scores['patient_utilities']).flatten()
         return all_scores  

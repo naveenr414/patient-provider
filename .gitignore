@@ -1,2 +1,3 @@
 ./results
 patient.egg-info
+patient/__pycache__/*
