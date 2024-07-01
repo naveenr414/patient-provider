@@ -42,6 +42,8 @@ def offline_solution(simulator,patient,available_providers,memory,per_epoch_func
         weights = np.array(weights)
 
         max_per_provider = simulator.provider_max_capacity
+        max_per_provider *= max(1,len(simulator.patients)/len(available_providers))
+
         LP_solution = solve_linear_program(weights,max_per_provider)
 
         matchings = [0 for i in range(weights.shape[0])]
@@ -76,6 +78,8 @@ def offline_learning_solution(simulator,patient,available_providers,memory,per_e
                 weights[i,j] = (1-np.abs(patient_contexts[i]-provider_contexts[j])).dot(predicted_coeff)/(np.sum(predicted_coeff))
 
         max_per_provider = simulator.provider_max_capacity
+        max_per_provider *= max(1,len(simulator.patients)/len(available_providers))
+
         LP_solution = solve_linear_program(weights,max_per_provider)
 
         matchings = [0 for i in range(weights.shape[0])]
@@ -96,14 +100,17 @@ def offline_learning_solution(simulator,patient,available_providers,memory,per_e
 
 def offline_solution_balance(simulator,patient,available_providers,memory,per_epoch_function):
     if memory == None:
-        lamb = 0.1
+        lamb = 1
         weights = [p.provider_rewards for p in simulator.patients]
         weights = np.array(weights)
 
         max_per_provider = simulator.provider_max_capacity
+        max_per_provider *= max(1,len(simulator.patients)/len(available_providers))
+
         LP_solution = solve_linear_program(weights,max_per_provider,lamb)
 
         matchings = [0 for i in range(weights.shape[0])]
+
         for (i,j) in LP_solution:
             matchings[i] = j
         memory = matchings 

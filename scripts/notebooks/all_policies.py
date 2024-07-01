@@ -27,7 +27,7 @@ import json
 
 from patient.simulator import run_multi_seed
 from patient.baseline_policies import random_policy, greedy_policy
-from patient.online_policies import p_approximation, p_approximation_balance
+from patient.online_policies import p_approximation, p_approximation_balance, p_approximation_with_additions, p_approximation_with_additions_balance, p_approximation_with_additions_balance_learning, solve_linear_program
 from patient.offline_policies import offline_solution, offline_solution_balance, offline_learning_solution
 from patient.utils import get_save_path, delete_duplicate_results, restrict_resources
 from patient.learning import guess_coefficients
@@ -36,11 +36,11 @@ is_jupyter = 'ipykernel' in sys.modules
 
 # +
 if is_jupyter: 
-    seed        = 42
-    num_patients = 100
-    num_providers = 5
+    seed        = 43
+    num_patients = 20
+    num_providers = 20
     provider_capacity = 1
-    top_choice_prob = 0.75
+    top_choice_prob = 0.5
     choice_model = "uniform_choice"
     out_folder = "policy_comparison"
     exit_option = 0.5
@@ -133,6 +133,42 @@ np.mean(rewards['matches'])/(num_patients*num_trials),np.mean(rewards['patient_u
 # +
 policy = p_approximation_balance
 name = "p_approximation_balance"
+
+rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'])
+
+results['{}_matches'.format(name)] = rewards['matches']
+results['{}_utilities'.format(name)] = rewards['patient_utilities']
+results['{}_workloads'.format(name)] = rewards['provider_workloads']
+
+np.mean(rewards['matches'])/(num_patients*num_trials),np.mean(rewards['patient_utilities'])/(num_patients*num_trials),np.std(rewards['provider_workloads'])
+
+# +
+policy = p_approximation_with_additions
+name = "p_approximation_additions"
+
+rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'])
+
+results['{}_matches'.format(name)] = rewards['matches']
+results['{}_utilities'.format(name)] = rewards['patient_utilities']
+results['{}_workloads'.format(name)] = rewards['provider_workloads']
+
+np.mean(rewards['matches'])/(num_patients*num_trials),np.mean(rewards['patient_utilities'])/(num_patients*num_trials),np.std(rewards['provider_workloads'])
+
+# +
+policy = p_approximation_with_additions_balance
+name = "p_approximation_additions_balance"
+
+rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'])
+
+results['{}_matches'.format(name)] = rewards['matches']
+results['{}_utilities'.format(name)] = rewards['patient_utilities']
+results['{}_workloads'.format(name)] = rewards['provider_workloads']
+
+np.mean(rewards['matches'])/(num_patients*num_trials),np.mean(rewards['patient_utilities'])/(num_patients*num_trials),np.std(rewards['provider_workloads'])
+
+# +
+policy = p_approximation_with_additions_balance_learning
+name = "p_approximation_additions_balance_learning"
 
 rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'])
 

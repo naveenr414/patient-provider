@@ -25,7 +25,9 @@ class Patient:
         if choice_model == "uniform_choice":
             provider_probs = [self.provider_rewards[i] if menu[i] == 1 else -1 for i in range(len(menu))]
             
-            if np.random.random() < self.choice_model_settings['top_choice_prob'] and np.max(provider_probs) > -1:
+            rand_num = np.random.random()
+
+            if rand_num < self.choice_model_settings['top_choice_prob'] and np.max(provider_probs) > -1:
                 return np.argmax(provider_probs)
 
             return -1    
@@ -65,6 +67,7 @@ class Simulator():
         self.unmatched_pairs = []
         self.preference_pairs = []
         self.unmatched_patients = []
+        self.raw_matched_pairs = []
 
     def step(self,patient_num,provider_list):
         chosen_provider = self.patients[patient_num].get_random_outcome(provider_list,self.choice_model)
@@ -74,6 +77,7 @@ class Simulator():
             self.provider_capacities[chosen_provider] -= 1
         
         available_providers = [1 if i > 0 else 0 for i in self.provider_capacities]
+        self.raw_matched_pairs.append((patient_num,chosen_provider))
         return self.provider_workloads, available_providers, chosen_provider
 
     def reset_patients(self):
