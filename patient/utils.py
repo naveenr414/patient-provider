@@ -4,6 +4,9 @@ import os
 import resource
 import numpy as np
 from copy import deepcopy 
+import gurobipy as gp
+from gurobipy import GRB
+
 
 def get_save_path(folder_name,result_name,use_date=False):
     """Create a string, file_name, which is the name of the file to save
@@ -159,3 +162,43 @@ def aggregate_normalize_data(results,baseline=None):
                         data_point[key][0] /= float(avg_by_type[data_type])
 
     return aggregate_data(results_copy)
+
+def solve_linear_program(weights,max_per_provider,lamb=0):
+    """Solve a Linear Program which maximizes weights + balance
+    
+    Arguments:
+        weights: Numpy array of size patients x providers
+        max_per_provider: Maximum # of patients per provider, >=1
+        lamb: Weight placed on the balance objective
+    
+    Returns: List of tuples, pairs of patient-provider matches"""
+
+    N,P = weights.shape 
+
+    m = gp.Model("bipartite_matching")
+    m.setParam('OutputFlag', 0)
+    x = m.addVars(N, P, vtype=GRB.BINARY, name="x")
+
+    v = m.addVars(P, name="v")
+    beta_bar = m.addVars(1,name="bar")
+
+    m.setObjective(gp.quicksum(weights[i, j] * x[i, j] for i in range(N) for j in range(P)) - lamb/P*gp.quicksum(v[j] for j in range(P)), GRB.MAXIMIZE)
+    m.addConstr(beta_bar[0] == 1/P * gp.quicksum(x[i, j] for i in range(N) for j in range(P)))
+
+    for j in range(P):
+        m.addConstr(gp.quicksum(x[i, j] for i in range(N)) <= max_per_provider, name=f"match_{j}_limit")
+        m.addConstr(-v[j] <= gp.quicksum(x[i,j] for i in range(N))-beta_bar[0], name=f"match_{j}_limit2")
+        m.addConstr(v[j] >= gp.quicksum(x[i,j] for i in range(N))-beta_bar[0], name=f"match_{j}_limit3")
+
+    for i in range(N):
+        m.addConstr(gp.quicksum(x[i, j] for j in range(P)) <= 1, name=f"match_{j}")
+
+    m.optimize()
+
+    # Extract the solution
+    solution = []
+    for i in range(N):
+        for j in range(P):
+            if x[i, j].X > 0.5:
+                solution.append((i, j))
+    return solution 

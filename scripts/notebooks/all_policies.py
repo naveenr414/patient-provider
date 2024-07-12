@@ -37,23 +37,29 @@ is_jupyter = 'ipykernel' in sys.modules
 # +
 if is_jupyter: 
     seed        = 43
-    num_patients = 20
-    num_providers = 20
+    num_patients = 10
+    num_providers = 30
     provider_capacity = 1
-    top_choice_prob = 0.5
+    top_choice_prob = 0.25
     choice_model = "uniform_choice"
     out_folder = "policy_comparison"
     exit_option = 0.5
+    true_top_choice_prob = 0.25
+    num_repetitions = 20
     num_trials = 1
     context_dim = 5
+    max_menu_size = 3
 else:
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', help='Random Seed', type=int, default=42)
     parser.add_argument('--n_patients',         '-N', help='Number of patients', type=int, default=100)
     parser.add_argument('--n_providers',        help='Number of providers', type=int, default=100)
     parser.add_argument('--n_trials',          help='Number of trials ', type=int, default=2)
-    parser.add_argument('--top_choice_prob',          help='Probability of picking top choice', type=float, default=0.8)
+    parser.add_argument('--top_choice_prob',          help='Probability of picking top choice', type=float, default=0.75)
+    parser.add_argument('--true_top_choice_prob',          help='Probability of picking top choice', type=float, default=0.75)
     parser.add_argument('--context_dim',          help='Context dim for patients and providers', type=int, default=5)
+    parser.add_argument('--max_menu_size',          help='Context dim for patients and providers', type=int, default=5)
+    parser.add_argument('--num_repetitions',          help='Context dim for patients and providers', type=int, default=10)
     parser.add_argument('--provider_capacity', help='Provider Capacity', type=int, default=5)
     parser.add_argument('--choice_model', help='Which choice model for patients', type=str, default='uniform_choice')
     parser.add_argument('--exit_option', help='What is the value of the exit option', type=float, default=0.5)
@@ -71,6 +77,9 @@ else:
     out_folder = args.out_folder
     num_trials = args.n_trials 
     context_dim = args.context_dim 
+    num_repetitions = args.num_repetitions
+    true_top_choice_prob = args.true_top_choice_prob
+    max_menu_size = args.max_menu_size
 
 save_name = secrets.token_hex(4)  
 # -
@@ -84,7 +93,10 @@ results['parameters'] = {'seed'      : seed,
         'choice_model': choice_model,
         'exit_option': exit_option,
         'num_trials': num_trials,
-        'context_dim': context_dim} 
+        'context_dim': context_dim, 
+        'true_top_choice_prob': true_top_choice_prob, 
+        'num_repetitions': num_repetitions, 
+        'max_menu_size': max_menu_size} 
 
 # ## Baselines
 

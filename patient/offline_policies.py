@@ -1,42 +1,20 @@
 import random 
 import numpy as np 
-import gurobipy as gp
-from gurobipy import GRB
 from patient.learning import guess_coefficients
-
-def solve_linear_program(weights,max_per_provider,lamb=0):
-    N,P = weights.shape 
-
-    m = gp.Model("bipartite_matching")
-    m.setParam('OutputFlag', 0)
-    x = m.addVars(N, P, vtype=GRB.BINARY, name="x")
-
-    v = m.addVars(P, name="v")
-    beta_bar = m.addVars(1,name="bar")
-
-
-    m.setObjective(gp.quicksum(weights[i, j] * x[i, j] for i in range(N) for j in range(P)) - lamb/P*gp.quicksum(v[j] for j in range(P)), GRB.MAXIMIZE)
-    m.addConstr(beta_bar[0] == 1/P * gp.quicksum(x[i, j] for i in range(N) for j in range(P)))
-
-    for j in range(P):
-        m.addConstr(gp.quicksum(x[i, j] for i in range(N)) <= max_per_provider, name=f"match_{j}_limit")
-        m.addConstr(-v[j] <= gp.quicksum(x[i,j] for i in range(N))-beta_bar[0], name=f"match_{j}_limit2")
-        m.addConstr(v[j] >= gp.quicksum(x[i,j] for i in range(N))-beta_bar[0], name=f"match_{j}_limit3")
-
-    for i in range(N):
-        m.addConstr(gp.quicksum(x[i, j] for j in range(P)) <= 1, name=f"match_{j}")
-
-    m.optimize()
-
-    # Extract the solution
-    solution = []
-    for i in range(N):
-        for j in range(P):
-            if x[i, j].X > 0.5:
-                solution.append((i, j))
-    return solution 
+from patient.utils import solve_linear_program
 
 def offline_solution(simulator,patient,available_providers,memory,per_epoch_function):
+    """Policy which selects according to the LP, in an offline fashion
+    
+    Arguments:
+        simulator: Simulator for patient-provider matching
+        patient: Particular patient we're finding menu for
+        available_providers: 0-1 List of available providers
+        memory: Stores which matches, as online policies compute in one-shot fashion
+        per_epoch_function: Unused 
+    
+    Returns: List of providers on the menu, along with the memory"""
+
     if memory == None:
         weights = [p.provider_rewards for p in simulator.patients]
         weights = np.array(weights)
@@ -50,18 +28,56 @@ def offline_solution(simulator,patient,available_providers,memory,per_epoch_func
         for (i,j) in LP_solution:
             matchings[i] = j
         memory = matchings 
+    weights = [p.provider_rewards for p in simulator.patients]
+
+    unmatched_providers = set(list(range(len(available_providers))))
+    for i in range(len(memory)):
+        if memory[i] >= 0 and memory[i] in unmatched_providers:
+            unmatched_providers.remove(memory[i])
 
     default_menu = [0 for i in range(len(available_providers))]
-    
-    for order in simulator.patient_order:
-        default_menu[memory[order]] = 1
 
-        if order == patient.idx:
-            break 
+    if memory[patient.idx] >= 0:
+        default_menu[memory[patient.idx]] = 1
     
+    unmatched_weights = [(i,weights[patient.idx][i]) for i in unmatched_providers]
+    unmatched_weights = [(i,j) for (i,j) in unmatched_weights if j > 0]
+    unmatched_weights = sorted(unmatched_weights,key=lambda k: k[1],reverse=True)
+    for i in range(min(len(unmatched_weights),simulator.max_menu_size-1)):
+        default_menu[unmatched_weights[i][0]] = 1
+    
+    num_added = np.sum(default_menu)
+    idx = list(simulator.patient_order).index(patient.idx)-1 
+    while num_added < simulator.max_menu_size and idx >= 0:
+        curr_patient = simulator.patient_order[idx]
+        if memory[curr_patient] >= 0 and (memory[patient.idx] < 0 or weights[patient.idx][memory[curr_patient]] >= weights[patient.idx][memory[patient.idx]]):
+            default_menu[memory[simulator.patient_order[idx]]] = 1
+            num_added += 1
+        idx -=1
+
+    idx = list(simulator.patient_order).index(patient.idx)-1 
+    while num_added < simulator.max_menu_size and idx >= 0:
+        curr_patient = simulator.patient_order[idx]
+        if memory[curr_patient] >= 0:
+            default_menu[memory[simulator.patient_order[idx]]] = 1
+            num_added += 1
+        idx -=1
+
     return default_menu, memory 
 
 def offline_learning_solution(simulator,patient,available_providers,memory,per_epoch_function):
+    """Policy which selects according to the LP, in an offline fashion
+        Additionally learns the weights over time
+    
+    Arguments:
+        simulator: Simulator for patient-provider matching
+        patient: Particular patient we're finding menu for
+        available_providers: 0-1 List of available providers
+        memory: Stores which matches, as online policies compute in one-shot fashion
+        per_epoch_function: Unused 
+    
+    Returns: List of providers on the menu, along with the memory"""
+
     if memory == None:
         patient_contexts = np.array([p.patient_vector for p in simulator.patients])
         provider_contexts = np.array(simulator.provider_vectors)
@@ -87,18 +103,57 @@ def offline_learning_solution(simulator,patient,available_providers,memory,per_e
             matchings[i] = j
         memory = matchings 
 
-    default_menu = [0 for i in range(len(available_providers))]
-    
-    for order in simulator.patient_order:
-        default_menu[memory[order]] = 1
+    weights = [p.provider_rewards for p in simulator.patients]
 
-        if order == patient.idx:
-            break 
+    unmatched_providers = set(list(range(len(available_providers))))
+    for i in range(len(memory)):
+        if memory[i] >= 0 and memory[i] in unmatched_providers:
+            unmatched_providers.remove(memory[i])
+
+    default_menu = [0 for i in range(len(available_providers))]
+
+    if memory[patient.idx] >= 0:
+        default_menu[memory[patient.idx]] = 1
     
+    unmatched_weights = [(i,weights[patient.idx][i]) for i in unmatched_providers]
+    unmatched_weights = [(i,j) for (i,j) in unmatched_weights if j > 0]
+    unmatched_weights = sorted(unmatched_weights,key=lambda k: k[1],reverse=True)
+    for i in range(min(len(unmatched_weights),simulator.max_menu_size-1)):
+        default_menu[unmatched_weights[i][0]] = 1
+    
+    num_added = np.sum(default_menu)
+    idx = list(simulator.patient_order).index(patient.idx)-1 
+    while num_added < simulator.max_menu_size and idx >= 0:
+        curr_patient = simulator.patient_order[idx]
+        if memory[curr_patient] >= 0 and (memory[patient.idx] < 0 or weights[patient.idx][memory[curr_patient]] >= weights[patient.idx][memory[patient.idx]]):
+            default_menu[memory[simulator.patient_order[idx]]] = 1
+            num_added += 1
+        idx -=1
+
+    idx = list(simulator.patient_order).index(patient.idx)-1 
+    while num_added < simulator.max_menu_size and idx >= 0:
+        curr_patient = simulator.patient_order[idx]
+        if memory[curr_patient] >= 0:
+            default_menu[memory[simulator.patient_order[idx]]] = 1
+            num_added += 1
+        idx -=1
+
     return default_menu, memory 
 
 
 def offline_solution_balance(simulator,patient,available_providers,memory,per_epoch_function):
+    """Policy which selects according to the LP, in an offline fashion
+        Adds in lamb=1 to account for balance
+    
+    Arguments:
+        simulator: Simulator for patient-provider matching
+        patient: Particular patient we're finding menu for
+        available_providers: 0-1 List of available providers
+        memory: Stores which matches, as online policies compute in one-shot fashion
+        per_epoch_function: Unused 
+    
+    Returns: List of providers on the menu, along with the memory"""
+
     if memory == None:
         lamb = 1
         weights = [p.provider_rewards for p in simulator.patients]
@@ -115,16 +170,39 @@ def offline_solution_balance(simulator,patient,available_providers,memory,per_ep
             matchings[i] = j
         memory = matchings 
 
+    weights = [p.provider_rewards for p in simulator.patients]
+
+    unmatched_providers = set(list(range(len(available_providers))))
+    for i in range(len(memory)):
+        if memory[i] >= 0 and memory[i] in unmatched_providers:
+            unmatched_providers.remove(memory[i])
+
     default_menu = [0 for i in range(len(available_providers))]
-    default_menu[memory[patient.idx]] = 1
 
-    providers_left = np.zeros(len(available_providers))
-
-    for i in range(patient.idx+1,len(simulator.patient_order)):
-        providers_left[memory[simulator.patient_order[i]]] += 1
+    if memory[patient.idx] >= 0:
+        default_menu[memory[patient.idx]] = 1
     
-    for i in range(len(providers_left)):
-        if providers_left[i] == 0:
-            default_menu[i] = 1
+    unmatched_weights = [(i,weights[patient.idx][i]) for i in unmatched_providers]
+    unmatched_weights = [(i,j) for (i,j) in unmatched_weights if j > 0]
+    unmatched_weights = sorted(unmatched_weights,key=lambda k: k[1],reverse=True)
+    for i in range(min(len(unmatched_weights),simulator.max_menu_size-1)):
+        default_menu[unmatched_weights[i][0]] = 1
+    
+    num_added = np.sum(default_menu)
+    idx = list(simulator.patient_order).index(patient.idx)-1 
+    while num_added < simulator.max_menu_size and idx >= 0:
+        curr_patient = simulator.patient_order[idx]
+        if memory[curr_patient] >= 0 and (memory[patient.idx] < 0 or weights[patient.idx][memory[curr_patient]] >= weights[patient.idx][memory[patient.idx]]):
+            default_menu[memory[simulator.patient_order[idx]]] = 1
+            num_added += 1
+        idx -=1
+
+    idx = list(simulator.patient_order).index(patient.idx)-1 
+    while num_added < simulator.max_menu_size and idx >= 0:
+        curr_patient = simulator.patient_order[idx]
+        if memory[curr_patient] >= 0:
+            default_menu[memory[simulator.patient_order[idx]]] = 1
+            num_added += 1
+        idx -=1
 
     return default_menu, memory 
