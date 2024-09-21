@@ -5,6 +5,11 @@ from patient.utils import solve_linear_program
 from patient.online_policies import compute_swap_scores, add_swap_matches
 import itertools
 import math 
+import gurobipy as gp
+from gurobipy import GRB
+from scipy.optimize import differential_evolution
+
+
 
 def offline_solution(simulator):
     """Policy which selects according to the LP, in an offline fashion
@@ -68,8 +73,6 @@ def offline_solution_loose_constraints(simulator):
         if j in unmatched_providers:
             unmatched_providers.remove(j)
     
-    print("Matchings {}".format(matchings))
-
     return matchings  
 
 def get_all_menus(N, M):
@@ -130,8 +133,6 @@ def optimal_policy_epoch(simulator):
     scores/=N 
     best_menu = np.argmax(scores)
     menu = all_menus[best_menu]
-    print("Best score {}".format(np.max(scores)))
-    print("Best menu {}".format(menu))
 
     return menu 
 
@@ -155,7 +156,7 @@ def offline_solution_more_patients(simulator):
     N = len(simulator.patients)
     M = weights.shape[1]
 
-    max_per_provider = simulator.provider_max_capacity 
+    max_per_provider = simulator.provider_max_capacity *2
 
     LP_solution = solve_linear_program(weights,max_per_provider)
 
@@ -216,9 +217,61 @@ def offline_solution_more_patients(simulator):
             for j in unmatched_provider_scores[:int(simulator.max_menu_size-np.sum(matchings[i]))]:
                 matchings[i][j] = 1
     
-    print("Matchings {}".format(matchings))
-
     return matchings  
+
+def offline_solution_2_more_patients(simulator):
+    p = simulator.choice_model_settings['true_top_choice_prob']
+
+    weights = [p.provider_rewards for p in simulator.patients]
+    weights = np.array(weights)
+    N = len(simulator.patients)
+    M = weights.shape[1]
+
+    orderings_by_provider = []
+
+    for j in range(M):
+        orderings_by_provider.append(np.argsort(weights[:,j])[::-1])
+
+    curr_matchings = [[] for i in range(M)]
+    curr_values = [[] for i in range(M)]
+    idx = [0 for i in range(M)]
+    curr_capacity = [0 for i in range(N)]
+
+    min_matchings_per = 2
+    max_matchings_per = 100
+    matchings = np.zeros((N,M))
+
+    while np.min(curr_capacity) < max_matchings_per:
+        round_values = [np.mean(curr_values[i])*(1-(1-p)**(len(curr_matchings[i]))) for i in range(M)]
+        round_values = np.array(round_values)
+        round_values[np.isnan(round_values)] = 0
+
+        for i in range(M):
+            while idx[i]<len(orderings_by_provider[i]) and curr_capacity[orderings_by_provider[i][idx[i]]] >= max_matchings_per:
+                idx[i] += 1
+        
+        addition_value = np.zeros(M)
+        for i in range(M):
+            if idx[i]>=N or curr_capacity[orderings_by_provider[i][idx[i]]] >= max_matchings_per:
+                continue 
+            new_value = np.sum(curr_values[i])+weights[orderings_by_provider[i][idx[i]]][i]
+            new_value /= len(curr_matchings[i])+1
+            new_value *= (1-(1-p)**(len(curr_matchings[i])+1))
+            addition_value[i] = new_value - round_values[i] 
+        
+        next_add = np.argmax(addition_value)
+        if addition_value[next_add] <= 0 and (idx[next_add] >= N or orderings_by_provider[next_add][idx[next_add]] >= min_matchings_per):
+            break 
+            
+        matchings[orderings_by_provider[next_add][idx[next_add]]][next_add] = 1
+        curr_capacity[orderings_by_provider[next_add][idx[next_add]]] += 1
+        curr_matchings[next_add].append(idx[next_add])
+        curr_values[next_add].append(weights[orderings_by_provider[next_add][idx[next_add]]][next_add])
+        idx[next_add] += 1
+    
+    print(np.sum(matchings,axis=1))
+    
+    return matchings 
 
 def offline_learning_solution(simulator,patient,available_providers,memory,per_epoch_function):
     """Policy which selects according to the LP, in an offline fashion

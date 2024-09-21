@@ -97,7 +97,7 @@ class Simulator():
             means = [np.random.random() for i in range(self.num_providers)]
             for i in range(self.num_patients):
                 patient_vector = np.random.random(self.context_dim)
-                utilities = [np.clip(np.random.normal(means[j],0.1),0,1) for j in range(self.num_providers)]            
+                utilities = [np.clip(np.random.normal(means[j],0.01),0,1) for j in range(self.num_providers)]            
                 self.patients.append(Patient(patient_vector,utilities,self.choice_model_settings,i))
         else:
             raise Exception("Utility Function {} not found".format(self.utility_function))
@@ -176,7 +176,6 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
 
             if chosen_provider >= 0:
                 matched_pairs.append((current_patient.patient_vector,env.provider_vectors[chosen_provider]))
-                unmatched_pairs.append((current_patient.patient_vector,env.provider_vectors[np.random.choice([i for i in range(len(env.provider_vectors)) if i != chosen_provider])]))
 
                 for i in range(len(selected_providers)):
                     if selected_providers[i] == 1 and i != chosen_provider:

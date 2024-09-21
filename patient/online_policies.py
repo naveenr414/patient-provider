@@ -247,6 +247,8 @@ def p_approximation_with_additions(simulator):
     weights = [p.provider_rewards for p in simulator.patients]
     weights = np.array(weights)
 
+    print("Weights {}".format(weights))
+
     max_per_provider = simulator.provider_max_capacity
     LP_solution = solve_linear_program(weights,max_per_provider)
 
@@ -264,16 +266,16 @@ def p_approximation_with_additions(simulator):
     swap_score = compute_swap_scores(simulator,pairs,weights)
     matchings = add_swap_matches(swap_score,matchings,pairs,simulator.max_menu_size)        
 
-    for i in range(len(matchings)):
-        unmatched_provider_scores = [(j,weights[i][j]) for j in unmatched_providers]
-        unmatched_provider_scores = sorted(unmatched_provider_scores,key=lambda k: k[1],reverse=True)
-        unmatched_provider_scores = [j[0] for j in unmatched_provider_scores]
+    # for i in range(len(matchings)):
+    #     unmatched_provider_scores = [(j,weights[i][j]) for j in unmatched_providers]
+    #     unmatched_provider_scores = sorted(unmatched_provider_scores,key=lambda k: k[1],reverse=True)
+    #     unmatched_provider_scores = [j[0] for j in unmatched_provider_scores]
 
-        if np.sum(matchings[i]) < simulator.max_menu_size:
-            for j in unmatched_provider_scores[:int(simulator.max_menu_size-np.sum(matchings[i]))]:
-                matchings[i][j] = 1
+    #     if np.sum(matchings[i]) < simulator.max_menu_size:
+    #         for j in unmatched_provider_scores[:int(simulator.max_menu_size-np.sum(matchings[i]))]:
+    #             matchings[i][j] = 1
 
-    memory = matchings 
+    print("Matchings {}".format(matchings))
 
     return matchings 
 
@@ -368,8 +370,6 @@ def p_approximation_with_additions_no_match(simulator):
                 if swap_score[i][j] > 0:
                     if pairs[j] != -1:
                         matchings[i][pairs[j]] = 1
-
-    print("Matchings {}".format(matchings))
     return matchings 
 
 
