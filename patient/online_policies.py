@@ -247,8 +247,6 @@ def p_approximation_with_additions(simulator):
     weights = [p.provider_rewards for p in simulator.patients]
     weights = np.array(weights)
 
-    print("Weights {}".format(weights))
-
     max_per_provider = simulator.provider_max_capacity
     LP_solution = solve_linear_program(weights,max_per_provider)
 
@@ -266,16 +264,14 @@ def p_approximation_with_additions(simulator):
     swap_score = compute_swap_scores(simulator,pairs,weights)
     matchings = add_swap_matches(swap_score,matchings,pairs,simulator.max_menu_size)        
 
-    # for i in range(len(matchings)):
-    #     unmatched_provider_scores = [(j,weights[i][j]) for j in unmatched_providers]
-    #     unmatched_provider_scores = sorted(unmatched_provider_scores,key=lambda k: k[1],reverse=True)
-    #     unmatched_provider_scores = [j[0] for j in unmatched_provider_scores]
+    for i in range(len(matchings)):
+        unmatched_provider_scores = [(j,weights[i][j]) for j in unmatched_providers]
+        unmatched_provider_scores = sorted(unmatched_provider_scores,key=lambda k: k[1],reverse=True)
+        unmatched_provider_scores = [j[0] for j in unmatched_provider_scores]
 
-    #     if np.sum(matchings[i]) < simulator.max_menu_size:
-    #         for j in unmatched_provider_scores[:int(simulator.max_menu_size-np.sum(matchings[i]))]:
-    #             matchings[i][j] = 1
-
-    print("Matchings {}".format(matchings))
+        if np.sum(matchings[i]) < simulator.max_menu_size:
+            for j in unmatched_provider_scores[:int(simulator.max_menu_size-np.sum(matchings[i]))]:
+                matchings[i][j] = 1
 
     return matchings 
 
@@ -291,7 +287,7 @@ def p_approximation_with_additions_loose_constraints(simulator):
     
     Returns: List of providers on the menu, along with the memory"""
 
-    p = simulator.choice_model_settings['true_top_choice_prob']
+    p = simulator.choice_model_settings['top_choice_prob']
 
     weights = [p.provider_rewards for p in simulator.patients]
     weights = np.array(weights)
@@ -554,3 +550,61 @@ def p_approximation_with_additions_balance_learning(simulator,patient,available_
     default_menu = memory[patient.idx]
     
     return default_menu, memory 
+
+def optimal_order_policy(simulator):
+    weights = [p.provider_rewards for p in simulator.patients]
+    weights = np.array(weights)
+    N = len(weights)
+
+    max_per_provider = simulator.provider_max_capacity
+    LP_solution = solve_linear_program(weights,max_per_provider)
+
+    matchings = np.zeros((len(simulator.patients),simulator.num_providers))
+    pairs = [-1 for i in range(len(simulator.patients))]
+    unmatched_providers = set(list(range(simulator.num_providers)))
+
+    for (i,j) in LP_solution:
+        matchings[i,j] = 1
+        pairs[i] = j
+
+        if j in unmatched_providers:
+            unmatched_providers.remove(j)
+
+    adjacency_edges = {}
+
+    for i in range(N):
+        adjacency_edges[i] = []
+
+    for i in range(N):
+        for j in range(N):
+            if i != j:
+                m_i = pairs[i] 
+                m_j = pairs[j] 
+
+                if m_i == -1 and m_j != -1:
+                    adjacency_edges[i].append(j)
+                elif m_i != -1 and m_j != -1 and weights[i][m_i] < weights[i][m_j]:
+                    adjacency_edges[i].append(j)
+
+    directed_acyclic_ordering = []
+    marked_nodes = [False for i in range(N)]
+
+    def dfs_recursive(start_node):
+        if marked_nodes[start_node]:
+            return 
+        marked_nodes[start_node] = True 
+        for j in adjacency_edges[start_node]:
+            if not marked_nodes[j]:
+                dfs_recursive(j)
+        directed_acyclic_ordering.append(start_node)
+
+    for i in range(N):
+        dfs_recursive(i)
+
+    directed_acyclic_ordering = directed_acyclic_ordering
+    menu = np.zeros(weights.shape)
+    for i in range(len(directed_acyclic_ordering)):
+        for j in range(i+1):
+            if pairs[directed_acyclic_ordering[j]] != -1:
+                menu[directed_acyclic_ordering[i]][pairs[directed_acyclic_ordering[j]]] = 1
+    return menu 

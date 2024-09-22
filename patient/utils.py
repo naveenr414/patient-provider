@@ -138,10 +138,10 @@ def aggregate_normalize_data(results,baseline=None):
             if type(data_point[key]) == list and (type(data_point[key][0]) == int or type(data_point[key][0]) == float):
                 value = data_point[key][0]
             elif type(data_point[key]) == int or type(data_point[key]) == float:
+
                 value = data_point[key]
             elif type(data_point[key]) == list and type(data_point[key][0]) == list:
                 is_list = True 
-                value = data_point[key][0]
                 data_point[key] = np.array(data_point[key][0])
             else:
                 continue 
@@ -156,7 +156,10 @@ def aggregate_normalize_data(results,baseline=None):
                 data_type = key.split("_")[-1]
                 if data_type in avg_by_type:
                     if type(avg_by_type[data_type]) == type(np.array([1,2])):
-                        data_point[key] = np.where(avg_by_type[data_type] == 0, 5, data_point[key] / avg_by_type[data_type])
+                        try:
+                            data_point[key] = data_point[key][avg_by_type[data_type]!=0] / avg_by_type[data_type][avg_by_type[data_type] !=0]
+                        except:
+                            continue 
                     else:
                         data_point[key][0] /= float(avg_by_type[data_type])
 

@@ -2,7 +2,7 @@ import numpy as np
 import random 
 from copy import deepcopy 
 import time 
-from patient.utils import compute_utility
+from patient.utils import compute_utility, solve_linear_program
 
 class Patient:
     """Class to represent the Patient and their information"""
@@ -52,8 +52,8 @@ class Simulator():
     """Simulator class that allows for evaluation of policies
         Both with and without re-entry"""
 
-    def __init__(self,num_patients,num_providers,provider_capacity,choice_model_settings,choice_model,context_dim,max_menu_size,utility_function):
-        self.num_patients = num_patients 
+    def __init__(self,num_patients,num_providers,provider_capacity,choice_model_settings,choice_model,context_dim,max_menu_size,utility_function,order,num_repetitions):
+        self.num_patients = num_patients*num_repetitions
         self.num_providers = num_providers
         self.provider_max_capacity = provider_capacity
         self.choice_model_settings = choice_model_settings
@@ -63,6 +63,8 @@ class Simulator():
         self.context_dim = context_dim
         self.max_menu_size = max_menu_size 
         self.utility_function = utility_function
+        self.order = order 
+        self.num_repetitions = num_repetitions
 
         self.matched_pairs = []
         self.unmatched_pairs = []
@@ -83,10 +85,14 @@ class Simulator():
         return self.provider_workloads, available_providers, chosen_provider
 
     def reset_patient_order(self):
-        self.patient_order = np.random.permutation(list(range(self.num_patients)))
+        if self.order == "random":
+            self.patient_order = np.random.permutation(list(range(self.num_patients)))
+        elif self.order == "optimal":
+            self.patient_order = compute_optimal_order(self)
+
 
     def reset_patient_utility(self):
-        self.patients = []
+        self.all_patients = []
 
         if self.utility_function == 'uniform':
             for i in range(self.num_patients):
@@ -97,10 +103,11 @@ class Simulator():
             means = [np.random.random() for i in range(self.num_providers)]
             for i in range(self.num_patients):
                 patient_vector = np.random.random(self.context_dim)
-                utilities = [np.clip(np.random.normal(means[j],0.01),0,1) for j in range(self.num_providers)]            
+                utilities = [np.clip(np.random.normal(means[j],0.1),0,1) for j in range(self.num_providers)]            
                 self.patients.append(Patient(patient_vector,utilities,self.choice_model_settings,i))
         else:
             raise Exception("Utility Function {} not found".format(self.utility_function))
+        self.patients = self.all_patients[:self.num_patients/self.num_repetitions]
 
     def reset_initial(self):
         self.provider_capacities = deepcopy(self.provider_max_capacities)
@@ -150,39 +157,39 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
     for _ in range(num_trials):
         env.reset_patient_order()
         env.reset_initial()
-
-        patient_list = env.patients 
-
         start = time.time()
         available_providers  = [1 for i in range(len(env.provider_capacities))]
-        memory = None 
+        patient_list = env.patients 
 
-        matched_pairs = []
-        unmatched_pairs = []
-        preference_pairs = []
-        unmatched_patients = []
+        for repetition in range(env.num_repetitions):
+            memory = None 
+            env.patient_list = env.all_patients[repetition*env.num_patients//env.num_reptitions:(repetition+1)*env.num_patients//env.num_reptitions]
 
-        for t in range(0, T):
-            current_patient = patient_list[env.patient_order[t]]
-            selected_providers,memory = policy(env,current_patient,available_providers,memory,deepcopy(per_epoch_results))
+            matched_pairs = []
+            unmatched_pairs = []
+            preference_pairs = []
+            unmatched_patients = []
 
-            selected_providers *= np.array(available_providers)
-            if np.sum(selected_providers) > env.max_menu_size:
-                indices = np.where(selected_providers == 1)[0]  # Get indices of elements that are 1
-                to_set_zero = indices[env.max_menu_size:]
-                selected_providers[to_set_zero] = 0 
+            for t in range(repetition*env.num_patients//env.num_reptitions,(repetition+1)*env.num_patients//env.num_reptitions):
+                current_patient = patient_list[env.patient_order[t]]
+                selected_providers,memory = policy(env,current_patient,available_providers,memory,deepcopy(per_epoch_results))
 
-            provider_workloads, available_providers,chosen_provider = env.step(env.patient_order[t],selected_providers)
+                selected_providers *= np.array(available_providers)
+                if np.sum(selected_providers) > env.max_menu_size:
+                    indices = np.where(selected_providers == 1)[0]  # Get indices of elements that are 1
+                    selected_providers[to_set_zero] = 0 
 
-            if chosen_provider >= 0:
-                matched_pairs.append((current_patient.patient_vector,env.provider_vectors[chosen_provider]))
+                provider_workloads, available_providers,chosen_provider = env.step(env.patient_order[t],selected_providers)
 
-                for i in range(len(selected_providers)):
-                    if selected_providers[i] == 1 and i != chosen_provider:
-                        preference_pairs.append((current_patient.patient_vector,env.provider_vectors[chosen_provider],env.provider_vectors[i]))
-            else:
-                unmatched_patients.append(env.patient_order[t])
-            env.unmatched_patients = unmatched_patients
+                if chosen_provider >= 0:
+                    matched_pairs.append((current_patient.patient_vector,env.provider_vectors[chosen_provider]))
+
+                    for i in range(len(selected_providers)):
+                        if selected_providers[i] == 1 and i != chosen_provider:
+                            preference_pairs.append((current_patient.patient_vector,env.provider_vectors[chosen_provider],env.provider_vectors[i]))
+                else:
+                    unmatched_patients.append(env.patient_order[t])
+                env.unmatched_patients = unmatched_patients
         time_taken += time.time()-start 
         all_trials_workload.append(deepcopy(provider_workloads))
 
@@ -226,6 +233,7 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None):
     context_dim = parameters['context_dim']
     max_menu_size = parameters['max_menu_size']
     utility_function = parameters['utility_function']
+    order = parameters['order']
 
     choice_model_settings = {
         'top_choice_prob': top_choice_prob,
@@ -234,17 +242,85 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None):
     }
 
     for seed in seed_list:
-        simulator = Simulator(num_patients,num_providers,provider_capacity,choice_model_settings,choice_model,context_dim,max_menu_size,utility_function)
+        simulator = Simulator(num_patients,num_providers,provider_capacity,choice_model_settings,choice_model,context_dim,max_menu_size,utility_function,order,num_repetitions)
 
         policy_results = run_heterogenous_policy(simulator,policy,seed,num_trials,per_epoch_function=per_epoch_function,second_seed=seed) 
         utilities_by_provider = policy_results
 
         num_matches = [len([j for j in i if j != []]) for i in utilities_by_provider]
         patient_utilities = [np.sum([np.sum(j) for j in i if len(j)>0]) for i in utilities_by_provider]
-        provider_workloads = [sum([len(j) for j in i])/len(i) for i in np.array(utilities_by_provider).T]
+        
+        if len(np.array(utilities_by_provider).shape) == 3:
+            provider_workloads = [[len(j) for j in i] for i in utilities_by_provider]
+            provider_workloads = np.mean(np.array(provider_workloads),axis=0).tolist()
+        else:
+            provider_workloads = [sum([len(j) for j in i])/len(i) for i in np.array(utilities_by_provider).T]
 
         scores['matches'].append(num_matches)
         scores['patient_utilities'].append(patient_utilities)
         scores['provider_workloads'].append(provider_workloads)
 
     return scores, simulator
+
+def compute_optimal_order(simulator):
+    """Policy which selects according to the LP, in an offline fashion
+    
+    Arguments:
+        simulator: Simulator for patient-provider matching
+        patient: Particular patient we're finding menu for
+        available_providers: 0-1 List of available providers
+        memory: Stores which matches, as online policies compute in one-shot fashion
+        per_epoch_function: Unused 
+    
+    Returns: List of providers on the menu, along with the memory"""
+    weights = [p.provider_rewards for p in simulator.patients]
+    weights = np.array(weights)
+    N = len(weights)
+
+    max_per_provider = simulator.provider_max_capacity
+    LP_solution = solve_linear_program(weights,max_per_provider)
+
+    matchings = np.zeros((len(simulator.patients),simulator.num_providers))
+    pairs = [-1 for i in range(len(simulator.patients))]
+    unmatched_providers = set(list(range(simulator.num_providers)))
+
+    for (i,j) in LP_solution:
+        matchings[i,j] = 1
+        pairs[i] = j
+
+        if j in unmatched_providers:
+            unmatched_providers.remove(j)
+
+    adjacency_edges = {}
+
+    for i in range(N):
+        adjacency_edges[i] = []
+
+    for i in range(N):
+        for j in range(N):
+            if i != j:
+                m_i = pairs[i] 
+                m_j = pairs[j] 
+
+                if m_i == -1 and m_j != -1:
+                    adjacency_edges[i].append(j)
+                elif m_i != -1 and m_j != -1 and weights[i][m_i] < weights[i][m_j]:
+                    adjacency_edges[i].append(j)
+
+    directed_acyclic_ordering = []
+    marked_nodes = [False for i in range(N)]
+
+    def dfs_recursive(start_node):
+        if marked_nodes[start_node]:
+            return 
+        marked_nodes[start_node] = True 
+        for j in adjacency_edges[start_node]:
+            if not marked_nodes[j]:
+                dfs_recursive(j)
+        directed_acyclic_ordering.append(start_node)
+
+    for i in range(N):
+        dfs_recursive(i)
+    
+    return directed_acyclic_ordering
+

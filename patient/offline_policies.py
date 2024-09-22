@@ -38,6 +38,7 @@ def offline_solution(simulator):
 
         if j in unmatched_providers:
             unmatched_providers.remove(j)
+    print(matchings)
     return matchings  
 
 def offline_solution_loose_constraints(simulator):
@@ -52,7 +53,7 @@ def offline_solution_loose_constraints(simulator):
     
     Returns: List of providers on the menu, along with the memory"""
 
-    p = simulator.choice_model_settings['true_top_choice_prob']
+    p = simulator.choice_model_settings['top_choice_prob']
 
     weights = [p.provider_rewards for p in simulator.patients]
     weights = np.array(weights)
@@ -93,7 +94,7 @@ def optimal_policy_epoch(simulator):
         
     Returns: List of integers, which providers to show them """
 
-    p = simulator.choice_model_settings['true_top_choice_prob']
+    p = simulator.choice_model_settings['top_choice_prob']
 
     weights = [p.provider_rewards for p in simulator.patients]
     weights = np.array(weights)
@@ -133,7 +134,6 @@ def optimal_policy_epoch(simulator):
     scores/=N 
     best_menu = np.argmax(scores)
     menu = all_menus[best_menu]
-
     return menu 
 
 
@@ -149,7 +149,7 @@ def offline_solution_more_patients(simulator):
     
     Returns: List of providers on the menu, along with the memory"""
 
-    p = simulator.choice_model_settings['true_top_choice_prob']
+    p = simulator.choice_model_settings['top_choice_prob']
 
     weights = [p.provider_rewards for p in simulator.patients]
     weights = np.array(weights)
@@ -178,7 +178,7 @@ def offline_solution_more_patients(simulator):
     matches_by_provider = np.sum(matchings,axis=0)
     total = np.sum(weights*matchings,axis=0)
 
-    p = simulator.choice_model_settings['true_top_choice_prob']
+    p = simulator.choice_model_settings['top_choice_prob']
     for _ in range(len(matchings)):
         next_best_patient_score = [0 for i in range(simulator.num_providers)]
         next_best_patient = [-1 for i in range(simulator.num_providers)]
@@ -220,7 +220,7 @@ def offline_solution_more_patients(simulator):
     return matchings  
 
 def offline_solution_2_more_patients(simulator):
-    p = simulator.choice_model_settings['true_top_choice_prob']
+    p = simulator.choice_model_settings['top_choice_prob']
 
     weights = [p.provider_rewards for p in simulator.patients]
     weights = np.array(weights)
@@ -237,7 +237,7 @@ def offline_solution_2_more_patients(simulator):
     idx = [0 for i in range(M)]
     curr_capacity = [0 for i in range(N)]
 
-    min_matchings_per = 2
+    min_matchings_per = 0
     max_matchings_per = 100
     matchings = np.zeros((N,M))
 
@@ -268,9 +268,7 @@ def offline_solution_2_more_patients(simulator):
         curr_matchings[next_add].append(idx[next_add])
         curr_values[next_add].append(weights[orderings_by_provider[next_add][idx[next_add]]][next_add])
         idx[next_add] += 1
-    
-    print(np.sum(matchings,axis=1))
-    
+        
     return matchings 
 
 def offline_learning_solution(simulator,patient,available_providers,memory,per_epoch_function):
