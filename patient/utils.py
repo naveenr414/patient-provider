@@ -7,7 +7,6 @@ from copy import deepcopy
 import gurobipy as gp
 from gurobipy import GRB
 
-
 def get_save_path(folder_name,result_name,use_date=False):
     """Create a string, file_name, which is the name of the file to save
     
@@ -36,13 +35,18 @@ def delete_duplicate_results(folder_name,result_name,data):
     all_results = glob.glob("../../results/{}/{}*.json".format(folder_name,result_name))
 
     for file_name in all_results:
-        load_file = json.load(open(file_name,"r"))
-
-        if 'parameters' in load_file and load_file['parameters'] == data['parameters']:
-            try:
-                os.remove(file_name)
-            except OSError as e:
-                print(f"Error deleting {file_name}: {e}")
+        try:
+            f = open(file_name)
+            first_few = f.read(1000)
+            first_few = first_few.split("}")[0]+"}}"
+            load_file = json.loads(first_few)['parameters']
+            if load_file == data['parameters']:
+                try:
+                    os.remove(file_name)
+                except OSError as e:
+                    print(f"Error deleting {file_name}: {e}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
 
 def get_results_matching_parameters(folder_name,result_name,parameters):
     """Get a list of dictionaries, with data, which match some set of parameters
@@ -58,19 +62,17 @@ def get_results_matching_parameters(folder_name,result_name,parameters):
     ret_results = []
 
     for file_name in all_results:
-        load_file = json.load(open(file_name,"r"))
+        try:
+            load_file = json.load(open(file_name,"r"))
 
-        for p in parameters:
-            if p not in load_file['parameters'] or load_file['parameters'][p] != parameters[p]:
-                break 
-        else:
-            ret_results.append(load_file)
+            for p in parameters:
+                if p not in load_file['parameters'] or load_file['parameters'][p] != parameters[p]:
+                    break 
+            else:
+                ret_results.append(load_file)
+        except:
+            pass
     return ret_results
-
-def compute_utility(patient_vector,provider_vector,coefficient_vector,context_dim):
-    distances = np.abs(patient_vector-provider_vector)
-    distances = 1-distances 
-    return distances.dot(coefficient_vector)/np.sum(coefficient_vector)
 
 def restrict_resources():
     """Set the system to only use a fraction of the memory/CPU/GPU available
@@ -132,15 +134,9 @@ def aggregate_normalize_data(results,baseline=None):
 
     for data_point in results_copy:
         avg_by_type = {}
-        linear_whittle_results = {}
         for key in data_point:
             is_list = False
-            if type(data_point[key]) == list and (type(data_point[key][0]) == int or type(data_point[key][0]) == float):
-                value = data_point[key][0]
-            elif type(data_point[key]) == int or type(data_point[key]) == float:
-
-                value = data_point[key]
-            elif type(data_point[key]) == list and type(data_point[key][0]) == list:
+            if type(data_point[key]) == list and type(data_point[key][0]) == list:
                 is_list = True 
                 data_point[key] = np.array(data_point[key][0])
             else:
@@ -189,8 +185,6 @@ def solve_linear_program(weights,max_per_provider,lamb=0):
 
     for j in range(P):
         m.addConstr(gp.quicksum(x[i, j] for i in range(N)) <= max_per_provider, name=f"match_{j}_limit")
-        m.addConstr(-v[j] <= gp.quicksum(x[i,j] for i in range(N))-beta_bar[0], name=f"match_{j}_limit2")
-        m.addConstr(v[j] >= gp.quicksum(x[i,j] for i in range(N))-beta_bar[0], name=f"match_{j}_limit3")
 
     for i in range(N):
         m.addConstr(gp.quicksum(x[i, j] for j in range(P)) <= 1, name=f"match_{j}")
@@ -204,3 +198,17 @@ def solve_linear_program(weights,max_per_provider,lamb=0):
             if x[i, j].X > 0.5:
                 solution.append((i, j))
     return solution 
+
+def one_shot_policy(simulator,patient,available_providers,memory,per_epoch_function):
+    """Helper function for policies that only need to run once initially
+    
+    Arguments:
+        simulator: Simulator for patient-provider matching
+        patient: Particular patient we're finding menu for
+        available_providers: 0-1 List of available providers
+        memory: Stores which matches, as online policies compute in one-shot fashion
+        per_epoch_function: Stores the matches from running the policy once
+
+    Returns: The Menu, from the per epoch function 
+    """
+    return per_epoch_function[patient.idx], memory 

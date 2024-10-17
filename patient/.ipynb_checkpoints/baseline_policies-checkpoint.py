@@ -4,22 +4,19 @@ import gurobipy as gp
 from gurobipy import GRB
 
 
-def random_policy(patient,simulator):
+def random_policy(simulator,patient,available_providers,memory,per_epoch_function):
     """Randomly give a menu of available providers
     
     Arguments:
         patient: Patient object with information on their utilities
         provider_capacities: List of integers, how much space each provider has
         
-    Returns: List of integers, which providers to show them """
+    Returns: List of integers, 0-1 vector of which providers to show """
+    random_provider = np.array([1 if random.random() < 0.5 else 0 for i in range(simulator.num_providers)])
+    
+    return random_provider, memory 
 
-    provider_capacities = simulator.provider_capacities
-    provider_max_capacities = simulator.provider_max_capacities
-
-    available_providers = [i for i in range(len(provider_capacities)) if random.random() < 0.5]
-    return available_providers
-
-def greedy_policy(patient,simulator):
+def greedy_policy(simulator,patient,available_providers,memory,per_epoch_function):
     """A policy which shows all providers
     
     Arguments:
@@ -28,10 +25,14 @@ def greedy_policy(patient,simulator):
         
     Returns: List of integers, which providers to show them """
 
-    provider_capacities = simulator.provider_capacities
-    provider_max_capacities = simulator.provider_max_capacities
+    if simulator.max_menu_size >= simulator.num_providers:
+        return [1 for i in range(simulator.num_providers)], memory 
 
-    return list(range(len(provider_capacities)))
+    utilities = patient.provider_rewards
+    menu = np.zeros(simulator.num_providers)
+    top_menu = np.argsort(utilities)[-simulator.max_menu_size:][::-1]
+    menu[top_menu] = 1
+    return menu, memory 
 
 def max_patient_utility(patient,simulator):
     """Leverage the Linear Program from the Davis paper to greedily optimize
@@ -154,7 +155,6 @@ def max_patient_utility_with_waittime(patient,simulator,alpha=1,lamb=1):
 
     return menu 
 
-
 def max_match_prob(patient,simulator):
     """Leverage the Linear Program from the Davis paper to greedily optimize
         Maximize for the number of matches
@@ -205,3 +205,4 @@ def max_match_prob(patient,simulator):
     optimal_value = model.objVal
     
     return menu 
+

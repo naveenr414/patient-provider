@@ -38,8 +38,62 @@ def offline_solution(simulator):
 
         if j in unmatched_providers:
             unmatched_providers.remove(j)
-    print(matchings)
     return matchings  
+
+def offline_solution_fairness(simulator):
+    """Policy which selects according to the LP, in an offline fashion
+    
+    Arguments:
+        simulator: Simulator for patient-provider matching
+        patient: Particular patient we're finding menu for
+        available_providers: 0-1 List of available providers
+        memory: Stores which matches, as online policies compute in one-shot fashion
+        per_epoch_function: Unused 
+    
+    Returns: List of providers on the menu, along with the memory"""
+    weights = [p.provider_rewards for p in simulator.patients]
+    weights = np.array(weights)
+
+    max_per_provider = simulator.provider_max_capacity
+    N,P = weights.shape 
+
+    m = gp.Model("bipartite_matching")
+    m.setParam('OutputFlag', 0)
+    x = m.addVars(N, P, vtype=GRB.BINARY, name="x")
+
+    l = m.addVars(1,name="l")
+
+    m.setObjective(l[0], GRB.MAXIMIZE)
+
+    for j in range(P):
+        m.addConstr(gp.quicksum(x[i, j] for i in range(N)) <= max_per_provider, name=f"match_{j}_limit")
+
+    for i in range(N):
+        m.addConstr(gp.quicksum(x[i, j] for j in range(P)) <= 1, name=f"match_{j}")
+        m.addConstr(gp.quicksum(x[i, j]*weights[i,j] for j in range(P)) >= l[0], name=f"match_{j}")
+
+    m.optimize()
+
+    # Extract the solution
+    solution = []
+    for i in range(N):
+        for j in range(P):
+            if x[i, j].X > 0.5:
+                solution.append((i, j))
+    LP_solution = solution 
+
+    matchings = np.zeros((len(simulator.patients),simulator.num_providers))
+    pairs = [-1 for i in range(len(simulator.patients))]
+    unmatched_providers = set(list(range(simulator.num_providers)))
+
+    for (i,j) in LP_solution:
+        matchings[i,j] = 1
+        pairs[i] = j
+
+        if j in unmatched_providers:
+            unmatched_providers.remove(j)
+    return matchings  
+
 
 def offline_solution_loose_constraints(simulator):
     """Policy which selects according to the LP, in an offline fashion
@@ -156,7 +210,7 @@ def offline_solution_more_patients(simulator):
     N = len(simulator.patients)
     M = weights.shape[1]
 
-    max_per_provider = simulator.provider_max_capacity *2
+    max_per_provider = simulator.provider_max_capacity
 
     LP_solution = solve_linear_program(weights,max_per_provider)
 
@@ -219,7 +273,12 @@ def offline_solution_more_patients(simulator):
     
     return matchings  
 
-def offline_solution_2_more_patients(simulator):
+def get_offline_solution_min_matchings(min_matchings_per):
+    def f(simulator):
+        return offline_solution_2_more_patients(simulator,min_matchings_per=min_matchings_per)
+    return f
+
+def offline_solution_2_more_patients(simulator,min_matchings_per=0):
     p = simulator.choice_model_settings['top_choice_prob']
 
     weights = [p.provider_rewards for p in simulator.patients]
@@ -237,8 +296,7 @@ def offline_solution_2_more_patients(simulator):
     idx = [0 for i in range(M)]
     curr_capacity = [0 for i in range(N)]
 
-    min_matchings_per = 0
-    max_matchings_per = 100
+    max_matchings_per = min(round(1/p),simulator.max_menu_size)
     matchings = np.zeros((N,M))
 
     while np.min(curr_capacity) < max_matchings_per:
@@ -258,9 +316,13 @@ def offline_solution_2_more_patients(simulator):
             new_value /= len(curr_matchings[i])+1
             new_value *= (1-(1-p)**(len(curr_matchings[i])+1))
             addition_value[i] = new_value - round_values[i] 
-        
-        next_add = np.argmax(addition_value)
-        if addition_value[next_add] <= 0 and (idx[next_add] >= N or orderings_by_provider[next_add][idx[next_add]] >= min_matchings_per):
+
+        for i in np.argsort(addition_value)[::-1]:
+            if idx[i] < N:
+                if addition_value[i]>0 or curr_capacity[orderings_by_provider[i][idx[i]]] < min_matchings_per:
+                    next_add = i 
+                    break 
+        else: 
             break 
             
         matchings[orderings_by_provider[next_add][idx[next_add]]][next_add] = 1
@@ -268,145 +330,112 @@ def offline_solution_2_more_patients(simulator):
         curr_matchings[next_add].append(idx[next_add])
         curr_values[next_add].append(weights[orderings_by_provider[next_add][idx[next_add]]][next_add])
         idx[next_add] += 1
-        
     return matchings 
 
-def offline_learning_solution(simulator,patient,available_providers,memory,per_epoch_function):
-    """Policy which selects according to the LP, in an offline fashion
-        Additionally learns the weights over time
-    
-    Arguments:
-        simulator: Simulator for patient-provider matching
-        patient: Particular patient we're finding menu for
-        available_providers: 0-1 List of available providers
-        memory: Stores which matches, as online policies compute in one-shot fashion
-        per_epoch_function: Unused 
-    
-    Returns: List of providers on the menu, along with the memory"""
 
-    if memory == None:
-        patient_contexts = np.array([p.patient_vector for p in simulator.patients])
-        provider_contexts = np.array(simulator.provider_vectors)
-
-        matched_pairs = simulator.matched_pairs
-        unmatched_pairs = simulator.unmatched_pairs
-        preference_pairs = simulator.preference_pairs
-
-        predicted_coeff = guess_coefficients(matched_pairs,unmatched_pairs,preference_pairs,simulator.context_dim)
-                
-        weights = np.zeros((simulator.num_patients,simulator.num_providers))
-        for i in range(simulator.num_patients):
-            for j in range(simulator.num_providers):
-                weights[i,j] = (1-np.abs(patient_contexts[i]-provider_contexts[j])).dot(predicted_coeff)/(np.sum(predicted_coeff))
-
-        max_per_provider = simulator.provider_max_capacity
-
-        LP_solution = solve_linear_program(weights,max_per_provider)
-
-        matchings = [0 for i in range(weights.shape[0])]
-        for (i,j) in LP_solution:
-            matchings[i] = j
-        memory = matchings 
+def offline_solution_3_more_patients(simulator,min_matchings_per=0):
+    p = simulator.choice_model_settings['top_choice_prob']
 
     weights = [p.provider_rewards for p in simulator.patients]
+    weights = np.array(weights)
+    N = len(simulator.patients)
+    M = weights.shape[1]
 
-    unmatched_providers = set(list(range(len(available_providers))))
-    for i in range(len(memory)):
-        if memory[i] >= 0 and memory[i] in unmatched_providers:
-            unmatched_providers.remove(memory[i])
+    orderings_by_provider = []
 
-    default_menu = [0 for i in range(len(available_providers))]
+    for j in range(M):
+        orderings_by_provider.append(np.argsort(weights[:,j])[::-1])
 
-    if memory[patient.idx] >= 0:
-        default_menu[memory[patient.idx]] = 1
-    
-    unmatched_weights = [(i,weights[patient.idx][i]) for i in unmatched_providers]
-    unmatched_weights = [(i,j) for (i,j) in unmatched_weights if j > 0]
-    unmatched_weights = sorted(unmatched_weights,key=lambda k: k[1],reverse=True)
-    for i in range(min(len(unmatched_weights),simulator.max_menu_size-1)):
-        default_menu[unmatched_weights[i][0]] = 1
-    
-    num_added = np.sum(default_menu)
-    idx = list(simulator.patient_order).index(patient.idx)-1 
-    while num_added < simulator.max_menu_size and idx >= 0:
-        curr_patient = simulator.patient_order[idx]
-        if memory[curr_patient] >= 0 and (memory[patient.idx] < 0 or weights[patient.idx][memory[curr_patient]] >= weights[patient.idx][memory[patient.idx]]):
-            default_menu[memory[simulator.patient_order[idx]]] = 1
-            num_added += 1
-        idx -=1
+    rewards = np.zeros((N,M))
+    for j in range(M):
+        for num_patients_taken in range(1,N+1):
+            avg_reward = np.sum(weights[orderings_by_provider[j][:num_patients_taken]])/(num_patients_taken)
+            rewards[num_patients_taken-1,j] = avg_reward*(1-(1-p)**(num_patients_taken))
 
-    idx = list(simulator.patient_order).index(patient.idx)-1 
-    while num_added < simulator.max_menu_size and idx >= 0:
-        curr_patient = simulator.patient_order[idx]
-        if memory[curr_patient] >= 0:
-            default_menu[memory[simulator.patient_order[idx]]] = 1
-            num_added += 1
-        idx -=1
+    # Suppose we consider patient i, and take the first x patients for provider j
+    contains_patient = np.zeros((N,N,M))
+    for j in range(M):
+        for num_patients_taken in range(1,N+1):
+            for i in range(N):
+                contains_patient[i,num_patients_taken-1,j] = int(i in orderings_by_provider[j][:num_patients_taken])
 
-    return default_menu, memory 
+    max_matchings_per = M
+    min_matchings_per = 0
 
+    m = gp.Model("bipartite_matching")
+    m.setParam('OutputFlag', 0)
+    x = m.addVars(N, M, vtype=GRB.BINARY, name="x")
 
-def offline_solution_balance(simulator,patient,available_providers,memory,per_epoch_function):
-    """Policy which selects according to the LP, in an offline fashion
-        Adds in lamb=1 to account for balance
-    
-    Arguments:
-        simulator: Simulator for patient-provider matching
-        patient: Particular patient we're finding menu for
-        available_providers: 0-1 List of available providers
-        memory: Stores which matches, as online policies compute in one-shot fashion
-        per_epoch_function: Unused 
-    
-    Returns: List of providers on the menu, along with the memory"""
+    m.setObjective(gp.quicksum(rewards[i, j] * x[i, j] for i in range(N) for j in range(M)), GRB.MAXIMIZE)
 
-    if memory == None:
-        lamb = 1
-        weights = [p.provider_rewards for p in simulator.patients]
-        weights = np.array(weights)
+    for i in range(N):
+        m.addConstr(gp.quicksum(contains_patient[i, x_bar,j]*x[x_bar,j] for j in range(M) for x_bar in range(N)) <= max_matchings_per, name=f"match_{j}")
+        m.addConstr(gp.quicksum(contains_patient[i, x_bar,j]*x[x_bar,j] for j in range(M) for x_bar in range(N)) >= min_matchings_per, name=f"match_{j}")
 
-        max_per_provider = simulator.provider_max_capacity
+    for j in range(M):
+        m.addConstr(gp.quicksum(x[i,j] for i in range(N)) <= 1)
 
-        LP_solution = solve_linear_program(weights,max_per_provider,lamb)
+    m.optimize()
 
-        matchings = [0 for i in range(weights.shape[0])]
+    # Extract the solution
+    solution = np.zeros((N,M))
+    for i in range(N):
+        for j in range(M):
+            if x[i, j].X > 0.5:
+                solution[i,j] = 1
+    print("Solution {}".format(solution))
+    return solution 
 
-        for (i,j) in LP_solution:
-            matchings[i] = j
-        memory = matchings 
+# +
+def offline_solution_4_more_patients(simulator,min_matchings_per=0):
+    p = simulator.choice_model_settings['top_choice_prob']
 
     weights = [p.provider_rewards for p in simulator.patients]
+    weights = np.array(weights)
+    N = len(simulator.patients)
+    M = weights.shape[1]
 
-    unmatched_providers = set(list(range(len(available_providers))))
-    for i in range(len(memory)):
-        if memory[i] >= 0 and memory[i] in unmatched_providers:
-            unmatched_providers.remove(memory[i])
-
-    default_menu = [0 for i in range(len(available_providers))]
-
-    if memory[patient.idx] >= 0:
-        default_menu[memory[patient.idx]] = 1
+    max_matchings_per = [min(round(1/p**(1.85)),simulator.max_menu_size) for i in range(N)]
     
-    unmatched_weights = [(i,weights[patient.idx][i]) for i in unmatched_providers]
-    unmatched_weights = [(i,j) for (i,j) in unmatched_weights if j > 0]
-    unmatched_weights = sorted(unmatched_weights,key=lambda k: k[1],reverse=True)
-    for i in range(min(len(unmatched_weights),simulator.max_menu_size-1)):
-        default_menu[unmatched_weights[i][0]] = 1
+#     max_matchings_per = []
+#     for i in range(N):
+#         preferred_providers = sorted(weights[i,:],reverse=True)
+#         vals = [round(np.mean(preferred_providers[:j])*(1-(1-p)**j),4) for j in range(1,len(preferred_providers)+1)]
+#         max_matchings_per.append(np.argmax(vals)+1)
+            
+    min_matchings_per = min(round(1/p**(0.5)),simulator.max_menu_size)
+
+    def get_solution(B):
+        m = gp.Model("bipartite_matching")
+        m.setParam('OutputFlag', 0)
+        x = m.addVars(N, M, vtype=GRB.BINARY, name="x")
+
+        m.setObjective(gp.quicksum(weights[i, j] * x[i, j] for i in range(N) for j in range(M)), GRB.MAXIMIZE)
+
+        for j in range(M):
+            m.addConstr(gp.quicksum(x[i,j] for i in range(N)) <= B)
+
+        for i in range(N):
+            m.addConstr(gp.quicksum(x[i,j] for j in range(M)) <= max_matchings_per[i], name=f"match_{j}")
+            m.addConstr(gp.quicksum(x[i,j] for j in range(M)) >= min_matchings_per, name=f"match_{j}")
+
+        m.optimize()
+        if m.status == GRB.INFEASIBLE:
+            return -1, np.zeros((N,M))
+        obj_value = m.getObjective().getValue()
+        real_value = (1-(1-p)**B)/B*obj_value
+
+        solution = np.zeros((N,M))
+        for i in range(N):
+            for j in range(M):
+                if x[i, j].X > 0.5:
+                    solution[i,j] = 1
     
-    num_added = np.sum(default_menu)
-    idx = list(simulator.patient_order).index(patient.idx)-1 
-    while num_added < simulator.max_menu_size and idx >= 0:
-        curr_patient = simulator.patient_order[idx]
-        if memory[curr_patient] >= 0 and (memory[patient.idx] < 0 or weights[patient.idx][memory[curr_patient]] >= weights[patient.idx][memory[patient.idx]]):
-            default_menu[memory[simulator.patient_order[idx]]] = 1
-            num_added += 1
-        idx -=1
+        return real_value, solution 
 
-    idx = list(simulator.patient_order).index(patient.idx)-1 
-    while num_added < simulator.max_menu_size and idx >= 0:
-        curr_patient = simulator.patient_order[idx]
-        if memory[curr_patient] >= 0:
-            default_menu[memory[simulator.patient_order[idx]]] = 1
-            num_added += 1
-        idx -=1
+    values = [get_solution(b)[0] for b in range(1,N+1)]
+    max_b = np.argmax(values)+1
 
-    return default_menu, memory 
+    sol = get_solution(max_b)[1] 
+    print(sol)
+    return sol
