@@ -87,6 +87,25 @@ def lp_fairness_policy(simulator):
         matchings[i,j] = 1
     return matchings  
 
+def lp_threshold(simulator):
+    """Policy which selects according to the LP, in an offline fashion
+    
+    Arguments:
+        simulator: Simulator for patient-provider matching
+    
+    Returns: List of providers on the menu"""
+    weights = np.array([p.provider_rewards for p in simulator.patients])
+    weights -= 0.5
+
+    max_per_provider = simulator.provider_max_capacity
+    LP_solution = solve_linear_program(weights,max_per_provider)
+
+    matchings = np.zeros((len(simulator.patients),simulator.num_providers))
+
+    for (i,j) in LP_solution:
+        matchings[i,j] = 1
+    return matchings 
+
 def compute_swap_scores(simulator,pairs,weights):
     """Compute the benefit from swapping/adding pairs of provider-patients
     

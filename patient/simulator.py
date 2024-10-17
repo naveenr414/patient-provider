@@ -32,6 +32,14 @@ class Patient:
                 return np.argmax(provider_probs)
 
             return -1    
+        elif choice_model == "threshold":
+            provider_probs = [self.all_provider_rewards[i] if menu[i] == 1 else -1 for i in range(len(menu))]
+            rand_num = np.random.random()
+            if rand_num < self.choice_model_settings['true_top_choice_prob'] and np.max(provider_probs) >= 0.5:
+                return np.argmax(provider_probs)
+
+            return -1    
+
         elif choice_model == "mnl":
             provider_probs = [self.all_provider_rewards[i] if menu[i] == 1 else -1 for i in range(len(menu))]
             provider_probs += [self.choice_model_settings['exit_option']]

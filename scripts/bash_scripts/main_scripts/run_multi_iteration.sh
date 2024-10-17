@@ -15,21 +15,33 @@ do
         choice_prob=0.5
         utility_function=uniform
 
-        for n_iterations in 2 3 4
+        # for n_iterations in 2 3 4
+        # do 
+        #     for n_providers in 5 10 25 50
+        #     do 
+        #         tmux send-keys -t match_${session} "conda activate patient; python all_policies.py --seed ${seed} --n_patients ${n_patients} --n_providers ${n_providers} --provider_capacity 1 --top_choice_prob ${choice_prob} --true_top_choice_prob ${choice_prob} --choice_model uniform_choice --exit_option 0.5 --out_folder iterative --context_dim 5 --n_trials 100 --utility_function ${utility_function} --num_repetitions ${n_iterations}" ENTER
+        #     done 
+        # done 
+
+        n_patients=25
+        n_providers=10
+        for provider_capacity in 1 2 3 4 5
         do 
-            for n_providers in 5 10 25 50
+            for utility_function in uniform normal
             do 
-                tmux send-keys -t match_${session} "conda activate patient; python all_policies.py --seed ${seed} --n_patients ${n_patients} --n_providers ${n_providers} --provider_capacity 1 --top_choice_prob ${choice_prob} --true_top_choice_prob ${choice_prob} --choice_model uniform_choice --exit_option 0.5 --out_folder iterative --context_dim 5 --n_trials 100 --utility_function ${utility_function} --num_repetitions ${n_iterations}" ENTER
+                tmux send-keys -t match_${session} "conda activate patient; python all_policies.py --seed ${seed} --n_patients ${n_patients} --n_providers ${n_providers} --provider_capacity ${provider_capacity} --top_choice_prob ${choice_prob} --true_top_choice_prob ${choice_prob} --choice_model uniform_choice --exit_option 0.5 --out_folder iterative --context_dim 5 --n_trials 100 --utility_function ${utility_function}" ENTER
             done 
         done 
 
-        n_providers=25
-        for n_iterations in 2 3 4
-        do 
-            for n_patients in 2 5 10
-            do 
-                tmux send-keys -t match_${session} "conda activate patient; python all_policies.py --seed ${seed} --n_patients ${n_patients} --n_providers ${n_providers} --provider_capacity 1 --top_choice_prob ${choice_prob} --true_top_choice_prob ${choice_prob} --choice_model uniform_choice --exit_option 0.5 --out_folder iterative --context_dim 5 --n_trials 100 --utility_function ${utility_function} --num_repetitions ${n_iterations}" ENTER
-            done 
-        done 
+        # utility_function=uniform
+
+        # n_providers=25
+        # for n_iterations in 2 3 4
+        # do 
+        #     for n_patients in 2 5 10
+        #     do 
+        #         tmux send-keys -t match_${session} "conda activate patient; python all_policies.py --seed ${seed} --n_patients ${n_patients} --n_providers ${n_providers} --provider_capacity 1 --top_choice_prob ${choice_prob} --true_top_choice_prob ${choice_prob} --choice_model uniform_choice --exit_option 0.5 --out_folder iterative --context_dim 5 --n_trials 100 --utility_function ${utility_function} --num_repetitions ${n_iterations}" ENTER
+        #     done 
+        # done 
     done 
 done 

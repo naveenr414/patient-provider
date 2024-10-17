@@ -26,9 +26,11 @@ import math
 
 from patient.simulator import run_multi_seed
 from patient.baseline_policies import *
-from patient.online_policies import *
-from patient.offline_policies import *
-from patient.utils import get_save_path, delete_duplicate_results, restrict_resources
+from patient.lp_policies import *
+from patient.group_based_policies import *
+from patient.ordering_policies import *
+from patient.provider_policies import *
+from patient.utils import get_save_path, delete_duplicate_results, restrict_resources, one_shot_policy
 
 is_jupyter = 'ipykernel' in sys.modules
 
@@ -38,12 +40,12 @@ if is_jupyter:
     num_patients = 25
     num_providers = 25
     provider_capacity = 1
-    top_choice_prob = 0.75
-    choice_model = "uniform_choice"
+    top_choice_prob = 1
+    choice_model = "threshold"
     utility_function = "normal"
     out_folder = "policy_comparison"
     exit_option = 0.5
-    true_top_choice_prob = 0.75
+    true_top_choice_prob = 1
     num_repetitions = 1
     num_trials = 100
     context_dim = 5
@@ -124,20 +126,18 @@ results['{}_minimums'.format(name)] = rewards['provider_minimums']
 np.sum(rewards['matches'])/(num_patients*num_repetitions*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_repetitions*num_trials*len(seed_list))
 
 # +
-# if 2**(num_patients*num_providers)*2**(num_patients)*math.factorial(num_patients) < 100000:
-#     policy = one_shot_policy
-#     per_epoch_function = optimal_policy_epoch
-#     name = "optimal"
-#     print("{} policy".format(name))
+policy = all_ones_policy
+name = "greedy_basic"
+print("{} policy".format(name))
 
-#     rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'])
 
-#     results['{}_matches'.format(name)] = rewards['matches']
-#     results['{}_utilities'.format(name)] = rewards['patient_utilities']
-#     results['{}_workloads'.format(name)] = rewards['provider_workloads']
-#     results['{}_minimums'.format(name)] = rewards['provider_minimums']
+results['{}_matches'.format(name)] = rewards['matches']
+results['{}_utilities'.format(name)] = rewards['patient_utilities']
+results['{}_workloads'.format(name)] = rewards['provider_workloads']
+results['{}_minimums'.format(name)] = rewards['provider_minimums']
 
-#     print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
+np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
 
 # +
 policy = greedy_policy
@@ -152,60 +152,44 @@ results['{}_workloads'.format(name)] = rewards['provider_workloads']
 results['{}_minimums'.format(name)] = rewards['provider_minimums']
 
 np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
-
-# +
-# if order == "optimal":
-#     policy = one_shot_policy
-#     per_epoch_function = optimal_order_policy
-#     name = "optimal_order"
-#     print("{} policy".format(name))
-
-#     rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
-
-#     results['{}_matches'.format(name)] = rewards['matches']
-#     results['{}_utilities'.format(name)] = rewards['patient_utilities']
-#     results['{}_workloads'.format(name)] = rewards['provider_workloads']
-#     results['{}_minimums'.format(name)] = rewards['provider_minimums']
-
-#     print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
 # -
+
+if 2**(num_patients*num_providers)*2**(num_patients)*math.factorial(num_patients) < 100000:
+    policy = one_shot_policy
+    per_epoch_function = optimal_policy
+    name = "optimal"
+    print("{} policy".format(name))
+
+    rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+
+    results['{}_matches'.format(name)] = rewards['matches']
+    results['{}_utilities'.format(name)] = rewards['patient_utilities']
+    results['{}_workloads'.format(name)] = rewards['provider_workloads']
+    results['{}_minimums'.format(name)] = rewards['provider_minimums']
+
+    print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
+
+if order == "optimal":
+    policy = one_shot_policy
+    per_epoch_function = optimal_order_policy
+    name = "optimal_order"
+    print("{} policy".format(name))
+
+    rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+
+    results['{}_matches'.format(name)] = rewards['matches']
+    results['{}_utilities'.format(name)] = rewards['patient_utilities']
+    results['{}_workloads'.format(name)] = rewards['provider_workloads']
+    results['{}_minimums'.format(name)] = rewards['provider_minimums']
+
+    print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
 
 # ## Offline
 
 # +
 policy = one_shot_policy
-per_epoch_function = offline_solution
-name = "offline_solution"
-print("{} policy".format(name))
-
-rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
-
-results['{}_matches'.format(name)] = rewards['matches']
-results['{}_utilities'.format(name)] = rewards['patient_utilities']
-results['{}_workloads'.format(name)] = rewards['provider_workloads']
-results['{}_minimums'.format(name)] = rewards['provider_minimums']
-
-np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
-
-# +
-# policy = one_shot_policy
-# per_epoch_function = offline_solution_fairness
-# name = "offline_solution_fairness"
-# print("{} policy".format(name))
-
-# rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
-
-# results['{}_matches'.format(name)] = rewards['matches']
-# results['{}_utilities'.format(name)] = rewards['patient_utilities']
-# results['{}_workloads'.format(name)] = rewards['provider_workloads']
-# results['{}_minimums'.format(name)] = rewards['provider_minimums']
-
-# np.mean(results['offline_solution_minimums'.format(name)]), np.mean(results['offline_solution_fairness_minimums'.format(name)]) 
-
-# +
-policy = one_shot_policy
-per_epoch_function = offline_solution_loose_constraints
-name = "offline_solution_loose_constraints"
+per_epoch_function = lp_policy
+name = "lp"
 print("{} policy".format(name))
 
 rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
@@ -219,8 +203,8 @@ np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewar
 
 # +
 policy = one_shot_policy
-per_epoch_function = p_approximation_with_additions_legacy
-name = "offline_solution_swaps_legacy"
+per_epoch_function = lp_multiple_match_policy
+name = "lp_multiple_match"
 print("{} policy".format(name))
 
 rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
@@ -231,86 +215,102 @@ results['{}_workloads'.format(name)] = rewards['provider_workloads']
 results['{}_minimums'.format(name)] = rewards['provider_minimums']
 
 np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
+# -
 
-# +
-# policy = one_shot_policy
-# per_epoch_function = p_approximation_with_additions
-# name = "offline_solution_swaps"
-# print("{} policy".format(name))
+if choice_model == 'threshold':
+    policy = one_shot_policy 
+    per_epoch_function = lp_threshold
+    name = "lp_threshold"
+    print("{} policy".format(name))
 
-# rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+    rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
 
-# results['{}_matches'.format(name)] = rewards['matches']
-# results['{}_utilities'.format(name)] = rewards['patient_utilities']
-# results['{}_workloads'.format(name)] = rewards['provider_workloads']
-# results['{}_minimums'.format(name)] = rewards['provider_minimums']
+    results['{}_matches'.format(name)] = rewards['matches']
+    results['{}_utilities'.format(name)] = rewards['patient_utilities']
+    results['{}_workloads'.format(name)] = rewards['provider_workloads']
+    results['{}_minimums'.format(name)] = rewards['provider_minimums']
 
-# np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
-
-# +
-# policy = one_shot_policy
-# per_epoch_function = p_approximation_with_additions_loose_constraints
-# name = "offline_solution_swaps_loose"
-# print("{} policy".format(name))
-
-# rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
-
-# results['{}_matches'.format(name)] = rewards['matches']
-# results['{}_utilities'.format(name)] = rewards['patient_utilities']
-# results['{}_workloads'.format(name)] = rewards['provider_workloads']
-# results['{}_minimums'.format(name)] = rewards['provider_minimums']
-
-# np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
-
-# +
-# policy = one_shot_policy
-# per_epoch_function = p_approximation_with_additions_no_match
-# name = "offline_solution_swaps_no_match"
-# print("{} policy".format(name))
-
-# rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
-
-# results['{}_matches'.format(name)] = rewards['matches']
-# results['{}_utilities'.format(name)] = rewards['patient_utilities']
-# results['{}_workloads'.format(name)] = rewards['provider_workloads']
-# results['{}_minimums'.format(name)] = rewards['provider_minimums']
-
-# np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
-
-# +
-# policy = one_shot_policy 
-# per_epoch_function = offline_solution_more_patients
-# name = "more_patients_than_providers"
-# print("{} policy".format(name))
-
-# rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
-
-# results['{}_matches'.format(name)] = rewards['matches']
-# results['{}_utilities'.format(name)] = rewards['patient_utilities']
-# results['{}_workloads'.format(name)] = rewards['provider_workloads']
-# results['{}_minimums'.format(name)] = rewards['provider_minimums']
-
-# np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
-
-# +
-# policy = one_shot_policy 
-# per_epoch_function = offline_solution_2_more_patients
-# name = "more_patients_than_providers_2"
-# print("{} policy".format(name))
-
-# rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
-
-# results['{}_matches'.format(name)] = rewards['matches']
-# results['{}_utilities'.format(name)] = rewards['patient_utilities']
-# results['{}_workloads'.format(name)] = rewards['provider_workloads']
-# results['{}_minimums'.format(name)] = rewards['provider_minimums']
-
-# np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
+    print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
 
 # +
 policy = one_shot_policy 
-per_epoch_function = offline_solution_4_more_patients
-name = "more_patients_than_providers_4"
+per_epoch_function = lp_more_patients_policy
+name = "lp_more_patients"
+print("{} policy".format(name))
+
+rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+
+results['{}_matches'.format(name)] = rewards['matches']
+results['{}_utilities'.format(name)] = rewards['patient_utilities']
+results['{}_workloads'.format(name)] = rewards['provider_workloads']
+results['{}_minimums'.format(name)] = rewards['provider_minimums']
+
+np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
+
+# +
+policy = one_shot_policy
+per_epoch_function = lp_fairness_policy
+name = "lp_fairness"
+print("{} policy".format(name))
+
+rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+
+results['{}_matches'.format(name)] = rewards['matches']
+results['{}_utilities'.format(name)] = rewards['patient_utilities']
+results['{}_workloads'.format(name)] = rewards['provider_workloads']
+results['{}_minimums'.format(name)] = rewards['provider_minimums']
+
+np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
+
+# +
+policy = one_shot_policy
+per_epoch_function = group_based_policy
+name = "group_based"
+print("{} policy".format(name))
+
+rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+
+results['{}_matches'.format(name)] = rewards['matches']
+results['{}_utilities'.format(name)] = rewards['patient_utilities']
+results['{}_workloads'.format(name)] = rewards['provider_workloads']
+results['{}_minimums'.format(name)] = rewards['provider_minimums']
+
+np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
+
+# +
+policy = one_shot_policy
+per_epoch_function = group_based_unidirectional_policy
+name = "group_based_unidirectional"
+print("{} policy".format(name))
+
+rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+
+results['{}_matches'.format(name)] = rewards['matches']
+results['{}_utilities'.format(name)] = rewards['patient_utilities']
+results['{}_workloads'.format(name)] = rewards['provider_workloads']
+results['{}_minimums'.format(name)] = rewards['provider_minimums']
+
+np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
+
+# +
+policy = one_shot_policy 
+per_epoch_function = provider_focused_policy
+name = "provider_focused"
+print("{} policy".format(name))
+
+rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+
+results['{}_matches'.format(name)] = rewards['matches']
+results['{}_utilities'.format(name)] = rewards['patient_utilities']
+results['{}_workloads'.format(name)] = rewards['provider_workloads']
+results['{}_minimums'.format(name)] = rewards['provider_minimums']
+
+np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
+
+# +
+policy = one_shot_policy 
+per_epoch_function = provider_focused_less_interference_policy
+name = "provider_focused_less_interference"
 print("{} policy".format(name))
 
 rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
