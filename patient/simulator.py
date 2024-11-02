@@ -4,6 +4,7 @@ from copy import deepcopy
 import time 
 from patient.utils import solve_linear_program
 from patient.ordering_policies import compute_optimal_order
+import itertools
 
 class Patient:
     """Class to represent the Patient and their information"""
@@ -264,6 +265,7 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None):
         'matches': [],
         'patient_utilities': [], 
         'provider_minimums': [],
+        'provider_minimums_all': [],
         'provider_workloads': [], 
     }
 
@@ -296,7 +298,13 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None):
 
         num_matches = [len([j for j in i if j != []]) for i in utilities_by_provider]
         patient_utilities = [sum([np.sum(j) if len(j)>0 else 0 for j in i]) for i in utilities_by_provider]
-        min_utilities = [min([np.min(j) for j in i if len(j)>0],default=0) for i in utilities_by_provider]
+        
+        print(utilities_by_provider[0])
+        list_of_utilities = [list(itertools.chain.from_iterable(i)) for i in utilities_by_provider]
+        min_utilities = [np.min(i) for i in list_of_utilities]
+        min_utilities_all = [np.min(i) if len(i) == num_patients else 0 for i in list_of_utilities]
+
+        print(min_utilities,min_utilities_all)
 
         if len(np.array(utilities_by_provider).shape) == 3:
             provider_workloads = [[len(j) for j in i] for i in utilities_by_provider]
@@ -307,7 +315,10 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None):
         scores['matches'].append(num_matches)
         scores['patient_utilities'].append(patient_utilities)
         scores['provider_workloads'].append(provider_workloads)
+
         scores['provider_minimums'].append(min_utilities)
+        scores['provider_minimums_all'].append(min_utilities_all)
+
 
     return scores, simulator
 
