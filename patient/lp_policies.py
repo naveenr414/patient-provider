@@ -22,6 +22,56 @@ def lp_policy(simulator):
         matchings[i,j] = 1
     return matchings  
 
+def lp_workload_policy(simulator,lamb=1):
+    """Policy which selects according to the LP, in an offline fashion
+    Takes into account the workloads for each provider
+    Arguments:
+        simulator: Simulator for patient-provider matching
+    
+    Returns: List of providers on the menu"""
+    weights = np.array([p.provider_rewards for p in simulator.patients])
+    workload_combos = np.zeros(weights.shape)
+    N,P = weights.shape 
+
+    for i in range(N):
+        for j in range(P):
+            workload_combos[i,j] = simulator.patients[i].workload + simulator.provider_previous_workloads[j]
+
+    max_per_provider = simulator.provider_max_capacity
+
+    m = gp.Model("bipartite_matching")
+    m.setParam('OutputFlag', 0)
+    x = m.addVars(N, P, vtype=GRB.BINARY, name="x")
+    z = m.addVar(name="z", vtype=GRB.CONTINUOUS)
+
+    m.setObjective(gp.quicksum(weights[i, j] * x[i, j] for i in range(N) for j in range(P))-z*lamb*min(N,P)/simulator.previous_patients_per_provider, GRB.MAXIMIZE)
+
+    for j in range(P):
+        m.addConstr(gp.quicksum(x[i, j] for i in range(N)) <= max_per_provider, name=f"match_{j}_limit")
+
+    for i in range(N):
+        m.addConstr(gp.quicksum(x[i, j] for j in range(P)) <= 1, name=f"match_{j}")
+
+    for i in range(N):
+        for j in range(P):
+            m.addConstr(z >= x[i, j] * workload_combos[i, j], name=f"z_constraint_{i}_{j}")
+
+
+    m.optimize()
+
+    # Extract the solution
+    solution = []
+    for i in range(N):
+        for j in range(P):
+            if x[i, j].X > 0.5:
+                solution.append((i, j))
+
+    matchings = np.zeros((len(simulator.patients),simulator.num_providers))
+
+    for (i,j) in solution:
+        matchings[i,j] = 1
+    return matchings 
+
 def lp_multiple_match_policy(simulator):
     """Policy which selects according to the LP
         Allows for multiple patients to be matched with a provider
