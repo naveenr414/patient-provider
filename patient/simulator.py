@@ -2,8 +2,9 @@ import numpy as np
 import random 
 from copy import deepcopy 
 import time 
-from patient.utils import solve_linear_program
+from patient.utils import solve_linear_program, safe_min, safe_max, safe_var
 from patient.ordering_policies import compute_optimal_order
+from patient.semi_synthetic import generate_semi_synthetic_theta_workload
 import itertools
 
 class Patient:
@@ -56,6 +57,24 @@ class Patient:
                 return -1 
             else:
                 return random_choice
+        elif choice_model == "mnl_max":
+            provider_probs = [self.all_provider_rewards[i] if menu[i] == 1 else -1 for i in range(len(menu))]
+            if max(provider_probs) > 0:
+                provider_probs = [max(provider_probs)]
+            
+            provider_probs += [self.choice_model_settings['exit_option']]
+
+            probs = [np.exp(i) if i >= 0 else 0 for i in provider_probs]
+            probs /= np.sum(probs)
+
+            random_choice = np.random.choice(list(range(len(probs))),p=probs)
+            if random_choice == len(self.all_provider_rewards):
+                return -1 
+            if menu[random_choice] == 0:
+                return -1 
+            else:
+                return random_choice
+
 
         else:
             raise Exception("{} choice model not found".format(choice_model))     
@@ -135,7 +154,13 @@ class Simulator():
                 patient_vector = np.random.random(self.context_dim)
                 utilities = rewards[i]          
                 self.all_patients.append(Patient(patient_vector,utilities,self.choice_model_settings,i))
-
+        elif self.utility_function == 'semi_synthetic':
+            theta, workloads = generate_semi_synthetic_theta_workload(self.num_patients,self.num_providers)
+            for i in range(self.num_patients):
+                patient_vector = np.random.random(self.context_dim)
+                utilities = theta[i]  
+                workload = workloads[i] 
+                self.all_patients.append(Patient(patient_vector,utilities,self.choice_model_settings,i,workload))
         else:
             raise Exception("Utility Function {} not found".format(self.utility_function))
         self.patients = self.all_patients[:self.num_patients//self.num_repetitions]
@@ -325,14 +350,14 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None):
         list_of_utilities = [[j for j in i if j>=0] for i in patient_results]
         list_of_utilities_all = [[max(j,0) for j in i] for i in patient_results]
 
-        min_utilities = [np.min(i) for i in list_of_utilities]
-        min_utilities_all = [np.min(i) for i in list_of_utilities_all]
+        min_utilities = [safe_min(i) for i in list_of_utilities]
+        min_utilities_all = [safe_min(i) for i in list_of_utilities_all]
 
-        max_gap = [np.max(i)-np.min(i) for i in list_of_utilities]
-        max_gap_all = [np.max(i)-np.min(i)for i in list_of_utilities_all]
+        max_gap = [safe_max(i)-safe_min(i) for i in list_of_utilities]
+        max_gap_all = [safe_max(i)-safe_min(i)for i in list_of_utilities_all]
 
-        variance = [np.var(i) for i in list_of_utilities]
-        variance_all = [np.var(i) for i in list_of_utilities_all]
+        variance = [safe_var(i) for i in list_of_utilities]
+        variance_all = [safe_var(i) for i in list_of_utilities_all]
 
         if len(np.array(utilities_by_provider).shape) == 3:
             provider_workloads = [[len(j) for j in i] for i in utilities_by_provider]

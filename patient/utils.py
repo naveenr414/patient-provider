@@ -208,3 +208,30 @@ def one_shot_policy(simulator,patient,available_providers,memory,per_epoch_funct
     Returns: The Menu, from the per epoch function 
     """
     return per_epoch_function[patient.idx], memory 
+
+def safe_min(arr):
+    """Safer version of min, for [] arrays
+    
+    Arguments:
+        array: Numpy array
+    
+    Returns: minimum, or 0 if list = []"""
+    return np.min(arr) if len(arr) > 0 else 0
+
+def safe_max(arr):
+    """Safer version of max, for [] arrays
+    
+    Arguments:
+        array: Numpy array
+    
+    Returns: maximum, or 0 if list = []"""
+    return np.max(arr) if len(arr) > 0 else 0
+
+def safe_var(arr):
+    """Safer version of max, for [] arrays
+    
+    Arguments:
+        array: Numpy array
+    
+    Returns: maximum, or 0 if list = []"""
+    return np.var(arr) if len(arr) > 0 else 0
