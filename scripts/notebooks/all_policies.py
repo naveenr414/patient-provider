@@ -36,21 +36,22 @@ is_jupyter = 'ipykernel' in sys.modules
 
 # +
 if is_jupyter: 
-    seed        = 43
-    num_patients = 25
-    num_providers = 25
+    seed        = 44
+    num_patients = 10
+    num_providers = 10
     provider_capacity = 1
-    top_choice_prob = 1
-    choice_model = "threshold"
-    utility_function = "normal"
+    top_choice_prob = 0.5
+    choice_model = "uniform_choice"
+    utility_function = "semi_synthetic"
     out_folder = "policy_comparison"
     exit_option = 0.5
-    true_top_choice_prob = 1
+    true_top_choice_prob = 0.5
     num_repetitions = 1
-    num_trials = 100
+    num_trials = 1000
     context_dim = 5
     max_menu_size = 25
-    order="random"
+    previous_patients_per_provider = 10
+    order="custom"
 else:
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', help='Random Seed', type=int, default=42)
@@ -62,6 +63,7 @@ else:
     parser.add_argument('--context_dim',          help='Context dim for patients and providers', type=int, default=5)
     parser.add_argument('--max_menu_size',          help='Context dim for patients and providers', type=int, default=50)
     parser.add_argument('--num_repetitions',          help='Context dim for patients and providers', type=int, default=1)
+    parser.add_argument('--previous_patients_per_provider',          help='Context dim for patients and providers', type=int, default=1)
     parser.add_argument('--provider_capacity', help='Provider Capacity', type=int, default=5)
     parser.add_argument('--choice_model', help='Which choice model for patients', type=str, default='uniform_choice')
     parser.add_argument('--exit_option', help='What is the value of the exit option', type=float, default=0.5)
@@ -86,6 +88,7 @@ else:
     max_menu_size = args.max_menu_size
     utility_function = args.utility_function
     order = args.order
+    previous_patients_per_provider = args.previous_patients_per_provider
 
 save_name = secrets.token_hex(4)  
 # -
@@ -104,12 +107,13 @@ results['parameters'] = {'seed'      : seed,
         'num_repetitions': num_repetitions, 
         'max_menu_size': max_menu_size, 
         'utility_function': utility_function, 
-        'order': order} 
+        'order': order, 
+        'previous_patients_per_provider': previous_patients_per_provider} 
 
 # ## Baselines
 
 seed_list = [seed]
-restrict_resources()
+# restrict_resources()
 
 # +
 policy = random_policy
@@ -118,10 +122,14 @@ print("{} policy".format(name))
 
 rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'])
 
-results['{}_matches'.format(name)] = rewards['matches']
-results['{}_utilities'.format(name)] = rewards['patient_utilities']
-results['{}_workloads'.format(name)] = rewards['provider_workloads']
 results['{}_minimums'.format(name)] = rewards['provider_minimums']
+results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+results['{}_gaps'.format(name)] = rewards['provider_gaps']
+results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+results['{}_variance'.format(name)] = rewards['provider_variance']
+results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
+results['{}_final_workloads'.format(name)] = rewards['final_workloads']
 
 np.sum(rewards['matches'])/(num_patients*num_repetitions*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_repetitions*num_trials*len(seed_list))
 
@@ -135,9 +143,17 @@ rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'])
 results['{}_matches'.format(name)] = rewards['matches']
 results['{}_utilities'.format(name)] = rewards['patient_utilities']
 results['{}_workloads'.format(name)] = rewards['provider_workloads']
-results['{}_minimums'.format(name)] = rewards['provider_minimums']
 
-np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
+results['{}_minimums'.format(name)] = rewards['provider_minimums']
+results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+results['{}_gaps'.format(name)] = rewards['provider_gaps']
+results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+results['{}_variance'.format(name)] = rewards['provider_variance']
+results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
+results['{}_final_workloads'.format(name)] = rewards['final_workloads']
+
+np.mean(results['{}_minimums_all'.format(name)]),np.mean(results['{}_gaps_all'.format(name)]),np.mean(results['{}_variance_all'.format(name)])
 
 # +
 policy = greedy_policy
@@ -149,7 +165,13 @@ rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'])
 results['{}_matches'.format(name)] = rewards['matches']
 results['{}_utilities'.format(name)] = rewards['patient_utilities']
 results['{}_workloads'.format(name)] = rewards['provider_workloads']
+
 results['{}_minimums'.format(name)] = rewards['provider_minimums']
+results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+results['{}_gaps'.format(name)] = rewards['provider_gaps']
+results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+results['{}_variance'.format(name)] = rewards['provider_variance']
+results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
 
 np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
 # -
@@ -165,24 +187,41 @@ if 2**(num_patients*num_providers)*2**(num_patients)*math.factorial(num_patients
     results['{}_matches'.format(name)] = rewards['matches']
     results['{}_utilities'.format(name)] = rewards['patient_utilities']
     results['{}_workloads'.format(name)] = rewards['provider_workloads']
+
     results['{}_minimums'.format(name)] = rewards['provider_minimums']
+    results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+    results['{}_gaps'.format(name)] = rewards['provider_gaps']
+    results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+    results['{}_variance'.format(name)] = rewards['provider_variance']
+    results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+    results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
+    results['{}_final_workloads'.format(name)] = rewards['final_workloads']
 
     print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
 
-if order == "optimal":
-    policy = one_shot_policy
-    per_epoch_function = optimal_order_policy
-    name = "optimal_order"
-    print("{} policy".format(name))
+# +
+policy = one_shot_policy
+per_epoch_function = optimal_order_policy
+name = "optimal_order"
+print("{} policy".format(name))
 
-    rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
 
-    results['{}_matches'.format(name)] = rewards['matches']
-    results['{}_utilities'.format(name)] = rewards['patient_utilities']
-    results['{}_workloads'.format(name)] = rewards['provider_workloads']
-    results['{}_minimums'.format(name)] = rewards['provider_minimums']
+results['{}_matches'.format(name)] = rewards['matches']
+results['{}_utilities'.format(name)] = rewards['patient_utilities']
+results['{}_workloads'.format(name)] = rewards['provider_workloads']
 
-    print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
+results['{}_minimums'.format(name)] = rewards['provider_minimums']
+results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+results['{}_gaps'.format(name)] = rewards['provider_gaps']
+results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+results['{}_variance'.format(name)] = rewards['provider_variance']
+results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
+results['{}_final_workloads'.format(name)] = rewards['final_workloads']
+
+print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
+# -
 
 # ## Offline
 
@@ -197,9 +236,40 @@ rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_e
 results['{}_matches'.format(name)] = rewards['matches']
 results['{}_utilities'.format(name)] = rewards['patient_utilities']
 results['{}_workloads'.format(name)] = rewards['provider_workloads']
-results['{}_minimums'.format(name)] = rewards['provider_minimums']
 
-np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
+results['{}_minimums'.format(name)] = rewards['provider_minimums']
+results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+results['{}_gaps'.format(name)] = rewards['provider_gaps']
+results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+results['{}_variance'.format(name)] = rewards['provider_variance']
+results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
+results['{}_final_workloads'.format(name)] = rewards['final_workloads']
+
+np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)),np.max(np.mean(np.array(rewards['final_workloads'])[0],axis=0))
+
+# +
+policy = one_shot_policy
+per_epoch_function = lp_workload_policy
+name = "lp"
+print("{} policy".format(name))
+
+rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+
+results['{}_matches'.format(name)] = rewards['matches']
+results['{}_utilities'.format(name)] = rewards['patient_utilities']
+results['{}_workloads'.format(name)] = rewards['provider_workloads']
+
+results['{}_minimums'.format(name)] = rewards['provider_minimums']
+results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+results['{}_gaps'.format(name)] = rewards['provider_gaps']
+results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+results['{}_variance'.format(name)] = rewards['provider_variance']
+results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
+results['{}_final_workloads'.format(name)] = rewards['final_workloads']
+
+np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)),np.max(np.mean(np.array(rewards['final_workloads'])[0],axis=0)),np.max(np.mean(np.array(rewards['final_workloads'])[0],axis=0))
 
 # +
 policy = one_shot_policy
@@ -212,7 +282,15 @@ rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_e
 results['{}_matches'.format(name)] = rewards['matches']
 results['{}_utilities'.format(name)] = rewards['patient_utilities']
 results['{}_workloads'.format(name)] = rewards['provider_workloads']
+
 results['{}_minimums'.format(name)] = rewards['provider_minimums']
+results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+results['{}_gaps'.format(name)] = rewards['provider_gaps']
+results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+results['{}_variance'.format(name)] = rewards['provider_variance']
+results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
+results['{}_final_workloads'.format(name)] = rewards['final_workloads']
 
 np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
 # -
@@ -228,7 +306,15 @@ if choice_model == 'threshold':
     results['{}_matches'.format(name)] = rewards['matches']
     results['{}_utilities'.format(name)] = rewards['patient_utilities']
     results['{}_workloads'.format(name)] = rewards['provider_workloads']
+
     results['{}_minimums'.format(name)] = rewards['provider_minimums']
+    results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+    results['{}_gaps'.format(name)] = rewards['provider_gaps']
+    results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+    results['{}_variance'.format(name)] = rewards['provider_variance']
+    results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+    results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
+    results['{}_final_workloads'.format(name)] = rewards['final_workloads']
 
     print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
 
@@ -243,7 +329,15 @@ rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_e
 results['{}_matches'.format(name)] = rewards['matches']
 results['{}_utilities'.format(name)] = rewards['patient_utilities']
 results['{}_workloads'.format(name)] = rewards['provider_workloads']
+
 results['{}_minimums'.format(name)] = rewards['provider_minimums']
+results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+results['{}_gaps'.format(name)] = rewards['provider_gaps']
+results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+results['{}_variance'.format(name)] = rewards['provider_variance']
+results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
+results['{}_final_workloads'.format(name)] = rewards['final_workloads']
 
 np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
 
@@ -258,7 +352,15 @@ rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_e
 results['{}_matches'.format(name)] = rewards['matches']
 results['{}_utilities'.format(name)] = rewards['patient_utilities']
 results['{}_workloads'.format(name)] = rewards['provider_workloads']
+
 results['{}_minimums'.format(name)] = rewards['provider_minimums']
+results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+results['{}_gaps'.format(name)] = rewards['provider_gaps']
+results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+results['{}_variance'.format(name)] = rewards['provider_variance']
+results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
+results['{}_final_workloads'.format(name)] = rewards['final_workloads']
 
 np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
 
@@ -273,7 +375,15 @@ rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_e
 results['{}_matches'.format(name)] = rewards['matches']
 results['{}_utilities'.format(name)] = rewards['patient_utilities']
 results['{}_workloads'.format(name)] = rewards['provider_workloads']
+
 results['{}_minimums'.format(name)] = rewards['provider_minimums']
+results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+results['{}_gaps'.format(name)] = rewards['provider_gaps']
+results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+results['{}_variance'.format(name)] = rewards['provider_variance']
+results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
+results['{}_final_workloads'.format(name)] = rewards['final_workloads']
 
 np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
 
@@ -288,7 +398,15 @@ rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_e
 results['{}_matches'.format(name)] = rewards['matches']
 results['{}_utilities'.format(name)] = rewards['patient_utilities']
 results['{}_workloads'.format(name)] = rewards['provider_workloads']
+
 results['{}_minimums'.format(name)] = rewards['provider_minimums']
+results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+results['{}_gaps'.format(name)] = rewards['provider_gaps']
+results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+results['{}_variance'.format(name)] = rewards['provider_variance']
+results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
+results['{}_final_workloads'.format(name)] = rewards['final_workloads']
 
 np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
 
@@ -303,7 +421,15 @@ rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_e
 results['{}_matches'.format(name)] = rewards['matches']
 results['{}_utilities'.format(name)] = rewards['patient_utilities']
 results['{}_workloads'.format(name)] = rewards['provider_workloads']
+
 results['{}_minimums'.format(name)] = rewards['provider_minimums']
+results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+results['{}_gaps'.format(name)] = rewards['provider_gaps']
+results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+results['{}_variance'.format(name)] = rewards['provider_variance']
+results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
+results['{}_final_workloads'.format(name)] = rewards['final_workloads']
 
 np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
 
@@ -318,7 +444,15 @@ rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_e
 results['{}_matches'.format(name)] = rewards['matches']
 results['{}_utilities'.format(name)] = rewards['patient_utilities']
 results['{}_workloads'.format(name)] = rewards['provider_workloads']
+
 results['{}_minimums'.format(name)] = rewards['provider_minimums']
+results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+results['{}_gaps'.format(name)] = rewards['provider_gaps']
+results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+results['{}_variance'.format(name)] = rewards['provider_variance']
+results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
+results['{}_final_workloads'.format(name)] = rewards['final_workloads']
 
 np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
 # -

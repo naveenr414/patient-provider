@@ -83,7 +83,7 @@ class Simulator():
     """Simulator class that allows for evaluation of policies
         Both with and without re-entry"""
 
-    def __init__(self,num_patients,num_providers,provider_capacity,choice_model_settings,choice_model,context_dim,max_menu_size,utility_function,order,num_repetitions,previous_patients_per_provider):
+    def __init__(self,num_patients,num_providers,provider_capacity,choice_model_settings,choice_model,context_dim,max_menu_size,utility_function,order,num_repetitions,previous_patients_per_provider,num_trials):
         self.num_patients = num_patients*num_repetitions
         self.num_providers = num_providers
         self.provider_max_capacity = provider_capacity
@@ -97,12 +97,14 @@ class Simulator():
         self.order = order 
         self.num_repetitions = num_repetitions
         self.previous_patients_per_provider = previous_patients_per_provider
+        self.num_trials = num_trials
 
         self.matched_pairs = []
         self.unmatched_pairs = []
         self.preference_pairs = []
         self.unmatched_patients = []
         self.raw_matched_pairs = []
+        self.custom_patient_order = []
 
     def step(self,patient_num,provider_list):
         """Update the workload by provider, after a patient receives a menu
@@ -125,11 +127,17 @@ class Simulator():
         self.raw_matched_pairs.append((patient_num,chosen_provider))
         return self.provider_workloads, available_providers, chosen_provider
 
-    def reset_patient_order(self):
+    def reset_patient_order(self,trial_num):
         if self.order == "random":
             self.patient_order = np.random.permutation(list(range(self.num_patients)))
         elif self.order == "optimal":
             self.patient_order = compute_optimal_order(self)
+        elif self.order == "custom":
+            if self.custom_patient_order == []:
+                self.patient_order = np.random.permutation(list(range(self.num_patients)))
+            else:
+                self.patient_order = self.custom_patient_order[trial_num]
+
 
     def reset_patient_utility(self):
         self.all_patients = []
@@ -220,7 +228,7 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
     for trial_num in range(num_trials):
         env.num_providers = M 
         env.num_patients = N
-        env.reset_patient_order()
+        env.reset_patient_order(trial_num)
         env.reset_initial()
         start = time.time()
         available_providers  = [1 for i in range(len(env.provider_capacities))]
@@ -339,7 +347,7 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None):
     }
 
     for seed in seed_list:
-        simulator = Simulator(num_patients,num_providers,provider_capacity,choice_model_settings,choice_model,context_dim,max_menu_size,utility_function,order,num_repetitions,previous_patients_per_provider)
+        simulator = Simulator(num_patients,num_providers,provider_capacity,choice_model_settings,choice_model,context_dim,max_menu_size,utility_function,order,num_repetitions,previous_patients_per_provider,num_trials)
 
         policy_results, patient_results, initial_workloads, final_workloads = run_heterogenous_policy(simulator,policy,seed,num_trials,per_epoch_function=per_epoch_function,second_seed=seed) 
         utilities_by_provider = policy_results
