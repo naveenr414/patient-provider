@@ -6,6 +6,8 @@ from patient.utils import solve_linear_program, safe_min, safe_max, safe_var
 from patient.ordering_policies import compute_optimal_order
 from patient.semi_synthetic import generate_semi_synthetic_theta_workload
 import itertools
+import os
+import json
 
 class Patient:
     """Class to represent the Patient and their information"""
@@ -83,7 +85,7 @@ class Simulator():
     """Simulator class that allows for evaluation of policies
         Both with and without re-entry"""
 
-    def __init__(self,num_patients,num_providers,provider_capacity,choice_model_settings,choice_model,context_dim,max_menu_size,utility_function,order,num_repetitions,previous_patients_per_provider,num_trials):
+    def __init__(self,num_patients,num_providers,provider_capacity,choice_model_settings,choice_model,context_dim,max_menu_size,utility_function,order,num_repetitions,previous_patients_per_provider,num_trials,seed):
         self.num_patients = num_patients*num_repetitions
         self.num_providers = num_providers
         self.provider_max_capacity = provider_capacity
@@ -98,6 +100,7 @@ class Simulator():
         self.num_repetitions = num_repetitions
         self.previous_patients_per_provider = previous_patients_per_provider
         self.num_trials = num_trials
+        self.seed = seed
 
         self.matched_pairs = []
         self.unmatched_pairs = []
@@ -163,7 +166,14 @@ class Simulator():
                 utilities = rewards[i]          
                 self.all_patients.append(Patient(patient_vector,utilities,self.choice_model_settings,i))
         elif self.utility_function == 'semi_synthetic':
-            theta, workloads = generate_semi_synthetic_theta_workload(self.num_patients,self.num_providers)
+            if os.path.exists("../../data/{}_{}_{}.json".format(self.seed,self.num_patients,self.num_providers)):
+                data = json.load(open("../../data/{}_{}_{}.json".format(self.seed,self.num_patients,self.num_providers)))
+                theta = np.array(data[0]) 
+                workloads = np.array(data[1])
+            else:
+                theta, workloads = generate_semi_synthetic_theta_workload(self.num_patients,self.num_providers)
+                data = [theta.tolist(),workloads.tolist()]
+                json.dump(data,open("../../data/{}_{}_{}.json".format(self.seed,self.num_patients,self.num_providers),"w"))
             for i in range(self.num_patients):
                 patient_vector = np.random.random(self.context_dim)
                 utilities = theta[i]  
@@ -347,7 +357,7 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None):
     }
 
     for seed in seed_list:
-        simulator = Simulator(num_patients,num_providers,provider_capacity,choice_model_settings,choice_model,context_dim,max_menu_size,utility_function,order,num_repetitions,previous_patients_per_provider,num_trials)
+        simulator = Simulator(num_patients,num_providers,provider_capacity,choice_model_settings,choice_model,context_dim,max_menu_size,utility_function,order,num_repetitions,previous_patients_per_provider,num_trials,seed)
 
         policy_results, patient_results, initial_workloads, final_workloads = run_heterogenous_policy(simulator,policy,seed,num_trials,per_epoch_function=per_epoch_function,second_seed=seed) 
         utilities_by_provider = policy_results

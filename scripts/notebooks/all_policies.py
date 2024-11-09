@@ -30,24 +30,24 @@ from patient.lp_policies import *
 from patient.group_based_policies import *
 from patient.ordering_policies import *
 from patient.provider_policies import *
-from patient.utils import get_save_path, delete_duplicate_results, restrict_resources, one_shot_policy
+from patient.utils import get_save_path, delete_duplicate_results, restrict_resources, one_shot_policy, MyEncoder
 
 is_jupyter = 'ipykernel' in sys.modules
 
 # +
 if is_jupyter: 
-    seed        = 44
-    num_patients = 10
-    num_providers = 10
+    seed        = 56
+    num_patients = 25
+    num_providers = 25
     provider_capacity = 1
-    top_choice_prob = 0.5
+    top_choice_prob = 0.9
+    true_top_choice_prob = 0.9
     choice_model = "uniform_choice"
-    utility_function = "semi_synthetic"
-    out_folder = "policy_comparison"
     exit_option = 0.5
-    true_top_choice_prob = 0.5
+    utility_function = "uniform"
+    out_folder = "policy_comparison"
     num_repetitions = 1
-    num_trials = 1000
+    num_trials = 100
     context_dim = 5
     max_menu_size = 25
     previous_patients_per_provider = 10
@@ -63,7 +63,7 @@ else:
     parser.add_argument('--context_dim',          help='Context dim for patients and providers', type=int, default=5)
     parser.add_argument('--max_menu_size',          help='Context dim for patients and providers', type=int, default=50)
     parser.add_argument('--num_repetitions',          help='Context dim for patients and providers', type=int, default=1)
-    parser.add_argument('--previous_patients_per_provider',          help='Context dim for patients and providers', type=int, default=1)
+    parser.add_argument('--previous_patients_per_provider',          help='Context dim for patients and providers', type=int, default=10)
     parser.add_argument('--provider_capacity', help='Provider Capacity', type=int, default=5)
     parser.add_argument('--choice_model', help='Which choice model for patients', type=str, default='uniform_choice')
     parser.add_argument('--exit_option', help='What is the value of the exit option', type=float, default=0.5)
@@ -113,7 +113,7 @@ results['parameters'] = {'seed'      : seed,
 # ## Baselines
 
 seed_list = [seed]
-# restrict_resources()
+restrict_resources()
 
 # +
 policy = random_policy
@@ -122,14 +122,17 @@ print("{} policy".format(name))
 
 rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'])
 
+results['{}_matches'.format(name)] = rewards['matches']
+results['{}_utilities'.format(name)] = rewards['patient_utilities']
+results['{}_workloads'.format(name)] = rewards['provider_workloads']
+
 results['{}_minimums'.format(name)] = rewards['provider_minimums']
 results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
 results['{}_gaps'.format(name)] = rewards['provider_gaps']
 results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
 results['{}_variance'.format(name)] = rewards['provider_variance']
 results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
-results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
-results['{}_final_workloads'.format(name)] = rewards['final_workloads']
+results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
 np.sum(rewards['matches'])/(num_patients*num_repetitions*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_repetitions*num_trials*len(seed_list))
 
@@ -150,8 +153,7 @@ results['{}_gaps'.format(name)] = rewards['provider_gaps']
 results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
 results['{}_variance'.format(name)] = rewards['provider_variance']
 results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
-results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
-results['{}_final_workloads'.format(name)] = rewards['final_workloads']
+results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
 np.mean(results['{}_minimums_all'.format(name)]),np.mean(results['{}_gaps_all'.format(name)]),np.mean(results['{}_variance_all'.format(name)])
 
@@ -172,6 +174,7 @@ results['{}_gaps'.format(name)] = rewards['provider_gaps']
 results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
 results['{}_variance'.format(name)] = rewards['provider_variance']
 results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
 np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
 # -
@@ -194,8 +197,7 @@ if 2**(num_patients*num_providers)*2**(num_patients)*math.factorial(num_patients
     results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
     results['{}_variance'.format(name)] = rewards['provider_variance']
     results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
-    results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
-    results['{}_final_workloads'.format(name)] = rewards['final_workloads']
+    results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
     print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
 
@@ -217,8 +219,7 @@ results['{}_gaps'.format(name)] = rewards['provider_gaps']
 results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
 results['{}_variance'.format(name)] = rewards['provider_variance']
 results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
-results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
-results['{}_final_workloads'.format(name)] = rewards['final_workloads']
+results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
 print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
 # -
@@ -243,15 +244,14 @@ results['{}_gaps'.format(name)] = rewards['provider_gaps']
 results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
 results['{}_variance'.format(name)] = rewards['provider_variance']
 results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
-results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
-results['{}_final_workloads'.format(name)] = rewards['final_workloads']
+results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
 np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)),np.max(np.mean(np.array(rewards['final_workloads'])[0],axis=0))
 
 # +
 policy = one_shot_policy
 per_epoch_function = lp_workload_policy
-name = "lp"
+name = "lp_workload"
 print("{} policy".format(name))
 
 rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
@@ -266,8 +266,7 @@ results['{}_gaps'.format(name)] = rewards['provider_gaps']
 results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
 results['{}_variance'.format(name)] = rewards['provider_variance']
 results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
-results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
-results['{}_final_workloads'.format(name)] = rewards['final_workloads']
+results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
 np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)),np.max(np.mean(np.array(rewards['final_workloads'])[0],axis=0)),np.max(np.mean(np.array(rewards['final_workloads'])[0],axis=0))
 
@@ -289,8 +288,7 @@ results['{}_gaps'.format(name)] = rewards['provider_gaps']
 results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
 results['{}_variance'.format(name)] = rewards['provider_variance']
 results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
-results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
-results['{}_final_workloads'.format(name)] = rewards['final_workloads']
+results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
 np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
 # -
@@ -313,8 +311,7 @@ if choice_model == 'threshold':
     results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
     results['{}_variance'.format(name)] = rewards['provider_variance']
     results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
-    results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
-    results['{}_final_workloads'.format(name)] = rewards['final_workloads']
+    results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
     print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
 
@@ -336,8 +333,7 @@ results['{}_gaps'.format(name)] = rewards['provider_gaps']
 results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
 results['{}_variance'.format(name)] = rewards['provider_variance']
 results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
-results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
-results['{}_final_workloads'.format(name)] = rewards['final_workloads']
+results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
 np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
 
@@ -359,8 +355,7 @@ results['{}_gaps'.format(name)] = rewards['provider_gaps']
 results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
 results['{}_variance'.format(name)] = rewards['provider_variance']
 results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
-results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
-results['{}_final_workloads'.format(name)] = rewards['final_workloads']
+results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
 np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
 
@@ -382,8 +377,7 @@ results['{}_gaps'.format(name)] = rewards['provider_gaps']
 results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
 results['{}_variance'.format(name)] = rewards['provider_variance']
 results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
-results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
-results['{}_final_workloads'.format(name)] = rewards['final_workloads']
+results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
 np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
 
@@ -405,8 +399,7 @@ results['{}_gaps'.format(name)] = rewards['provider_gaps']
 results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
 results['{}_variance'.format(name)] = rewards['provider_variance']
 results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
-results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
-results['{}_final_workloads'.format(name)] = rewards['final_workloads']
+results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
 np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
 
@@ -428,8 +421,7 @@ results['{}_gaps'.format(name)] = rewards['provider_gaps']
 results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
 results['{}_variance'.format(name)] = rewards['provider_variance']
 results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
-results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
-results['{}_final_workloads'.format(name)] = rewards['final_workloads']
+results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
 np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
 
@@ -451,8 +443,7 @@ results['{}_gaps'.format(name)] = rewards['provider_gaps']
 results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
 results['{}_variance'.format(name)] = rewards['provider_variance']
 results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
-results['{}_initial_workloads'.format(name)] = rewards['initial_workloads']
-results['{}_final_workloads'.format(name)] = rewards['final_workloads']
+results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
 np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
 # -
@@ -463,6 +454,6 @@ save_path = get_save_path(out_folder,save_name)
 
 delete_duplicate_results(out_folder,"",results)
 
-json.dump(results,open('../../results/'+save_path,'w'))
+json.dump(results,open('../../results/'+save_path,'w'),cls=MyEncoder)
 
 

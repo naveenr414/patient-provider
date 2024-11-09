@@ -34,7 +34,7 @@ def get_age_costs(ages,age_buckets):
     return cost_per_age
 
 def generate_semi_synthetic_theta_workload(num_patients,num_providers):
-    """Generaet a semi synthetic dataset based on medicare
+    """Generate a semi synthetic dataset based on medicare
     Sample providers from the medicare dataset, and place
     patients randomly in different locations in CT
     
