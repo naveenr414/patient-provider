@@ -2,7 +2,7 @@ import numpy as np
 import gurobipy as gp
 from gurobipy import GRB
 
-def provider_focused_policy(simulator,min_matchings_per=[],max_matchings_per=[]):
+def provider_focused_policy(simulator,min_matchings_per=[],max_matchings_per=[],lamb=0,use_log=False):
     """Policy that optimizes menus for each provider, while
     ignoring inter-provider interference effects
     It does so by maximiznig (1-p)^{x} * \sum \theta/x
@@ -31,7 +31,22 @@ def provider_focused_policy(simulator,min_matchings_per=[],max_matchings_per=[])
         m.setParam('OutputFlag', 0)
         x = m.addVars(N, M, vtype=GRB.BINARY, name="x")
 
-        m.setObjective(gp.quicksum(weights[i, j] * x[i, j] for i in range(N) for j in range(M)), GRB.MAXIMIZE)
+        if not use_log:
+            m.setObjective(gp.quicksum((weights[i, j]-lamb*p) * x[i, j] for i in range(N) for j in range(M)), GRB.MAXIMIZE)
+        else:
+            breakpoints = [0,1, 8,32]  # Example range
+            values = [0]+[np.log(x) for x in breakpoints[1:]]  # Precompute log values
+
+            sum_x = m.addVars(N, lb=0, name="sum_x")  # Sum of x_{i,j}
+            z = m.addVars(N, name="z")  # Log values
+
+            for i in range(N):
+                m.addConstr(sum_x[i] == gp.quicksum(x[i, j] for j in range(M)))
+            for i in range(N):
+                m.addGenConstrPWL(sum_x[i], z[i], breakpoints, values, "PWL_{}".format(i))
+
+            m.setObjective(gp.quicksum(weights[i, j] * x[i, j] for i in range(N) for j in range(M))-gp.quicksum(lamb*p*z[i] for i in range(N)), GRB.MAXIMIZE)
+
 
         for j in range(M):
             m.addConstr(gp.quicksum(x[i,j] for i in range(N)) <= B)
@@ -54,10 +69,18 @@ def provider_focused_policy(simulator,min_matchings_per=[],max_matchings_per=[])
     
         return real_value, solution 
 
-    values = [get_solution(b)[0] for b in range(1,N+1)]
-    max_b = np.argmax(values)+1
+    values = []
+    solutions = []
+    for b in range(1,N+1):
+        value, sol = get_solution(b)
+        if len(values) > 0 and value < values[-1]:
+            break 
+        values.append(value)
+        solutions.append(sol)
 
-    sol = get_solution(max_b)[1] 
+    max_b = np.argmax(values)
+
+    sol = solutions[max_b]
     return sol
 
 def provider_focused_less_interference_policy(simulator):
@@ -84,3 +107,33 @@ def provider_focused_less_interference_policy(simulator):
     min_matchings_per = [i/2 for i in max_matchings_per]
 
     return provider_focused_policy(simulator,min_matchings_per=min_matchings_per,max_matchings_per=max_matchings_per)
+
+def provider_focused_linear_regularization_policy(lamb):
+    """Policy that optimizes menus for each provider, while
+    adding in a penalty for the total number of things offered
+    This can help reduce provider-side interference
+    in a linear manner
+    
+    Arguments:
+        lamb: Lamb value to restrict the intereference between menus
+    
+    Returns: List of providers on the menu"""
+
+    def policy(simulator):
+        return provider_focused_policy(simulator,min_matchings_per=[],max_matchings_per=[],lamb=lamb)
+    return policy 
+
+def provider_focused_log_regularization_policy(lamb):
+    """Policy that optimizes menus for each provider, while
+    adding in a penalty for the total number of things offered
+    This can help reduce provider-side interference
+    in a linear manner
+    
+    Arguments:
+        lamb: Lamb value to restrict the intereference between menus
+    
+    Returns: List of providers on the menu"""
+
+    def policy(simulator):
+        return provider_focused_policy(simulator,min_matchings_per=[],max_matchings_per=[],lamb=lamb,use_log=True)
+    return policy 
