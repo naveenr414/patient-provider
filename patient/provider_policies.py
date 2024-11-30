@@ -239,7 +239,7 @@ def gradient_descent_policy(simulator):
             best_x = values_by_loss[np.argmin(loss_values)][1]
     return (best_x > 0.1).detach().int().numpy()
 
-def objective(z, theta, p, lamb=1, smooth_reg='entropy', epsilon=1e-5):
+def objective(z, theta, p, sorted_theta,lamb=1, smooth_reg='entropy', epsilon=1e-5):
     # Reparameterize x using sigmoid
     x = torch.sigmoid(z)  # x is now bounded in [0, 1]
     
@@ -249,11 +249,29 @@ def objective(z, theta, p, lamb=1, smooth_reg='entropy', epsilon=1e-5):
     row_sums = torch.sum(x, dim=1, keepdim=True)  # Shape: (rows, 1)
     
     # Normalize x by row sums
-    normalized_x = x / (p*torch.maximum(row_sums, torch.tensor(1.0, device=sum_x.device)))*(1-(1-p)**(torch.maximum(row_sums, torch.tensor(1.0, device=sum_x.device))))  # Avoid division by zero
+    normalized_x = x / (p*torch.maximum(row_sums, torch.tensor(1.0, device=sum_x.device)))*(1-(1-p)**(torch.maximum(row_sums, torch.tensor(1.0, device=sum_x.device)))) 
     
+    sorted_normalized_x = normalized_x.gather(1, sorted_theta)
+
+    # Compute cumulative products (1 - normalized_x) along rows
+    one_minus_sorted = 1 - sorted_normalized_x
+    cumprods = torch.cumprod(one_minus_sorted, dim=1)
+
+    # Shift the cumulative products to use for the original scaling (prepending 1 for first index)
+    shifted_cumprods = torch.cat([torch.ones(cumprods.size(0), 1, device=cumprods.device), cumprods[:, :-1]], dim=1)
+
+    # Apply the cumulative product scaling to the original indices
+    scaled_normalized_x = sorted_normalized_x * shifted_cumprods
+
+    # Scatter back to the original positions
+    normalized_x = torch.zeros_like(normalized_x)
+    normalized_x.scatter_(1, sorted_theta, scaled_normalized_x)
+    # Normalize row-wise
+    normalized_x /= (torch.sum(normalized_x, dim=1, keepdim=True) + 1e-8)
+
     # Compute numerator for the first term (using normalized x)
     term1_num = (1 - (1 - p) ** torch.sum(normalized_x,dim=0)) * torch.sum(normalized_x * theta, dim=0)
-    
+
     term1_den = torch.sum(normalized_x, dim=0) + 1e-8  # Avoid division by zero
     term1_den = torch.maximum(term1_den,torch.tensor(1.0, device=sum_x.device))
 
@@ -262,15 +280,14 @@ def objective(z, theta, p, lamb=1, smooth_reg='entropy', epsilon=1e-5):
         
     term1 = torch.sum(term1) / theta.shape[1]  # Normalize by number of columns
 
+    reg_term = 0
     # Add smooth regularization term
-    if smooth_reg == 'logit':
+    if smooth_reg == 'logit' and lamb > 0:
         reg_term = torch.sum(torch.logit(x, eps=epsilon) ** 2)  # Logit-based penalty
-    elif smooth_reg == 'entropy':
+    elif smooth_reg == 'entropy' and lamb > 0:
         reg_term = -torch.sum(x * torch.log(x + epsilon) + (1 - x) * torch.log(1 - x + epsilon))  # Entropy-based penalty
-    else:
-        raise ValueError("Unsupported regularization: choose 'logit' or 'entropy'")
-        # Final loss with regularization
     loss = term1 - lamb * reg_term
+
     return loss
 
 def gradient_descent_policy_2(simulator):
@@ -278,6 +295,9 @@ def gradient_descent_policy_2(simulator):
 
     theta = [p.provider_rewards for p in simulator.patients]
     theta = torch.Tensor(theta)
+
+    sorted_theta = torch.argsort(theta, dim=1,descending=True)  
+
     N = len(simulator.patients)
     M = theta.shape[1]
 
@@ -285,7 +305,7 @@ def gradient_descent_policy_2(simulator):
     best_loss = 1000
     for _ in range(5): 
         if _ == 0:
-            x = torch.Tensor(lp_policy(simulator))  
+            x = torch.Tensor(lp_policy(simulator))*10-10/2  
         else:
             x = torch.rand(N, M, requires_grad=True)  
         x.requires_grad = True
@@ -307,8 +327,9 @@ def gradient_descent_policy_2(simulator):
             else:
                 lamb = 0
             # Compute the objective
-            loss = -objective(x, theta, p,lamb=lamb)
-            
+            loss = -objective(x, theta, p,sorted_theta,lamb=lamb)
+            true_loss = -objective(torch.round(torch.sigmoid(x))*1000-500, theta, p,sorted_theta,lamb=0)
+
             # Backpropagation
             loss.backward()
             torch.nn.utils.clip_grad_norm_([x], max_norm=10)
@@ -316,10 +337,11 @@ def gradient_descent_policy_2(simulator):
             # Gradient step
             optimizer.step()
             scheduler.step()
-            
-            values_by_loss.append((loss.detach(),torch.sigmoid(x).detach()))
+
+            values_by_loss.append((true_loss.detach(),torch.sigmoid(x).detach()))
         
-        if values_by_loss[-1][0] < best_loss:
-            best_loss = values_by_loss[-1][0]
-            best_x = values_by_loss[-1][1]
+        min_loc = np.argmin([i[0] for i in values_by_loss])
+        if values_by_loss[min_loc][0] < best_loss:
+            best_loss = values_by_loss[min_loc][0]
+            best_x = values_by_loss[min_loc][1]
     return np.round(((best_x).detach().numpy()))
