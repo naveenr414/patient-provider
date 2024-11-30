@@ -6,6 +6,9 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+from patient.lp_policies import lp_policy
+from patient.baseline_policies import greedy_policy
+
 
 def provider_focused_policy(simulator,min_matchings_per=[],max_matchings_per=[],lamb=0,use_log=False):
     """Policy that optimizes menus for each provider, while
@@ -236,7 +239,7 @@ def gradient_descent_policy(simulator):
             best_loss = final_loss
             best_x = values_by_loss[np.argmin(loss_values)][1]
     return (best_x > 0.1).detach().int().numpy()
-    
+
 def objective(z, theta, p, lamb=1, smooth_reg='entropy', epsilon=1e-5):
     # Reparameterize x using sigmoid
     x = torch.sigmoid(z)  # x is now bounded in [0, 1]
@@ -248,21 +251,18 @@ def objective(z, theta, p, lamb=1, smooth_reg='entropy', epsilon=1e-5):
     row_sums = torch.sum(x, dim=1, keepdim=True)  # Shape: (rows, 1)
     
     # Normalize x by row sums
-    normalized_x = x / torch.maximum(row_sums, torch.tensor(1.0, device=sum_x.device))  # Avoid division by zero
+    normalized_x = x / (p*torch.maximum(row_sums, torch.tensor(1.0, device=sum_x.device)))*(1-(1-p)**(torch.maximum(row_sums, torch.tensor(1.0, device=sum_x.device))))  # Avoid division by zero
     
     # Compute numerator for the first term (using normalized x)
-    term1_num = (1 - (1 - p) ** sum_x) * torch.sum(normalized_x * theta, dim=0)
+    term1_num = (1 - (1 - p) ** torch.sum(normalized_x,dim=0)) * torch.sum(normalized_x * theta, dim=0)
     
-    # Compute denominator for the first term (using normalized x)
-    term1_den = torch.sum(x, dim=0) + 1e-8  # Avoid division by zero
+    term1_den = torch.sum((x+normalized_x)/2, dim=0) + 1e-8  # Avoid division by zero
     term1_den = torch.maximum(term1_den,torch.tensor(1.0, device=sum_x.device))
 
     # Compute the main term
     term1 = (term1_num / term1_den)
         
-    
     term1 = torch.sum(term1) / theta.shape[1]  # Normalize by number of columns
-
 
     # Add smooth regularization term
     if smooth_reg == 'logit':
@@ -273,9 +273,7 @@ def objective(z, theta, p, lamb=1, smooth_reg='entropy', epsilon=1e-5):
         raise ValueError("Unsupported regularization: choose 'logit' or 'entropy'")
         # Final loss with regularization
     loss = term1 - lamb * reg_term
-    
     return loss
-
 
 def gradient_descent_policy_2(simulator):
     p = simulator.choice_model_settings['top_choice_prob']
@@ -285,13 +283,14 @@ def gradient_descent_policy_2(simulator):
     N = len(simulator.patients)
     M = theta.shape[1]
 
-    lamb = 0
-    lamb2 = 0
-
-    best_loss = float('inf')
     best_x = None
-    for _ in range(1):  # Run 5 independent optimizations
-        x = torch.rand(N, M, requires_grad=True)  # Variables to optimize (not constrained to [0, 1])
+    best_loss = 1000
+    for _ in range(5): 
+        if _ == 0:
+            x = torch.Tensor(lp_policy(simulator))  
+        else:
+            x = torch.rand(N, M, requires_grad=True)  
+        x.requires_grad = True
 
         # Optimizer
         optimizer = optim.Adam([x], lr=0.1)
@@ -305,7 +304,7 @@ def gradient_descent_policy_2(simulator):
             
             if epoch > 800:
                 lamb = 1
-            elif epoch > 400:
+            elif epoch > 700:
                 lamb = 0.25
             else:
                 lamb = 0
@@ -320,10 +319,9 @@ def gradient_descent_policy_2(simulator):
             optimizer.step()
             scheduler.step()
             
-            # Clip x to enforce constraints
-            # with torch.no_grad():
-            #     x.clamp_(0, 1)  # Ensure x_{i,j} stays in [0, 1]
             values_by_loss.append((loss.detach(),torch.sigmoid(x).detach()))
         
-        best_x = values_by_loss[-1][1]
+        if values_by_loss[-1][0] < best_loss:
+            best_loss = values_by_loss[-1][0]
+            best_x = values_by_loss[-1][1]
     return np.round(((best_x).detach().numpy()))
