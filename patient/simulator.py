@@ -235,7 +235,7 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
     if per_epoch_function != None and env.num_repetitions == 1:
         per_epoch_results = per_epoch_function(env)
 
-    utility_by_provider = [0 for i in range(env.num_providers)]
+    utility_by_provider = np.zeros((env.num_patients,env.num_providers))
 
     for trial_num in range(num_trials):
         env.num_providers = M 
@@ -287,7 +287,7 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
                     patient_results_trial.append(-0.01)
                 elif chosen_provider >= 0:
                     patient_results_trial.append(current_patient.provider_rewards[chosen_provider])
-                    utility_by_provider[chosen_provider] += 1 # current_patient.provider_rewards[chosen_provider]
+                    utility_by_provider[current_patient.idx][chosen_provider] += current_patient.provider_rewards[chosen_provider]
 
                 if chosen_provider >= 0:
                     matched_pairs.append((current_patient.patient_vector,env.provider_vectors[chosen_provider]))

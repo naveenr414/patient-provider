@@ -251,6 +251,8 @@ def objective(z, theta, p, sorted_theta,lamb=1, smooth_reg='entropy', epsilon=1e
     # Normalize x by row sums
     normalized_x = x / (p*torch.maximum(row_sums, torch.tensor(1.0, device=sum_x.device)))*(1-(1-p)**(torch.maximum(row_sums, torch.tensor(1.0, device=sum_x.device)))) 
     
+    prod = (1 - (1 - p) ** torch.sum(normalized_x,dim=0))
+
     sorted_normalized_x = normalized_x.gather(1, sorted_theta)
 
     # Compute cumulative products (1 - normalized_x) along rows
@@ -267,10 +269,11 @@ def objective(z, theta, p, sorted_theta,lamb=1, smooth_reg='entropy', epsilon=1e
     normalized_x = torch.zeros_like(normalized_x)
     normalized_x.scatter_(1, sorted_theta, scaled_normalized_x)
     # Normalize row-wise
+
     normalized_x /= (torch.sum(normalized_x, dim=1, keepdim=True) + 1e-8)
 
     # Compute numerator for the first term (using normalized x)
-    term1_num = (1 - (1 - p) ** torch.sum(normalized_x,dim=0)) * torch.sum(normalized_x * theta, dim=0)
+    term1_num = prod * torch.sum(normalized_x * theta, dim=0)
 
     term1_den = torch.sum(normalized_x, dim=0) + 1e-8  # Avoid division by zero
     term1_den = torch.maximum(term1_den,torch.tensor(1.0, device=sum_x.device))
