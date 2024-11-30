@@ -36,12 +36,12 @@ is_jupyter = 'ipykernel' in sys.modules
 
 # +
 if is_jupyter: 
-    seed        = 43
+    seed        = 44
     num_patients = 25
-    num_providers = 25
+    num_providers = 5
     provider_capacity = 1
-    top_choice_prob = 0.9
-    true_top_choice_prob = 0.9
+    top_choice_prob = 0.5
+    true_top_choice_prob = 0.5
     choice_model = "uniform_choice"
     exit_option = 0.5
     utility_function = "normal"
@@ -514,7 +514,38 @@ results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
 results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
 print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
+
+# +
+policy = one_shot_policy 
+per_epoch_function = gradient_descent_policy_2
+name = "gradient_descent_2"
+print("{} policy".format(name))
+
+rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+
+results['{}_matches'.format(name)] = rewards['matches']
+results['{}_utilities'.format(name)] = rewards['patient_utilities']
+results['{}_workloads'.format(name)] = rewards['provider_workloads']
+
+results['{}_minimums'.format(name)] = rewards['provider_minimums']
+results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+results['{}_gaps'.format(name)] = rewards['provider_gaps']
+results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+results['{}_variance'.format(name)] = rewards['provider_variance']
+results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
+
+print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
 # -
+
+if is_jupyter:
+    theta = [p.provider_rewards for p in simulator.patients]
+    theta = torch.Tensor(theta)
+    opt_tensor = torch.Tensor(lp_policy(simulator))
+    ones_tensor = torch.Tensor(np.ones(opt_tensor.shape))
+    x = torch.Tensor(gradient_descent_policy_2(simulator))
+    p = true_top_choice_prob
+    print(objective(opt_tensor*10000-10000/2,theta,p,0), objective(ones_tensor*10000-10000/2,theta,p,0), objective(x*10000-10000/2,theta,p,0))
 
 # ## Save Data
 

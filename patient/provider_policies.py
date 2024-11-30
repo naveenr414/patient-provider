@@ -97,7 +97,6 @@ def provider_focused_policy(simulator,min_matchings_per=[],max_matchings_per=[],
     max_b = np.argmax(values)
 
     sol = solutions[max_b]
-    print("B {}, Per provider {}, Per Patient {}".format(max_b+1,np.sum(sol,axis=0),np.sum(sol,axis=1)))
     return sol
 
 def provider_focused_less_interference_policy(simulator):
@@ -246,7 +245,6 @@ def objective(z, theta, p, lamb=1, smooth_reg='entropy', epsilon=1e-5):
     
     # Compute the sum of x over rows for each column
     sum_x = torch.sum(x, dim=0)  # Shape: (columns,)
-    
     # Compute the sum of x across all columns for each row
     row_sums = torch.sum(x, dim=1, keepdim=True)  # Shape: (rows, 1)
     
@@ -256,7 +254,7 @@ def objective(z, theta, p, lamb=1, smooth_reg='entropy', epsilon=1e-5):
     # Compute numerator for the first term (using normalized x)
     term1_num = (1 - (1 - p) ** torch.sum(normalized_x,dim=0)) * torch.sum(normalized_x * theta, dim=0)
     
-    term1_den = torch.sum((x+normalized_x)/2, dim=0) + 1e-8  # Avoid division by zero
+    term1_den = torch.sum(normalized_x, dim=0) + 1e-8  # Avoid division by zero
     term1_den = torch.maximum(term1_den,torch.tensor(1.0, device=sum_x.device))
 
     # Compute the main term
