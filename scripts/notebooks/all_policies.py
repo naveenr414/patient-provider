@@ -40,8 +40,8 @@ if is_jupyter:
     num_patients = 25
     num_providers = 25
     provider_capacity = 1
-    top_choice_prob = 0.9
-    true_top_choice_prob = 0.9
+    top_choice_prob = 1
+    true_top_choice_prob = 1
     choice_model = "uniform_choice"
     exit_option = 0.5
     utility_function = "normal"
@@ -112,7 +112,7 @@ results['parameters'] = {'seed'      : seed,
 
 # ## Baselines
 
-seed_list = [seed]
+seed_list = [43,44,45]
 restrict_resources()
 
 # +
@@ -446,29 +446,29 @@ results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
 results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
 np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
-# -
 
-policy = one_shot_policy 
-for lamb in [0.25,0.5,1,2,4]:
-    per_epoch_function = provider_focused_linear_regularization_policy(lamb)
-    name = "provider_focused_linear_regularization_{}".format(lamb)
-    print("{} policy".format(name))
+# +
+# policy = one_shot_policy 
+# for lamb in [0.25,0.5,1,2,4]:
+#     per_epoch_function = provider_focused_linear_regularization_policy(lamb)
+#     name = "provider_focused_linear_regularization_{}".format(lamb)
+#     print("{} policy".format(name))
 
-    rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+#     rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
 
-    results['{}_matches'.format(name)] = rewards['matches']
-    results['{}_utilities'.format(name)] = rewards['patient_utilities']
-    results['{}_workloads'.format(name)] = rewards['provider_workloads']
+#     results['{}_matches'.format(name)] = rewards['matches']
+#     results['{}_utilities'.format(name)] = rewards['patient_utilities']
+#     results['{}_workloads'.format(name)] = rewards['provider_workloads']
 
-    results['{}_minimums'.format(name)] = rewards['provider_minimums']
-    results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
-    results['{}_gaps'.format(name)] = rewards['provider_gaps']
-    results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
-    results['{}_variance'.format(name)] = rewards['provider_variance']
-    results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
-    results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
+#     results['{}_minimums'.format(name)] = rewards['provider_minimums']
+#     results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+#     results['{}_gaps'.format(name)] = rewards['provider_gaps']
+#     results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+#     results['{}_variance'.format(name)] = rewards['provider_variance']
+#     results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+#     results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
-    print(lamb,np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
+#     print(lamb,np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
 
 # +
 # policy = one_shot_policy 
@@ -536,17 +536,81 @@ results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
 results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
 print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
+
+
+# +
+
+def objective2(z, theta, p, sorted_theta,lamb=1, smooth_reg='entropy', epsilon=1e-5):
+    # Reparameterize x using sigmoid
+    x = torch.sigmoid(z)  # x is now bounded in [0, 1]
+    
+    # Compute the sum of x over rows for each column
+    sum_x = torch.sum(x, dim=0)  # Shape: (columns,)
+    # Compute the sum of x across all columns for each row
+    row_sums = torch.sum(x, dim=1, keepdim=True)  # Shape: (rows, 1)
+    
+    # Normalize x by row sums
+    normalized_x = x / (p*torch.maximum(row_sums, torch.tensor(1.0, device=sum_x.device)))*(1-(1-p)**(torch.maximum(row_sums, torch.tensor(1.0, device=sum_x.device)))) 
+
+    sorted_normalized_x = normalized_x.gather(1, sorted_theta)
+
+    # Compute cumulative products (1 - normalized_x) along rows
+    one_minus_sorted = 1 - sorted_normalized_x
+    cumprods = torch.cumprod(one_minus_sorted, dim=1)
+
+    # Shift the cumulative products to use for the original scaling (prepending 1 for first index)
+    shifted_cumprods = torch.cat([torch.ones(cumprods.size(0), 1, device=cumprods.device), cumprods[:, :-1]], dim=1)
+
+    # Apply the cumulative product scaling to the original indices
+    scaled_normalized_x = sorted_normalized_x * shifted_cumprods
+
+    # Scatter back to the original positions
+    normalized_x = torch.zeros_like(normalized_x)
+    normalized_x.scatter_(1, sorted_theta, scaled_normalized_x)
+    # Normalize row-wise
+
+    normalized_x /= (torch.sum(normalized_x, dim=1, keepdim=True) + 1e-8)
+    prod = (1 - (1 - p) ** torch.sum(normalized_x,dim=0)) 
+
+    # Compute numerator for the first term (using normalized x)
+    term1_num = prod * torch.sum(normalized_x * theta, dim=0)
+
+    term1_den = torch.sum(normalized_x, dim=0) + 1e-8  # Avoid division by zero
+    term1_den = torch.maximum(term1_den,torch.tensor(1.0, device=sum_x.device))
+
+    # Compute the main term
+    term1 = (term1_num / term1_den)
+        
+    term1 = torch.sum(term1) / theta.shape[1]  # Normalize by number of columns
+
+    reg_term = 0
+    # Add smooth regularization term
+    if smooth_reg == 'logit' and lamb > 0:
+        reg_term = torch.sum(torch.logit(x, eps=epsilon) ** 2)  # Logit-based penalty
+    elif smooth_reg == 'entropy' and lamb > 0:
+        reg_term = -torch.sum(x * torch.log(x + epsilon) + (1 - x) * torch.log(1 - x + epsilon))  # Entropy-based penalty
+    loss = term1 - lamb * reg_term
+
+    return loss
+
+
+
 # -
+
+objective2(ones_tensor*10000-10000/2,theta,p,sorted_theta,0)
+
+x
 
 if is_jupyter:
     theta = [p.provider_rewards for p in simulator.patients]
     theta = torch.Tensor(theta)
-    sorted_theta = torch.argsort(theta, dim=1)  # Sorting indices of `theta` row-wise
+    sorted_theta = torch.argsort(theta, dim=1,descending=True)  # Sorting indices of `theta` row-wise
     opt_tensor = torch.Tensor(lp_policy(simulator))
     ones_tensor = torch.Tensor(np.ones(opt_tensor.shape))
     x = torch.Tensor(gradient_descent_policy_2(simulator))
     p = true_top_choice_prob
-    print(objective(opt_tensor*10000-10000/2,theta,p,sorted_theta,0), objective(ones_tensor*10000-10000/2,theta,p,sorted_theta,0), objective(x*10000-10000/2,theta,p,sorted_theta,0))
+    print(objective2(opt_tensor*10000-10000/2,theta,p,sorted_theta,0),objective2(ones_tensor*10000-10000/2,theta,p,sorted_theta,0),objective2(x*10000-10000/2,theta,p,sorted_theta,0))
+    print(objective(opt_tensor*10000-10000/2,theta,p,sorted_theta,0),objective(ones_tensor*10000-10000/2,theta,p,sorted_theta,0),objective(x*10000-10000/2,theta,p,sorted_theta,0))
 
 # ## Save Data
 

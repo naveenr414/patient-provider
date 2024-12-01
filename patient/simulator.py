@@ -236,6 +236,8 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
         per_epoch_results = per_epoch_function(env)
 
     utility_by_provider = np.zeros((env.num_patients,env.num_providers))
+    selected_b = np.zeros((env.num_patients,env.num_providers))
+    probs = np.zeros((env.num_providers))
 
     for trial_num in range(num_trials):
         env.num_providers = M 
@@ -263,7 +265,7 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
 
             for i in range(len(env.patients)):
                 env.patients[i].provider_rewards = np.array(env.patients[i].all_provider_rewards)[np.array(available_providers) == 1]
-            
+
             if per_epoch_function != None and env.num_repetitions > 1:
                 per_epoch_results = per_epoch_function(env)
 
@@ -282,12 +284,20 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
                     indices = np.where(selected_provider_to_all == 1)[0]  # Get indices of elements that are 1
                     to_set_zero = indices[env.max_menu_size:]
                     selected_provider_to_all[to_set_zero] = 0 
+                
+                # TODO: Remove this
+                for j in range(len(available_providers)):
+                    utility_by_provider[current_patient.idx][j] += available_providers[j]
+
                 provider_workloads, available_providers,chosen_provider = env.step(env.patient_order[t],selected_provider_to_all)
+
                 if np.sum(selected_provider_to_all) == 0:
                     patient_results_trial.append(-0.01)
                 elif chosen_provider >= 0:
                     patient_results_trial.append(current_patient.provider_rewards[chosen_provider])
-                    utility_by_provider[current_patient.idx][chosen_provider] += current_patient.provider_rewards[chosen_provider]
+                    probs[chosen_provider] += 1
+                    selected_b[current_patient.idx][chosen_provider] += 1
+                    # utility_by_provider[current_patient.idx][chosen_provider] += 1 # current_patient.provider_rewards[chosen_provider]
 
                 if chosen_provider >= 0:
                     matched_pairs.append((current_patient.patient_vector,env.provider_vectors[chosen_provider]))
@@ -302,7 +312,8 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
         all_trials_workload.append(deepcopy(provider_workloads))
         patient_results.append(deepcopy(patient_results_trial))
     
-    print("Took {} time".format(time_taken))
+    for i in range(utility_by_provider.shape[0]):
+        utility_by_provider[i] /= np.sum(utility_by_provider[i])
 
     return all_trials_workload, patient_results, initial_workloads, final_workloads
 

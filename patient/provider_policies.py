@@ -243,15 +243,11 @@ def objective(z, theta, p, sorted_theta,lamb=1, smooth_reg='entropy', epsilon=1e
     # Reparameterize x using sigmoid
     x = torch.sigmoid(z)  # x is now bounded in [0, 1]
     
-    # Compute the sum of x over rows for each column
-    sum_x = torch.sum(x, dim=0)  # Shape: (columns,)
     # Compute the sum of x across all columns for each row
-    row_sums = torch.sum(x, dim=1, keepdim=True)  # Shape: (rows, 1)
+    row_sums = torch.sum(x, dim=0, keepdim=True)  # Shape: (rows, 1)
     
     # Normalize x by row sums
-    normalized_x = x / (p*torch.maximum(row_sums, torch.tensor(1.0, device=sum_x.device)))*(1-(1-p)**(torch.maximum(row_sums, torch.tensor(1.0, device=sum_x.device)))) 
-    
-    prod = (1 - (1 - p) ** torch.sum(normalized_x,dim=0))
+    normalized_x = x / (p*torch.maximum(row_sums, torch.tensor(1.0, device=x.device)))*(1-(1-p)**(torch.maximum(row_sums, torch.tensor(1.0, device=x.device)))) 
 
     sorted_normalized_x = normalized_x.gather(1, sorted_theta)
 
@@ -270,13 +266,13 @@ def objective(z, theta, p, sorted_theta,lamb=1, smooth_reg='entropy', epsilon=1e
     normalized_x.scatter_(1, sorted_theta, scaled_normalized_x)
     # Normalize row-wise
 
-    normalized_x /= (torch.sum(normalized_x, dim=1, keepdim=True) + 1e-8)
+    prod = p*torch.sum(normalized_x,dim=0)
 
     # Compute numerator for the first term (using normalized x)
     term1_num = prod * torch.sum(normalized_x * theta, dim=0)
 
     term1_den = torch.sum(normalized_x, dim=0) + 1e-8  # Avoid division by zero
-    term1_den = torch.maximum(term1_den,torch.tensor(1.0, device=sum_x.device))
+    term1_den = torch.maximum(term1_den,torch.tensor(1.0, device=x.device))
 
     # Compute the main term
     term1 = (term1_num / term1_den)
@@ -292,6 +288,7 @@ def objective(z, theta, p, sorted_theta,lamb=1, smooth_reg='entropy', epsilon=1e
     loss = term1 - lamb * reg_term
 
     return loss
+
 
 def gradient_descent_policy_2(simulator):
     p = simulator.choice_model_settings['top_choice_prob']
