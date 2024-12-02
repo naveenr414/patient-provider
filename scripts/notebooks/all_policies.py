@@ -36,12 +36,12 @@ is_jupyter = 'ipykernel' in sys.modules
 
 # +
 if is_jupyter: 
-    seed        = 45
-    num_patients = 25
-    num_providers = 25
+    seed        = 43
+    num_patients = 5
+    num_providers = 5
     provider_capacity = 1
-    top_choice_prob = 1
-    true_top_choice_prob = 1
+    top_choice_prob = 0.5
+    true_top_choice_prob = 0.5
     choice_model = "uniform_choice"
     exit_option = 0.5
     utility_function = "normal"
@@ -112,7 +112,7 @@ results['parameters'] = {'seed'      : seed,
 
 # ## Baselines
 
-seed_list = [43,44,45]
+seed_list = [seed]
 restrict_resources()
 
 # +
@@ -538,19 +538,19 @@ results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i]
 print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
 
 
-# +
+# -
 
 def objective2(z, theta, p, sorted_theta,lamb=1, smooth_reg='entropy', epsilon=1e-5):
     # Reparameterize x using sigmoid
     x = torch.sigmoid(z)  # x is now bounded in [0, 1]
     
-    # Compute the sum of x over rows for each column
-    sum_x = torch.sum(x, dim=0)  # Shape: (columns,)
     # Compute the sum of x across all columns for each row
-    row_sums = torch.sum(x, dim=1, keepdim=True)  # Shape: (rows, 1)
+    row_sums = torch.sum(x, dim=0, keepdim=True)  # Shape: (rows, 1)
     
     # Normalize x by row sums
-    normalized_x = x / (p*torch.maximum(row_sums, torch.tensor(1.0, device=sum_x.device)))*(1-(1-p)**(torch.maximum(row_sums, torch.tensor(1.0, device=sum_x.device)))) 
+    normalized_x = x / (p*torch.maximum(row_sums, torch.tensor(1.0, device=x.device)))*(1-(1-p)**(torch.maximum(row_sums, torch.tensor(1.0, device=x.device)))) 
+
+    print("Predicted normalized x {}".format(normalized_x))
 
     sorted_normalized_x = normalized_x.gather(1, sorted_theta)
 
@@ -569,14 +569,13 @@ def objective2(z, theta, p, sorted_theta,lamb=1, smooth_reg='entropy', epsilon=1
     normalized_x.scatter_(1, sorted_theta, scaled_normalized_x)
     # Normalize row-wise
 
-    normalized_x /= (torch.sum(normalized_x, dim=1, keepdim=True) + 1e-8)
-    prod = (1 - (1 - p) ** torch.sum(normalized_x,dim=0)) 
+    prod = p*torch.sum(normalized_x,dim=0)
 
     # Compute numerator for the first term (using normalized x)
     term1_num = prod * torch.sum(normalized_x * theta, dim=0)
 
     term1_den = torch.sum(normalized_x, dim=0) + 1e-8  # Avoid division by zero
-    term1_den = torch.maximum(term1_den,torch.tensor(1.0, device=sum_x.device))
+    term1_den = torch.maximum(term1_den,torch.tensor(1.0, device=x.device))
 
     # Compute the main term
     term1 = (term1_num / term1_den)
@@ -594,13 +593,6 @@ def objective2(z, theta, p, sorted_theta,lamb=1, smooth_reg='entropy', epsilon=1
     return loss
 
 
-
-# -
-
-objective2(ones_tensor*10000-10000/2,theta,p,sorted_theta,0)
-
-x
-
 if is_jupyter:
     theta = [p.provider_rewards for p in simulator.patients]
     theta = torch.Tensor(theta)
@@ -609,8 +601,10 @@ if is_jupyter:
     ones_tensor = torch.Tensor(np.ones(opt_tensor.shape))
     x = torch.Tensor(gradient_descent_policy_2(simulator))
     p = true_top_choice_prob
-    print(objective2(opt_tensor*10000-10000/2,theta,p,sorted_theta,0),objective2(ones_tensor*10000-10000/2,theta,p,sorted_theta,0),objective2(x*10000-10000/2,theta,p,sorted_theta,0))
-    print(objective(opt_tensor*10000-10000/2,theta,p,sorted_theta,0),objective(ones_tensor*10000-10000/2,theta,p,sorted_theta,0),objective(x*10000-10000/2,theta,p,sorted_theta,0))
+
+if is_jupyter:
+    print(objective2(ones_tensor*10000-10000/2,theta,p,sorted_theta,0))
+    print(objective2(x*10000-10000/2,theta,p,sorted_theta,0))
 
 # ## Save Data
 

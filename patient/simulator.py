@@ -312,8 +312,13 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
         all_trials_workload.append(deepcopy(provider_workloads))
         patient_results.append(deepcopy(patient_results_trial))
     
+    print("Available providers {}".format(utility_by_provider))
+    print("Selected {}".format(selected_b))
+    print("Prob {}".format(probs))
+
     for i in range(utility_by_provider.shape[0]):
         utility_by_provider[i] /= np.sum(utility_by_provider[i])
+    print("Took {} time".format(time_taken))
 
     return all_trials_workload, patient_results, initial_workloads, final_workloads
 
