@@ -252,66 +252,53 @@ def objective(z, theta, p, sorted_theta,rows_with_top_i,lamb=1, smooth_reg='entr
     filtered_argsorted = [
         torch.masked_select(argsorted[i], mask[i]) for i in range(len(argsorted))
     ]
-
-    # Populate `rows_with_top_i`
-    for provider in range(theta.shape[1]):
-        curr = torch.zeros(1, device=theta.device)
-        for top_num in range(theta.shape[0]):
-            for patient in range(len(filtered_argsorted)):
-                if (
-                    top_num < len(filtered_argsorted[patient])
-                    and filtered_argsorted[patient][top_num] == provider
-                    and x[patient, provider] == 1
-                ):
-                    curr += 1
-            rows_with_top_i[provider, top_num] = curr
-    rows_with_top_i /= (theta.shape[0] - 1)
-
-    # Step 3: Compute `is_top_k`
     is_top_k = torch.zeros((theta.shape[0], theta.shape[1], theta.shape[0]), device=theta.device)
-    for patient in range(theta.shape[0]):
-        for provider in range(theta.shape[1]):
-            s = 0
-            for top_num in range(theta.shape[0]):
-                if (
-                    top_num < len(filtered_argsorted[patient])
-                    and provider == filtered_argsorted[patient][top_num]
-                ):
-                    s += 1 / (theta.shape[0] - 1)
-                is_top_k[patient, provider, top_num] = s
+
+    # We need to update rows_with_top_i for each provider from their rank onwards
+    for patient in range(len(filtered_argsorted)):
+        # For each provider at the current rank
+        for rank in range(len(filtered_argsorted[patient])):
+            provider = filtered_argsorted[patient][rank]
+            # Update rows_with_top_i for this provider starting from the current rank onwards
+            rows_with_top_i[provider, rank:] += 1
+            is_top_k[patient,provider,rank:] +=  1 / (theta.shape[0] - 1)
+
+
+    # Normalize rows_with_top_i
+    rows_with_top_i /= (theta.shape[0] - 1)
 
     # Step 4: Normalize `x`
     normalized_x = torch.zeros_like(x)
-    S = theta.shape[0]
+    delta = rows_with_top_i[None, :, :] - is_top_k
+    delta = torch.roll(delta, shifts=1, dims=2)  # Shift columns to the right (dims=2 corresponds to columns)
+    delta[:, :, 0] = 0  # Set the leftmost column to 1
 
-    for patient in range(x.shape[0]):
-        for provider in range(x.shape[1]):
-            tot = 0
-            prod = 1
-            for top_num in range(S):
-                tot += (1 / S) * prod
-                if top_num < S - 1:
-                    delta = rows_with_top_i[provider, top_num] - is_top_k[patient, provider, top_num]
-                    prod *= (1 - p * delta)
-            normalized_x[patient, provider] = x[patient, provider] * tot
 
-    sorted_normalized_x = normalized_x.gather(1, sorted_theta)
+    delta = 1-p*delta
+    delta_raised = torch.cumprod(delta,dim=2)
+    # Raise delta to successive powers along the third dimension
+    delta_swapped = delta_raised.permute(0, 2, 1)
+
+    normalized_x = x[:,None,:] * delta_swapped
+
+    sorted_normalized_x = normalized_x.gather(dim=2, index=sorted_theta.unsqueeze(1).expand(-1, normalized_x.size(1), -1))
 
     # Compute cumulative products (1 - normalized_x) along rows
     one_minus_sorted = 1 - sorted_normalized_x
-    cumprods = torch.cumprod(one_minus_sorted, dim=1)
+    cumprods = torch.cumprod(one_minus_sorted, dim=2)
 
-    # Shift the cumulative products to use for the original scaling (prepending 1 for first index)
-    shifted_cumprods = torch.cat([torch.ones(cumprods.size(0), 1, device=cumprods.device), cumprods[:, :-1]], dim=1)
+    # # Shift the cumulative products to use for the original scaling (prepending 1 for first index)
+    shifted_cumprods = torch.cat([torch.ones(cumprods.size(0), cumprods.size(1) ,1,device=cumprods.device), cumprods[:,:,:-1]], dim=2)
+
 
     # Apply the cumulative product scaling to the original indices
     scaled_normalized_x = sorted_normalized_x * shifted_cumprods
+    scaled_normalized_x = torch.mean(scaled_normalized_x,dim=1)
 
     # Scatter back to the original positions
-    normalized_x = torch.zeros_like(normalized_x)
+    normalized_x = torch.zeros_like(scaled_normalized_x)
     normalized_x.scatter_(1, sorted_theta, scaled_normalized_x)
     # Normalize row-wise
-
     # Compute numerator for the first term (using normalized x)
     term = p * torch.sum(normalized_x * theta, dim=0)
         
