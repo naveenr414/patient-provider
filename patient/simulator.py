@@ -322,11 +322,11 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
         patient_results.append(deepcopy(patient_results_trial))
     
     utility_by_provider *= (1/num_times_in_position[:,:,None])
-    print("Available providers {}".format((utility_by_provider/env.num_patients).tolist()))
-    print("Top {}".format((top_b/num_trials).tolist()))
-    print("Selected {}".format((selected_b/num_trials).tolist()))
+    # print("Available providers {}".format((utility_by_provider/env.num_patients).tolist()))
+    # print("Top {}".format((top_b/num_trials).tolist()))
+    # print("Selected {}".format((selected_b/num_trials).tolist()))
 
-    print("Prob {}".format(probs/num_trials))
+    # print("Prob {}".format(probs/num_trials))
 
     for i in range(utility_by_provider.shape[0]):
         utility_by_provider[i] /= np.sum(utility_by_provider[i])

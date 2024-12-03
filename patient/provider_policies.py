@@ -240,6 +240,8 @@ def gradient_descent_policy(simulator):
     return (best_x > 0.1).detach().int().numpy()
 
 def objective(z, theta, p, sorted_theta,rows_with_top_i,lamb=1, smooth_reg='entropy', epsilon=1e-5):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
     x = torch.sigmoid(z)
         
     rows_with_top_i = torch.zeros((theta.shape[1], theta.shape[0]), device=theta.device)
@@ -247,11 +249,7 @@ def objective(z, theta, p, sorted_theta,rows_with_top_i,lamb=1, smooth_reg='entr
 
     # Mask elements in `argsorted` where x is 0
     mask = x.gather(1, argsorted) != 0
-
-    # Filter out -1 indices
-    filtered_argsorted = [
-        torch.masked_select(argsorted[i], mask[i]) for i in range(len(argsorted))
-    ]
+    filtered_argsorted = torch.where(mask, argsorted, -1)  # Replace invalid indices with -1
     is_top_k = torch.zeros((theta.shape[0], theta.shape[1], theta.shape[0]), device=theta.device)
 
     # We need to update rows_with_top_i for each provider from their rank onwards
@@ -268,7 +266,7 @@ def objective(z, theta, p, sorted_theta,rows_with_top_i,lamb=1, smooth_reg='entr
     rows_with_top_i /= (theta.shape[0] - 1)
 
     # Step 4: Normalize `x`
-    normalized_x = torch.zeros_like(x)
+    normalized_x = torch.zeros_like(x).to(device)
     delta = rows_with_top_i[None, :, :] - is_top_k
     delta = torch.roll(delta, shifts=1, dims=2)  # Shift columns to the right (dims=2 corresponds to columns)
     delta[:, :, 0] = 0  # Set the leftmost column to 1
@@ -288,7 +286,7 @@ def objective(z, theta, p, sorted_theta,rows_with_top_i,lamb=1, smooth_reg='entr
     cumprods = torch.cumprod(one_minus_sorted, dim=2)
 
     # # Shift the cumulative products to use for the original scaling (prepending 1 for first index)
-    shifted_cumprods = torch.cat([torch.ones(cumprods.size(0), cumprods.size(1) ,1,device=cumprods.device), cumprods[:,:,:-1]], dim=2)
+    shifted_cumprods = torch.cat([torch.ones(cumprods.size(0), cumprods.size(1) ,1,device=cumprods.device), cumprods[:,:,:-1]], dim=2).to(device)
 
 
     # Apply the cumulative product scaling to the original indices
@@ -315,37 +313,37 @@ def objective(z, theta, p, sorted_theta,rows_with_top_i,lamb=1, smooth_reg='entr
     return loss
 
 def gradient_descent_policy_2(simulator):
+    global torch
     p = simulator.choice_model_settings['top_choice_prob']
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     theta = [p.provider_rewards for p in simulator.patients]
-    theta = torch.Tensor(theta)
-
-    sorted_theta = torch.argsort(theta, dim=1,descending=True)  
+    theta = torch.Tensor(theta).to(device)
 
     rows_with_top_i = np.zeros((theta.shape[1],theta.shape[0]))
 
-    argsorted = [np.argsort(i).numpy()[::-1] for i in theta]
-
-    for provider in range(len(rows_with_top_i)):
-        curr = 0
-        for i in range(len(rows_with_top_i[provider])):
-            for j in range(len(argsorted)):
-                if argsorted[j][i] == provider:
-                    curr += 1
-            rows_with_top_i[provider][i] = curr
-    rows_with_top_i /= theta.shape[0]
+    argsorted = torch.argsort(theta, dim=1, descending=True)
+    provider_indices = torch.arange(theta.shape[1], device=device)
+    rows_with_top_i = torch.zeros((theta.shape[1], theta.shape[0]), device=device)
+    for i in range(theta.shape[0]):
+        provider_ranks = argsorted[i]
+        rows_with_top_i[provider_ranks, provider_indices] += 1
+    rows_with_top_i = torch.cumsum(rows_with_top_i, dim=1) / theta.shape[0]
 
     N = len(simulator.patients)
     M = theta.shape[1]
 
     best_x = None
     best_loss = 1000
-    for _ in range(5): 
+    for _ in range(2): 
         if _ == 0:
-            x = torch.Tensor(lp_policy(simulator))*10-10/2  
+            x = torch.tensor(lp_policy(simulator), dtype=torch.float32, device=device) * 10 - 5
         else:
-            x = torch.rand(N, M, requires_grad=True)  
+            x = torch.rand(N, M, requires_grad=True, device=device)
+
         x.requires_grad = True
+
+        print("Device {}".format(x.device))
 
         # Optimizer
         optimizer = optim.Adam([x], lr=0.1)
@@ -364,21 +362,29 @@ def gradient_descent_policy_2(simulator):
             else:
                 lamb = 0
             # Compute the objective
-            loss = -objective(x, theta, p,sorted_theta,rows_with_top_i,lamb=lamb)
-            true_loss = -objective(torch.round(torch.sigmoid(x))*1000-500, theta, p,sorted_theta,rows_with_top_i,lamb=0)
+            import torch.profiler
+
+            with torch.profiler.profile(with_stack=True) as prof:
+                loss = -objective(x, theta, p,argsorted,rows_with_top_i,lamb=lamb)
+                loss.backward()
+
+
+            if lamb != 0:
+                true_loss = -objective(torch.round(torch.sigmoid(x))*1000-500, theta, p,argsorted,rows_with_top_i,lamb=0)
+            else:
+                true_loss = loss
 
             # Backpropagation
-            loss.backward()
             torch.nn.utils.clip_grad_norm_([x], max_norm=10)
 
             # Gradient step
             optimizer.step()
             scheduler.step()
 
-            values_by_loss.append((true_loss.detach(),torch.sigmoid(x).detach()))
+            values_by_loss.append((true_loss.detach(), torch.sigmoid(x).detach()))
         
-        min_loc = np.argmin([i[0] for i in values_by_loss])
+        min_loc = torch.argmin(torch.tensor([i[0] for i in values_by_loss], device=device))
         if values_by_loss[min_loc][0] < best_loss:
             best_loss = values_by_loss[min_loc][0]
             best_x = values_by_loss[min_loc][1]
-    return np.round(((best_x).detach().numpy()))
+    return torch.round(best_x).cpu().numpy()
