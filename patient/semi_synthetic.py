@@ -89,7 +89,6 @@ def generate_semi_synthetic_theta_workload(num_patients,num_providers):
             distance += 0.01
             if distance <= max_distance:
                 theta[i,j] = min(max(beta/distance + noise,0),1)
-
     age_costs = get_age_costs(ages,age_buckets)
     patient_costs = np.array([max(min(age_costs[i['age']]+np.random.normal(0,0.1),1),0) for i in random_patients])
-    return theta, patient_costs 
+    return theta, patient_costs, random_patients, downsample_ct_data.to_dict('records')

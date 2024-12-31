@@ -30,18 +30,11 @@ class Patient:
         Returns: Integer, -1 is exit
             And other numbers signify a particular provider"""
 
-        if choice_model == "uniform_choice":
+        if choice_model == "uniform_choice" or choice_model == "threshold":
             provider_probs = [self.all_provider_rewards[i] if menu[i] == 1 else -1 for i in range(len(menu))]
             
             rand_num = np.random.random()
             if rand_num < self.choice_model_settings['true_top_choice_prob'] and np.max(provider_probs) > -1:
-                return np.argmax(provider_probs)
-
-            return -1    
-        elif choice_model == "threshold":
-            provider_probs = [self.all_provider_rewards[i] if menu[i] == 1 else -1 for i in range(len(menu))]
-            rand_num = np.random.random()
-            if rand_num < self.choice_model_settings['true_top_choice_prob'] and np.max(provider_probs) >= 0.5:
                 return np.argmax(provider_probs)
 
             return -1    
@@ -86,7 +79,7 @@ class Simulator():
     """Simulator class that allows for evaluation of policies
         Both with and without re-entry"""
 
-    def __init__(self,num_patients,num_providers,provider_capacity,choice_model_settings,choice_model,context_dim,max_menu_size,utility_function,order,num_repetitions,previous_patients_per_provider,num_trials,seed):
+    def __init__(self,num_patients,num_providers,provider_capacity,choice_model_settings,choice_model,context_dim,max_menu_size,utility_function,order,num_repetitions,previous_patients_per_provider,num_trials,batch_size,seed):
         self.num_patients = num_patients*num_repetitions
         self.num_providers = num_providers
         self.provider_max_capacity = provider_capacity
@@ -102,6 +95,7 @@ class Simulator():
         self.previous_patients_per_provider = previous_patients_per_provider
         self.num_trials = num_trials
         self.seed = seed
+        self.batch_size = batch_size
 
         self.matched_pairs = []
         self.unmatched_pairs = []
@@ -172,9 +166,11 @@ class Simulator():
                 theta = np.array(data[0]) 
                 workloads = np.array(data[1])
             else:
-                theta, workloads = generate_semi_synthetic_theta_workload(self.num_patients,self.num_providers)
+                theta, workloads,random_patients, random_providers = generate_semi_synthetic_theta_workload(self.num_patients,self.num_providers)
                 data = [theta.tolist(),workloads.tolist()]
                 json.dump(data,open("../../data/{}_{}_{}.json".format(self.seed,self.num_patients,self.num_providers),"w"))
+                json.dump(random_patients,open("../../data/patient_data_{}_{}_{}.json".format(self.seed,self.num_patients,self.num_providers),"w"))
+                json.dump(random_providers,open("../../data/provider_data_{}_{}_{}.json".format(self.seed,self.num_patients,self.num_providers),"w"))
             for i in range(self.num_patients):
                 patient_vector = np.random.random(self.context_dim)
                 utilities = theta[i]  
@@ -182,6 +178,12 @@ class Simulator():
                 self.all_patients.append(Patient(patient_vector,utilities,self.choice_model_settings,i,workload))
         else:
             raise Exception("Utility Function {} not found".format(self.utility_function))
+        
+        if self.choice_model == "threshold":
+            threshold = self.all_patients[0].choice_model_settings['exit_option']
+            for i in range(len(self.all_patients)):
+                self.all_patients[i].all_provider_rewards = [int(j>threshold)*j for j in self.all_patients[i].all_provider_rewards]
+        
         self.patients = self.all_patients[:self.num_patients//self.num_repetitions]
 
     def reset_initial(self):
@@ -236,12 +238,9 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
     if per_epoch_function != None and env.num_repetitions == 1:
         per_epoch_results = per_epoch_function(env)
 
-    utility_by_provider = np.zeros((env.num_patients,env.num_patients,env.num_providers))
     top_b = np.zeros((env.num_patients,env.num_providers))
     num_times_in_position = np.zeros((env.num_patients,env.num_patients))
-    selected_b = np.zeros((env.num_patients,env.num_providers))
-    probs = np.zeros((env.num_providers))
-    frac_0_1_selected = 0
+    matches_per = np.zeros((env.num_patients,env.num_providers))
 
     for trial_num in range(num_trials):
         env.num_providers = M 
@@ -289,14 +288,6 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
                     indices = np.where(selected_provider_to_all == 1)[0]  # Get indices of elements that are 1
                     to_set_zero = indices[env.max_menu_size:]
                     selected_provider_to_all[to_set_zero] = 0 
-
-                # TODO: Remove this
-                for j in range(len(available_providers)):
-                    utility_by_provider[current_patient.idx][t][j] += available_providers[j]
-
-                if current_patient.idx == 0 and available_providers[2] == 0 and available_providers[1] == 1:
-                    frac_0_1_selected += 1/num_trials
-
                 provider_workloads, available_providers,chosen_provider = env.step(env.patient_order[t],selected_provider_to_all)
 
                 top_b[current_patient.idx][np.argmax(np.array(available_providers)*np.array(current_patient.provider_rewards))] += 1
@@ -305,8 +296,7 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
                     patient_results_trial.append(-0.01)
                 elif chosen_provider >= 0:
                     patient_results_trial.append(current_patient.provider_rewards[chosen_provider])
-                    selected_b[current_patient.idx][chosen_provider] += 1
-                    probs[chosen_provider] += 1
+                    matches_per[current_patient.idx][chosen_provider] += 1/num_trials
                                         
                 if chosen_provider >= 0:
                     matched_pairs.append((current_patient.patient_vector,env.provider_vectors[chosen_provider]))
@@ -321,18 +311,9 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
         all_trials_workload.append(deepcopy(provider_workloads))
         patient_results.append(deepcopy(patient_results_trial))
     
-    utility_by_provider *= (1/num_times_in_position[:,:,None])
-    # print("Available providers {}".format((utility_by_provider/env.num_patients).tolist()))
-    # print("Top {}".format((top_b/num_trials).tolist()))
-    # print("Selected {}".format((selected_b/num_trials).tolist()))
-
-    # print("Prob {}".format(probs/num_trials))
-
-    for i in range(utility_by_provider.shape[0]):
-        utility_by_provider[i] /= np.sum(utility_by_provider[i])
     print("Took {} time".format(time_taken))
 
-    return all_trials_workload, patient_results, initial_workloads, final_workloads
+    return all_trials_workload, patient_results, initial_workloads, final_workloads, matches_per
 
 
 def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None):
@@ -363,6 +344,7 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None):
         'provider_workloads': [], 
         'initial_workloads': [], 
         'final_workloads': [],
+        'matches_per': [],
     }
 
     num_patients = parameters['num_patients']
@@ -380,6 +362,7 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None):
     utility_function = parameters['utility_function']
     order = parameters['order']
     previous_patients_per_provider = parameters['previous_patients_per_provider']
+    batch_size = parameters['batch_size']
 
     choice_model_settings = {
         'top_choice_prob': top_choice_prob,
@@ -388,9 +371,9 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None):
     }
 
     for seed in seed_list:
-        simulator = Simulator(num_patients,num_providers,provider_capacity,choice_model_settings,choice_model,context_dim,max_menu_size,utility_function,order,num_repetitions,previous_patients_per_provider,num_trials,seed)
+        simulator = Simulator(num_patients,num_providers,provider_capacity,choice_model_settings,choice_model,context_dim,max_menu_size,utility_function,order,num_repetitions,previous_patients_per_provider,num_trials,batch_size,seed)
 
-        policy_results, patient_results, initial_workloads, final_workloads = run_heterogenous_policy(simulator,policy,seed,num_trials,per_epoch_function=per_epoch_function,second_seed=seed) 
+        policy_results, patient_results, initial_workloads, final_workloads, matches_per = run_heterogenous_policy(simulator,policy,seed,num_trials,per_epoch_function=per_epoch_function,second_seed=seed) 
         utilities_by_provider = policy_results
 
         num_matches = [len([j for j in i if j != []]) for i in utilities_by_provider]
@@ -419,6 +402,7 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None):
         scores['matches'].append(num_matches)
         scores['patient_utilities'].append(patient_utilities)
         scores['provider_workloads'].append(provider_workloads)
+        scores['matches_per'].append(matches_per.tolist())
 
         scores['provider_minimums'].append(min_utilities)
         scores['provider_minimums_all'].append(min_utilities_all)

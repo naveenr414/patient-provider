@@ -11,8 +11,9 @@ do
         seed=$((${session}+${start_seed}))
         echo ${seed}
 
-        n_patients=25
-        n_providers=25
+        # TODO: Change this to 25
+        n_patients=5
+        n_providers=5
         for max_menu_size in 5 50
         do 
             for utility_function in uniform normal 

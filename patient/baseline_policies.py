@@ -84,7 +84,7 @@ def optimal_policy(simulator):
     scores = []
     all_menus = get_all_menus(N,M)
 
-    for menu in all_menus:
+    for j,menu in enumerate(all_menus):
         total_reward = 0
         for ordering in all_orders:
             for s in range(len(all_selections)):

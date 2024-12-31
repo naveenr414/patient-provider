@@ -104,7 +104,7 @@ def optimal_order_policy(simulator,num_divisions=2):
 
     for i in range(N):
         dfs_recursive(i)
-    num_divisions = min(num_divisions,len(directed_acyclic_ordering))
+    num_divisions = min(simulator.batch_size,len(directed_acyclic_ordering))
     divisions = compute_optimal_divisions(directed_acyclic_ordering,adjacency_edges,num_divisions)
     num_divisions = len(divisions)-1
     division_by_num = []

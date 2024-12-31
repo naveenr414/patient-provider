@@ -192,111 +192,71 @@ def l1_regularization(x,theta,p):
     term3 = -torch.sum(x*torch.log(x+1e-8))
     return term3 
 
-def gradient_descent_policy(simulator):
-    p = simulator.choice_model_settings['top_choice_prob']
-
-    theta = [p.provider_rewards for p in simulator.patients]
-    theta = torch.Tensor(theta)
-    N = len(simulator.patients)
-    M = theta.shape[1]
-
-    lamb = 0
-    lamb2 = 0
-
-    best_loss = float('inf')
-    best_x = None
-    for _ in range(10):  # Run 5 independent optimizations
-        x = torch.rand(N, M, requires_grad=True)  # Variables to optimize (not constrained to [0, 1])
-
-        # Optimizer
-        optimizer = optim.Adam([x], lr=0.01)
-
-        values_by_loss = []
-
-        # Training loop
-        for epoch in range(250):  # Adjust number of iterations as needed
-            optimizer.zero_grad()
-            
-            # Compute the objective
-            loss = -objective(x, theta, p)
-            loss += lamb*entropy_penalty(x,theta,p)
-            loss += lamb2*l1_regularization(x,theta,p)  # Minimize negative of objective (maximize objective)
-            
-            # Backpropagation
-            loss.backward()
-
-            # Gradient step
-            optimizer.step()
-            
-            # Clip x to enforce constraints
-            with torch.no_grad():
-                x.clamp_(0, 1)  # Ensure x_{i,j} stays in [0, 1]
-            values_by_loss.append((loss.detach(),x.detach()))
-        loss_values = [i[0] for i in values_by_loss]
-        final_loss = np.min(loss_values)
-        if final_loss < best_loss:
-            best_loss = final_loss
-            best_x = values_by_loss[np.argmin(loss_values)][1]
-    return (best_x > 0.1).detach().int().numpy()
-
-def objective(z, theta, p, sorted_theta,rows_with_top_i,lamb=1, smooth_reg='entropy', epsilon=1e-5):
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+def objective_slow(z, theta, p, sorted_theta,rows_with_top_i,top_num_by_patient_provider,lamb=1, smooth_reg='entropy', epsilon=1e-5):
     x = torch.sigmoid(z)
         
-    rows_with_top_i = torch.zeros((theta.shape[1], theta.shape[0]), device=theta.device)
+    rows_with_top_i = torch.zeros((theta.shape[1], theta.shape[1]), device=theta.device)
     argsorted = torch.argsort(theta, dim=1, descending=True)
 
     # Mask elements in `argsorted` where x is 0
     mask = x.gather(1, argsorted) != 0
-    filtered_argsorted = torch.where(mask, argsorted, -1)  # Replace invalid indices with -1
-    is_top_k = torch.zeros((theta.shape[0], theta.shape[1], theta.shape[0]), device=theta.device)
 
-    # We need to update rows_with_top_i for each provider from their rank onwards
-    for patient in range(len(filtered_argsorted)):
-        # For each provider at the current rank
-        for rank in range(len(filtered_argsorted[patient])):
-            provider = filtered_argsorted[patient][rank]
-            # Update rows_with_top_i for this provider starting from the current rank onwards
-            rows_with_top_i[provider, rank:] += 1
-            is_top_k[patient,provider,rank:] +=  1 / (theta.shape[0] - 1)
+    # # Filter out -1 indices
+    filtered_argsorted = [
+        torch.masked_select(argsorted[i], mask[i]) for i in range(len(argsorted))
+    ]
 
-
-    # Normalize rows_with_top_i
+    # Populate `rows_with_top_i`
+    for provider in range(theta.shape[1]):
+        for patient in range(len(filtered_argsorted)):
+            if x[patient, provider] == 0:
+                continue 
+            rows_with_top_i[provider,top_num_by_patient_provider[patient][provider]:] += 1
     rows_with_top_i /= (theta.shape[0] - 1)
 
+    # Step 3: Compute `is_top_k`
+    is_top_k = torch.zeros((theta.shape[0], theta.shape[1], theta.shape[1]), device=theta.device)
+    
+    if theta.shape[0] == 1:
+        const = 1
+    else:
+        const = 1 / (theta.shape[0] - 1)
+    for patient in range(theta.shape[0]):
+        for provider in range(theta.shape[1]):
+            is_top_k[patient, provider, top_num_by_patient_provider[patient][provider]:] = const 
+
     # Step 4: Normalize `x`
-    normalized_x = torch.zeros_like(x).to(device)
-    delta = rows_with_top_i[None, :, :] - is_top_k
-    delta = torch.roll(delta, shifts=1, dims=2)  # Shift columns to the right (dims=2 corresponds to columns)
-    delta[:, :, 0] = 0  # Set the leftmost column to 1
+    normalized_x = torch.zeros_like(x)
+    S = theta.shape[1]
 
+    prod = torch.ones_like(is_top_k[:, :, 0], dtype=x.dtype)  # Shape: (x.shape[0], x.shape[1])
+    tot = torch.zeros_like(prod)
 
-    delta = 1-p*delta
-    delta_raised = torch.cumprod(delta,dim=2)
-    # Raise delta to successive powers along the third dimension
-    delta_swapped = delta_raised.permute(0, 2, 1)
+    for top_num in range(S):
+        tot += (1 / S) * prod  # Accumulate the total
 
-    normalized_x = x[:,None,:] * delta_swapped
-
-    sorted_normalized_x = normalized_x.gather(dim=2, index=sorted_theta.unsqueeze(1).expand(-1, normalized_x.size(1), -1))
+        if top_num < S - 1:
+            # Compute delta in a vectorized way
+            delta = rows_with_top_i[:, top_num].unsqueeze(0) - is_top_k[:, :, top_num]
+            prod *= (1 - p * delta)
+    normalized_x = x * tot
+    sorted_normalized_x = normalized_x.gather(1, sorted_theta)
 
     # Compute cumulative products (1 - normalized_x) along rows
     one_minus_sorted = 1 - sorted_normalized_x
-    cumprods = torch.cumprod(one_minus_sorted, dim=2)
+    cumprods = torch.cumprod(one_minus_sorted, dim=1)
 
-    # # Shift the cumulative products to use for the original scaling (prepending 1 for first index)
-    shifted_cumprods = torch.cat([torch.ones(cumprods.size(0), cumprods.size(1) ,1,device=cumprods.device), cumprods[:,:,:-1]], dim=2).to(device)
-
+    # Shift the cumulative products to use for the original scaling (prepending 1 for first index)
+    shifted_cumprods = torch.cat([torch.ones(cumprods.size(0), 1, device=cumprods.device), cumprods[:, :-1]], dim=1)
 
     # Apply the cumulative product scaling to the original indices
     scaled_normalized_x = sorted_normalized_x * shifted_cumprods
-    scaled_normalized_x = torch.mean(scaled_normalized_x,dim=1)
 
     # Scatter back to the original positions
-    normalized_x = torch.zeros_like(scaled_normalized_x)
+    normalized_x = torch.zeros_like(normalized_x)
     normalized_x.scatter_(1, sorted_theta, scaled_normalized_x)
     # Normalize row-wise
+
     # Compute numerator for the first term (using normalized x)
     term = p * torch.sum(normalized_x * theta, dim=0)
         
@@ -312,79 +272,227 @@ def objective(z, theta, p, sorted_theta,rows_with_top_i,lamb=1, smooth_reg='entr
 
     return loss
 
-def gradient_descent_policy_2(simulator):
-    global torch
+
+def objective_fast(z, theta, p, sorted_theta,rows_with_top_i,top_num_by_patient_provider,lamb=1, smooth_reg='entropy', epsilon=1e-5):
+    # Reparameterize x using sigmoid
+    x = torch.sigmoid(z)  # x is now bounded in [0, 1]
+    
+    # Compute the sum of x across all columns for each row
+    row_sums = torch.sum(x, dim=0, keepdim=True)  # Shape: (rows, 1)
+    
+    # Normalize x by row sums
+    normalized_x = x / (p*torch.maximum(row_sums, torch.tensor(1.0, device=x.device)))*(1-(1-p)**(torch.maximum(row_sums, torch.tensor(1.0, device=x.device)))) 
+
+    sorted_normalized_x = normalized_x.gather(1, sorted_theta)
+
+    # Compute cumulative products (1 - normalized_x) along rows
+    one_minus_sorted = 1 - sorted_normalized_x
+    cumprods = torch.cumprod(one_minus_sorted, dim=1)
+
+    # Shift the cumulative products to use for the original scaling (prepending 1 for first index)
+    shifted_cumprods = torch.cat([torch.ones(cumprods.size(0), 1, device=cumprods.device), cumprods[:, :-1]], dim=1)
+
+    # Apply the cumulative product scaling to the original indices
+    scaled_normalized_x = sorted_normalized_x * shifted_cumprods
+
+    # Scatter back to the original positions
+    normalized_x = torch.zeros_like(normalized_x)
+    normalized_x.scatter_(1, sorted_theta, scaled_normalized_x)
+    # Normalize row-wise
+
+    prod = p*torch.sum(normalized_x,dim=0)
+
+    # Compute numerator for the first term (using normalized x)
+    term1_num = prod * torch.sum(normalized_x * theta, dim=0)
+
+    term1_den = torch.sum(normalized_x, dim=0) + 1e-8  # Avoid division by zero
+    term1_den = torch.maximum(term1_den,torch.tensor(1.0, device=x.device))
+
+    # Compute the main term
+    term1 = (term1_num / term1_den)
+        
+    term1 = torch.sum(term1) / theta.shape[1]  # Normalize by number of columns
+
+    reg_term = 0
+    # Add smooth regularization term
+    if smooth_reg == 'logit' and lamb > 0:
+        reg_term = torch.sum(torch.logit(x, eps=epsilon) ** 2)  # Logit-based penalty
+    elif smooth_reg == 'entropy' and lamb > 0:
+        reg_term = -torch.sum(x * torch.log(x + epsilon) + (1 - x) * torch.log(1 - x + epsilon))  # Entropy-based penalty
+    loss = term1 - lamb * reg_term
+
+    return loss
+
+def gradient_descent_policy(simulator):
+    import time 
+    start = time.time() 
     p = simulator.choice_model_settings['top_choice_prob']
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     theta = [p.provider_rewards for p in simulator.patients]
-    theta = torch.Tensor(theta).to(device)
+    theta = torch.Tensor(theta)
 
-    rows_with_top_i = np.zeros((theta.shape[1],theta.shape[0]))
+    sorted_theta = torch.argsort(theta, dim=1,descending=True)  
 
-    argsorted = torch.argsort(theta, dim=1, descending=True)
-    provider_indices = torch.arange(theta.shape[1], device=device)
-    rows_with_top_i = torch.zeros((theta.shape[1], theta.shape[0]), device=device)
+    rows_with_top_i = np.zeros((theta.shape[1],theta.shape[1]))
+
+    argsorted = [np.argsort(i).numpy()[::-1] for i in theta]
+
+    for provider in range(len(rows_with_top_i)):
+        curr = 0
+        for i in range(len(rows_with_top_i[provider])):
+            for j in range(len(argsorted)):
+                if argsorted[j][i] == provider:
+                    curr += 1
+            rows_with_top_i[provider][i] = curr
+    rows_with_top_i /= theta.shape[0]
+
+    top_num_by_patient_provider = [[theta.shape[0] for i in range(theta.shape[1])] for i in range(theta.shape[0])]
+
     for i in range(theta.shape[0]):
-        provider_ranks = argsorted[i]
-        rows_with_top_i[provider_ranks, provider_indices] += 1
-    rows_with_top_i = torch.cumsum(rows_with_top_i, dim=1) / theta.shape[0]
+        for top_num in range(theta.shape[1]):
+            top_num_by_patient_provider[i][sorted_theta[i][top_num]] = top_num
+
 
     N = len(simulator.patients)
     M = theta.shape[1]
 
     best_x = None
     best_loss = 1000
-    for _ in range(2): 
+
+    start = time.time() 
+    for _ in range(1): 
         if _ == 0:
-            x = torch.tensor(lp_policy(simulator), dtype=torch.float32, device=device) * 10 - 5
+            x = torch.Tensor(lp_policy(simulator))*10-10/2  
         else:
-            x = torch.rand(N, M, requires_grad=True, device=device)
-
+            x = torch.rand(N, M, requires_grad=True)  
         x.requires_grad = True
-
-        print("Device {}".format(x.device))
+        scale = 10
 
         # Optimizer
-        optimizer = optim.Adam([x], lr=0.1)
+        if scale == 10:
+            optimizer = optim.Adam([x], lr=0.25)
+        elif scale == 100:
+            optimizer = optim.Adam([x], lr=0.1)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=200, gamma=0.5)
 
         values_by_loss = []
 
         # Training loop
-        for epoch in range(1000):  # Adjust number of iterations as needed
+        for epoch in range(10*scale):  # Adjust number of iterations as needed
             optimizer.zero_grad()
+
             
-            if epoch > 800:
+            if epoch > 8*scale:
                 lamb = 1
-            elif epoch > 700:
+            elif epoch > 7*scale:
                 lamb = 0.25
             else:
                 lamb = 0
             # Compute the objective
-            import torch.profiler
+            loss = -objective_slow(x, theta, p,sorted_theta,rows_with_top_i,top_num_by_patient_provider,lamb=lamb)
 
-            with torch.profiler.profile(with_stack=True) as prof:
-                loss = -objective(x, theta, p,argsorted,rows_with_top_i,lamb=lamb)
-                loss.backward()
-
-
-            if lamb != 0:
-                true_loss = -objective(torch.round(torch.sigmoid(x))*1000-500, theta, p,argsorted,rows_with_top_i,lamb=0)
-            else:
-                true_loss = loss
-
+            true_loss = -objective_slow(torch.round(torch.sigmoid(x))*1000-500, theta, p,sorted_theta,rows_with_top_i,top_num_by_patient_provider,lamb=0)
             # Backpropagation
+            loss.backward()
             torch.nn.utils.clip_grad_norm_([x], max_norm=10)
 
             # Gradient step
             optimizer.step()
             scheduler.step()
 
-            values_by_loss.append((true_loss.detach(), torch.sigmoid(x).detach()))
+            if epoch%10 == 0:
+                values_by_loss.append((true_loss.detach(),torch.sigmoid(x).detach()))
         
-        min_loc = torch.argmin(torch.tensor([i[0] for i in values_by_loss], device=device))
+        min_loc = np.argmin([i[0] for i in values_by_loss])
         if values_by_loss[min_loc][0] < best_loss:
             best_loss = values_by_loss[min_loc][0]
             best_x = values_by_loss[min_loc][1]
-    return torch.round(best_x).cpu().numpy()
+    return np.round(((best_x).detach().numpy()))
+
+
+def gradient_descent_policy_fast(simulator):
+    import time 
+    start = time.time() 
+    p = simulator.choice_model_settings['top_choice_prob']
+
+    theta = [p.provider_rewards for p in simulator.patients]
+    theta = torch.Tensor(theta)
+
+    sorted_theta = torch.argsort(theta, dim=1,descending=True)  
+
+    rows_with_top_i = np.zeros((theta.shape[1],theta.shape[1]))
+
+    argsorted = [np.argsort(i).numpy()[::-1] for i in theta]
+
+    for provider in range(len(rows_with_top_i)):
+        curr = 0
+        for i in range(len(rows_with_top_i[provider])):
+            for j in range(len(argsorted)):
+                if argsorted[j][i] == provider:
+                    curr += 1
+            rows_with_top_i[provider][i] = curr
+    rows_with_top_i /= theta.shape[0]
+
+    top_num_by_patient_provider = [[theta.shape[0] for i in range(theta.shape[1])] for i in range(theta.shape[0])]
+
+    for i in range(theta.shape[0]):
+        for top_num in range(theta.shape[1]):
+            top_num_by_patient_provider[i][sorted_theta[i][top_num]] = top_num
+
+
+    N = len(simulator.patients)
+    M = theta.shape[1]
+
+    best_x = None
+    best_loss = 1000
+
+    start = time.time() 
+    for _ in range(1): 
+        if _ == 0:
+            x = torch.Tensor(lp_policy(simulator))*10-10/2  
+        else:
+            x = torch.rand(N, M, requires_grad=True)  
+        x.requires_grad = True
+        scale = 10
+
+        # Optimizer
+        if scale == 10:
+            optimizer = optim.Adam([x], lr=0.25)
+        elif scale == 100:
+            optimizer = optim.Adam([x], lr=0.1)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=200, gamma=0.5)
+
+        values_by_loss = []
+
+        # Training loop
+        for epoch in range(10*scale):  # Adjust number of iterations as needed
+            optimizer.zero_grad()
+
+            
+            if epoch > 8*scale:
+                lamb = 1
+            elif epoch > 7*scale:
+                lamb = 0.25
+            else:
+                lamb = 0
+            # Compute the objective
+            loss = -objective_fast(x, theta, p,sorted_theta,rows_with_top_i,top_num_by_patient_provider,lamb=lamb)
+
+            true_loss = -objective_fast(torch.round(torch.sigmoid(x))*1000-500, theta, p,sorted_theta,rows_with_top_i,top_num_by_patient_provider,lamb=0)
+
+            # Backpropagation
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_([x], max_norm=10)
+
+            # Gradient step
+            optimizer.step()
+            scheduler.step()
+
+            if epoch%10 == 0:
+                values_by_loss.append((true_loss.detach(),torch.sigmoid(x).detach()))
+        
+        min_loc = np.argmin([i[0] for i in values_by_loss])
+        if values_by_loss[min_loc][0] < best_loss:
+            best_loss = values_by_loss[min_loc][0]
+            best_x = values_by_loss[min_loc][1]
+    return np.round(((best_x).detach().numpy()))
