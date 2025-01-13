@@ -2,13 +2,11 @@ import numpy as np
 import random 
 from copy import deepcopy 
 import time 
-from patient.utils import solve_linear_program, safe_min, safe_max, safe_var
+from patient.utils import safe_min, safe_max, safe_var
 from patient.ordering_policies import compute_optimal_order
 from patient.semi_synthetic import generate_semi_synthetic_theta_workload
-import itertools
 import os
 import json
-import torch
 
 class Patient:
     """Class to represent the Patient and their information"""
@@ -381,10 +379,8 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None):
         
         list_of_utilities = [[j for j in i if j>=0] for i in patient_results]
         list_of_utilities_all = [[max(j,0) for j in i] for i in patient_results]
-
         min_utilities = [safe_min(i) for i in list_of_utilities]
         min_utilities_all = [safe_min(i) for i in list_of_utilities_all]
-
         max_gap = [safe_max(i)-safe_min(i) for i in list_of_utilities]
         max_gap_all = [safe_max(i)-safe_min(i)for i in list_of_utilities_all]
 

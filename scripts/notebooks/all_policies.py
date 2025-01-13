@@ -37,11 +37,11 @@ is_jupyter = 'ipykernel' in sys.modules
 # +
 if is_jupyter: 
     seed        = 43
-    num_patients = 2
+    num_patients = 5
     num_providers = 5
     provider_capacity = 1
-    top_choice_prob = 0.5
-    true_top_choice_prob = 0.5
+    top_choice_prob = 0.9
+    true_top_choice_prob = 0.9
     choice_model = "uniform_choice"
     exit_option = 0.5
     utility_function = "uniform"
@@ -53,13 +53,14 @@ if is_jupyter:
     previous_patients_per_provider = 10
     batch_size = 1
     order="custom"
+    fairness_weight=0.5
 else:
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', help='Random Seed', type=int, default=42)
     parser.add_argument('--n_patients',         '-N', help='Number of patients', type=int, default=100)
     parser.add_argument('--n_providers',        help='Number of providers', type=int, default=100)
     parser.add_argument('--batch_size',        help='Batch Size', type=int, default=1)
-    parser.add_argument('--n_trials',          help='Number of trials ', type=int, default=2)
+    parser.add_argument('--n_trials',          help='Number of trials ', type=int, default=100)
     parser.add_argument('--top_choice_prob',          help='Probability of picking top choice', type=float, default=0.75)
     parser.add_argument('--true_top_choice_prob',          help='Probability of picking top choice', type=float, default=0.75)
     parser.add_argument('--context_dim',          help='Context dim for patients and providers', type=int, default=5)
@@ -71,7 +72,8 @@ else:
     parser.add_argument('--exit_option', help='What is the value of the exit option', type=float, default=0.5)
     parser.add_argument('--out_folder', help='Which folder to write results to', type=str, default='policy_comparison')
     parser.add_argument('--utility_function', help='Which folder to write results to', type=str, default='uniform')
-    parser.add_argument('--order', help='Which folder to write results to', type=str, default='random')
+    parser.add_argument('--order', help='Which folder to write results to', type=str, default='custom')
+    parser.add_argument('--fairness_weight', help='How much to weight fairness', type=float, default=0)
 
     args = parser.parse_args()
 
@@ -92,6 +94,7 @@ else:
     order = args.order
     previous_patients_per_provider = args.previous_patients_per_provider
     batch_size = args.batch_size
+    fairness_weight=args.fairness_weight
 
 save_name = secrets.token_hex(4)  
 # -
@@ -112,7 +115,10 @@ results['parameters'] = {'seed'      : seed,
         'utility_function': utility_function, 
         'order': order, 
         'previous_patients_per_provider': previous_patients_per_provider, 
-        'batch_size': batch_size} 
+        'batch_size': batch_size, 
+        'fairness_weight': fairness_weight} 
+
+results['parameters']
 
 # ## Baselines
 
@@ -138,7 +144,7 @@ results['{}_variance'.format(name)] = rewards['provider_variance']
 results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
 results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
-np.sum(rewards['matches'])/(num_patients*num_repetitions*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_repetitions*num_trials*len(seed_list))
+print(np.sum(rewards['matches'])/(num_patients*num_repetitions*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_repetitions*num_trials*len(seed_list)))
 
 # +
 policy = all_ones_policy
@@ -159,7 +165,7 @@ results['{}_variance'.format(name)] = rewards['provider_variance']
 results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
 results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
-np.mean(results['{}_minimums_all'.format(name)]),np.mean(results['{}_gaps_all'.format(name)]),np.mean(results['{}_variance_all'.format(name)])
+print(np.mean(results['{}_minimums_all'.format(name)]),np.mean(results['{}_gaps_all'.format(name)]),np.mean(results['{}_variance_all'.format(name)]))
 
 # +
 policy = greedy_policy
@@ -180,7 +186,7 @@ results['{}_variance'.format(name)] = rewards['provider_variance']
 results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
 results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
-np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
+print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
 # -
 
 if 2**(num_patients*num_providers)*2**(num_patients)*math.factorial(num_patients) < 4000000:
@@ -250,7 +256,33 @@ results['{}_variance'.format(name)] = rewards['provider_variance']
 results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
 results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
-np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)),np.max(np.mean(np.array(rewards['final_workloads'])[0],axis=0))
+np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)),np.max(np.mean(np.array(rewards['final_workloads'])[0],axis=0)), np.sum(rewards['provider_minimums'])/(num_patients*num_trials*len(seed_list))
+
+
+# +
+policy = one_shot_policy
+name="lp_fairness"
+per_epoch_function = lambda s: lp_fairness_policy(s,weight=fairness_weight)
+print("{} policy".format(name))
+
+if fairness_weight > 0:
+
+    rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+
+    results['{}_matches'.format(name)] = rewards['matches']
+    results['{}_utilities'.format(name)] = rewards['patient_utilities']
+    results['{}_workloads'.format(name)] = rewards['provider_workloads']
+
+    results['{}_minimums'.format(name)] = rewards['provider_minimums']
+    results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+    results['{}_gaps'.format(name)] = rewards['provider_gaps']
+    results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+    results['{}_variance'.format(name)] = rewards['provider_variance']
+    results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+    results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
+
+    print(fairness_weight,np.sum(rewards['provider_minimums'])/(num_patients*num_trials*len(seed_list)))
+
 
 # +
 policy = one_shot_policy
@@ -297,28 +329,6 @@ results['{}_matches_per'.format(name)] = rewards['matches_per']
 
 print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
 # -
-
-if utility_function != 'semi_synthetic':
-    policy = one_shot_policy 
-    per_epoch_function = gradient_descent_policy
-    name = "gradient_descent"
-    print("{} policy".format(name))
-
-    rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
-
-    results['{}_matches'.format(name)] = rewards['matches']
-    results['{}_utilities'.format(name)] = rewards['patient_utilities']
-    results['{}_workloads'.format(name)] = rewards['provider_workloads']
-
-    results['{}_minimums'.format(name)] = rewards['provider_minimums']
-    results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
-    results['{}_gaps'.format(name)] = rewards['provider_gaps']
-    results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
-    results['{}_variance'.format(name)] = rewards['provider_variance']
-    results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
-    results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
-
-    print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
 
 # ## Save Data
 

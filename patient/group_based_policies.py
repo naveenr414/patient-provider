@@ -84,8 +84,6 @@ def lp_more_patients_policy(simulator):
     
     return matchings  
 
-
-
 def group_based_policy(simulator,legacy=False):
     """Policy which selects patients through the LP + additional swaps
     

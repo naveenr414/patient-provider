@@ -2,7 +2,6 @@ from patient.utils import solve_linear_program
 import numpy as np
 from copy import deepcopy
 import random
-from patient.provider_policies import provider_focused_less_interference_policy
 
 def compute_optimal_divisions(directed_acyclic_ordering,adjacency_edges,num_divisions):
     """Compute the location where we should split up the DAG

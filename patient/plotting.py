@@ -232,6 +232,9 @@ def plot_scatter(ax,x_values,y_values,labels,formatting):
     
     Side Effects: Plots a bar plot"""
 
+    if len(labels) == 0:
+        labels = [None for i in range(len(x_values))]
+
     if formatting['color_palette'][0] == '#':
         colors = [formatting['color_palette']]
         assert len(x_values) == 1
@@ -324,7 +327,7 @@ def plot_text(ax,text,x,y,formatting):
 
     ax.text(x,y, text, color=formatting['color_palette'], fontsize=formatting['fontsize'], ha='center')
 
-def create_axes(plot_dimensions,formatting,x_labels=None,y_labels=None,titles=None,sup_x_label="",sup_y_label="",sup_title=""):
+def create_axes(plot_dimensions,formatting,x_labels=None,y_labels=None,titles=None,sup_x_label="",sup_y_label="",sup_title="",sup_x_label_loc=0.01):
     """Create the figure and axes elements with certain labels, 
         number of subplots, and a title
         
@@ -375,9 +378,9 @@ def create_axes(plot_dimensions,formatting,x_labels=None,y_labels=None,titles=No
             ax[i][j].set_ylabel(y_labels[i][j],fontsize=label_size)
             ax[i][j].set_title(titles[i][j],fontsize=title_size)
 
-    fig.supxlabel(sup_x_label)
-    fig.supylabel(sup_y_label)
-    fig.suptitle(sup_title)
+    fig.supxlabel(sup_x_label,y=sup_x_label_loc,fontsize=label_size)
+    fig.supylabel(sup_y_label,fontsize=label_size)
+    fig.suptitle(sup_title,fontsize=title_size)
 
 
     for i in range(plot_dimensions[0]):

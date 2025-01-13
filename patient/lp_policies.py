@@ -93,7 +93,7 @@ def lp_multiple_match_policy(simulator):
     return matchings  
 
 
-def lp_fairness_policy(simulator):
+def lp_fairness_policy(simulator,weight=0.5):
     """Policy which selects according to the LP, in an offline fashion
     
     Arguments:
@@ -112,7 +112,7 @@ def lp_fairness_policy(simulator):
 
     l = m.addVars(1,name="l")
 
-    m.setObjective(l[0], GRB.MAXIMIZE)
+    m.setObjective(weight*l[0] + (1-weight)*gp.quicksum(weights[i, j] * x[i, j] for i in range(N) for j in range(P)), GRB.MAXIMIZE)
 
     for j in range(P):
         m.addConstr(gp.quicksum(x[i, j] for i in range(N)) <= max_per_provider, name=f"match_{j}_limit")

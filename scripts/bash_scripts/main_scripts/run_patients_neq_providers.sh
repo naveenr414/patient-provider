@@ -22,5 +22,17 @@ do
         do 
             tmux send-keys -t match_${session} "conda activate patient; python all_policies.py --seed ${seed} --n_patients ${n_patients} --n_providers ${n_providers} --provider_capacity 1 --top_choice_prob ${choice_prob} --true_top_choice_prob ${choice_prob} --choice_model uniform_choice --exit_option 0.5 --out_folder providers_patients --context_dim 5 --n_trials 100 --utility_function ${utility_function} --max_menu_size ${max_menu_size}" ENTER
         done 
+
+        max_menu_size=50
+        for n_patients in 5 10 15 20 25 30 35 40
+        do 
+            for utility_function in uniform 
+            do 
+                for choice_prob in 0.1 0.3 0.5 0.7 0.9
+                do 
+                    tmux send-keys -t match_${session} "conda activate patient; python all_policies.py --seed ${seed} --n_patients ${n_patients} --n_providers ${n_providers} --provider_capacity 1 --top_choice_prob ${choice_prob} --true_top_choice_prob ${choice_prob} --choice_model uniform_choice --exit_option 0.5 --out_folder providers_patients --context_dim 5 --n_trials 100 --utility_function ${utility_function} --max_menu_size ${max_menu_size}" ENTER
+                done 
+            done 
+        done
     done 
 done 
