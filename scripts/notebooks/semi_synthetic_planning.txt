@@ -1,0 +1,56 @@
+Cardio conditions 
+Myocardial Infarct – Cardiovascular Disease (Cardiology)
+Angina/Artery Disease – Cardiovascular Disease (Cardiology)
+Congestive Heart Failure – Advanced Heart Failure and Transplant Cardiology
+Hypertension – Cardiovascular Disease (Cardiology)
+Arrhythmias – Cardiac Electrophysiology
+Venous Disease – Peripheral Vascular Disease
+Peripheral Arterial Disease – Peripheral Vascular Disease, Cardiac Electrophysiology, Intensivits, 
+People: 
+Cardiovascular Disease (Cardiology) – General heart and vascular conditions
+Advanced Heart Failure and Transplant Cardiology – Complex heart failure cases
+Interventional Cardiology – Minimally invasive procedures like stenting
+Cardiac Electrophysiology – Arrhythmia management and pacemaker implantation
+Peripheral Vascular Disease – Treatment of artery and vein disorders
+Critical Care (Intensivists) – Management of acute life-threatening cardiac event
+
+Gastrointestinal and Hepatic Conditions + Renal and Endocrine Conditions::
+Hepatic Disease – Gastroenterologist (specialist not listed; General Practice for preliminary care)
+Gastro-Intestinal Disease – General Practice or referral to a Gastroenterologist
+Pancreatic Disease – General Practice or Endocrinology for conditions like pancreatitis or diabetes
+Renal Disease – Nephrology
+Diabetes Mellitus – Endocrinology
+People: 
+Gastroenterology (specialist not listed) – Digestive system disorders
+Hepatology (specialist not listed) – Liver-related conditions
+Nephrology – Kidney diseases and dialysis
+Endocrinology – Diabetes, thyroid disorders, and hormonal conditions
+
+
+Neurological and Psychiatric Conditions:
+Stroke – Neurology (specialist not listed; Critical Care or General Practice for initial care)
+Dementia – Geriatric Medicine
+Paralysis – Neurology (specialist not listed; General Practice for care coordination)
+Neuromuscular Disease – Neurology (Critical Care for acute cases)
+Psychiatric Disorder – Psychiatry (specialist not listed; General Practice or Addiction Medicine for initial care)
+People:
+Neurology (specialist not listed) – Stroke, neuromuscular disorders, paralysis
+Psychiatry (specialist not listed) – Psychiatric disorders and mental health care
+Geriatric Medicine – Dementia and neurodegenerative diseases in older patients
+Critical Care (Intensivists) – Acute neurological crises requiring intensive support
+Sleep Medicine – Sleep disorders with neurological components
+
+Substance Use Disorders:
+Alcohol Abuse – Addiction Medicine
+Illicit Drug Abuse – Addiction Medicine
+People:
+Addiction Medicine – Treatment and management of substance use disorders
+
+Oncological Conditions:
+Previous Solid Tumor(s) – Medical Oncology
+Leukemia and Myeloma – Hematology
+Lymphoma – Hematology
+People: 
+Medical Oncology – Treatment of solid tumors
+Hematology – Blood cancers, including leukemia and myeloma
+Critical Care (Intensivists) – Management of complications from cancer or chemotherapy
