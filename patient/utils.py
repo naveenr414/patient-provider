@@ -6,6 +6,7 @@ import numpy as np
 from copy import deepcopy 
 import gurobipy as gp
 from gurobipy import GRB
+import torch
 
 def get_save_path(folder_name,result_name,use_date=False):
     """Create a string, file_name, which is the name of the file to save
@@ -82,7 +83,7 @@ def restrict_resources():
     Returns: None
     
     Side Effects: Makes sure that a) Only 50% of GPU is used, b) 1 Thread is used, and c) 30 GB of Memory"""
-
+    torch.set_num_threads(1)
     resource.setrlimit(resource.RLIMIT_AS, (30 * 1024 * 1024 * 1024, -1))
 
 def aggregate_data(results):
@@ -207,7 +208,7 @@ def one_shot_policy(simulator,patient,available_providers,memory,per_epoch_funct
 
     Returns: The Menu, from the per epoch function 
     """
-    return per_epoch_function[patient.idx], memory 
+    return per_epoch_function[patient.idx], None  
 
 def safe_min(arr):
     """Safer version of min, for [] arrays
@@ -246,3 +247,44 @@ class MyEncoder(json.JSONEncoder):
             return obj.tolist()
         else:
             return super(MyEncoder, self).default(obj)
+
+def parse_comorbidity_data(s):
+    """Given a string from the NIH Table of Comorbidities
+        https://pmc.ncbi.nlm.nih.gov/articles/PMC2536650/
+    Parse this and get the rate of comorbidities by age group
+    
+    Arguments:
+        s: String, from the comorbidities table
+    
+    Returns: Array of the probabilities for having any of these 
+        comorbidities, by age group"""
+
+    cardio_numbers = []
+
+    for i in s:
+        temp = []
+
+        for j in i.split("\t"):
+            temp.append(float(j.split("(")[1].replace(")","")))
+
+        cardio_numbers.append(temp)
+    cardio_numbers = 1-np.prod(1-np.array(cardio_numbers)/100,axis=0)
+    return cardio_numbers
+
+def get_age_num(age):
+    """From https://pmc.ncbi.nlm.nih.gov/articles/PMC2536650/
+        Turn age into an age group
+    
+    Arguments:
+        age: Integer, age
+    
+    Returns: Index from 0-3 for the group"""
+
+    if 18<=age<=53:
+        return 0
+    elif 54<=age<=64:
+        return 1
+    elif 65<=age<=73:
+        return 2
+    else:
+        return 3

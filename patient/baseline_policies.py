@@ -4,7 +4,7 @@ import itertools
 import math
 
 
-def random_policy(simulator,patient,available_providers,memory,per_epoch_function):
+def random_policy(simulator):
     """Randomly give a menu of available providers
     
     Arguments:
@@ -12,11 +12,11 @@ def random_policy(simulator,patient,available_providers,memory,per_epoch_functio
         provider_capacities: List of integers, how much space each provider has
         
     Returns: List of integers, 0-1 vector of which providers to show """
-    random_provider = np.array([1 if random.random() < 0.5 else 0 for i in range(simulator.num_providers)])
-    
-    return random_provider, memory 
+    random_matrix = np.random.random((simulator.num_patients,simulator.num_providers))
+    random_provider = np.round(random_matrix)
+    return random_provider 
 
-def all_ones_policy(simulator,patient,available_providers,memory,per_epoch_function):
+def all_ones_policy(simulator):
     """A policy which shows all providers
     
     Arguments:
@@ -25,9 +25,10 @@ def all_ones_policy(simulator,patient,available_providers,memory,per_epoch_funct
         
     Returns: List of integers, which providers to show them """
 
-    return [1 for i in range(simulator.num_providers)], memory 
+    ret = np.ones((simulator.num_patients,simulator.num_providers))
+    return ret 
 
-def greedy_policy(simulator,patient,available_providers,memory,per_epoch_function):
+def greedy_policy(simulator):
     """A policy which shows providers greedily
         This shows the top based on the utility
     
@@ -38,13 +39,17 @@ def greedy_policy(simulator,patient,available_providers,memory,per_epoch_functio
     Returns: List of integers, which providers to show them """
 
     if simulator.max_menu_size >= simulator.num_providers:
-        return [1 for i in range(simulator.num_providers)], memory 
+        return np.ones((simulator.num_patients,simulator.num_providers))
 
-    utilities = patient.provider_rewards
-    menu = np.zeros(simulator.num_providers)
-    top_menu = np.argsort(utilities)[-simulator.max_menu_size:][::-1]
-    menu[top_menu] = 1
-    return menu, memory 
+    all_menus = []
+
+    for patient in simulator.patients:
+        utilities = patient.provider_rewards
+        menu = np.zeros(simulator.num_providers)
+        top_menu = np.argsort(utilities)[-simulator.max_menu_size:][::-1]
+        menu[top_menu] = 1
+        all_menus.append(menu)
+    return np.array(all_menus)
 
 
 

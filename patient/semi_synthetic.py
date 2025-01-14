@@ -1,6 +1,20 @@
 import json 
 import pandas as pd
 import numpy as np
+from patient.utils import parse_comorbidity_data, get_age_num
+
+cormobidity_list = ['cardio','gastro','neuro','substance','onco'] 
+population_rates = {}
+specialty_grouping = {
+    'cardio': ['CARDIOVASCULAR DISEASE (CARDIOLOGY)','ADVANCED HEART FAILURE AND TRANSPLANT CARDIOLOGY','INTERVENTIONAL CARDIOLOGY','CARDIAC ELECTROPHYSIOLOGY','PERIPHERAL VASCULAR DISEASE','CRITICAL CARE (INTENSIVISTS)'], 
+    'gastro': ['NEPHROLOGY','ENDOCRINOLOGY'],
+    'neuro': ['CRITICAL CARE (INTENSIVISTS)','GERIATRIC MEDICINE','SLEEP MEDICINE'],
+    'substance': ['ADDICTION MEDICINE'], 
+    'onco': ['CRITICAL CARE (INTENSIVISTS)','HEMATOLOGY','MEDICAL ONCOLOGY'],
+}
+
+for c in cormobidity_list:
+    population_rates[c] = parse_comorbidity_data(open("../../data/{}.txt".format(c)).read().split("\n"))
 
 def get_age_costs(ages,age_buckets):
     """Get the cost, a proxy for the workload, based on a patient's age
@@ -33,7 +47,7 @@ def get_age_costs(ages,age_buckets):
 
     return cost_per_age
 
-def generate_semi_synthetic_theta_workload(num_patients,num_providers):
+def generate_semi_synthetic_theta_workload(num_patients,num_providers,comorbidities=False):
     """Generate a semi synthetic dataset based on medicare
     Sample providers from the medicare dataset, and place
     patients randomly in different locations in CT
@@ -54,6 +68,11 @@ def generate_semi_synthetic_theta_workload(num_patients,num_providers):
 
     ct_data = medicare_data[medicare_data['State'] == 'CT']
     ct_data = ct_data[ct_data['sec_spec_all'].str.contains('INTERNAL MEDICINE|GENERAL PRACTICE|FAMILY', case=False, na=False)]
+    
+    if comorbidities:
+        for key, specialties in specialty_grouping.items():
+            ct_data[key] = ct_data['sec_spec_all'].apply(lambda x: any(spec in x for spec in specialties))
+
     downsample_ct_data =  ct_data.sample(frac=num_providers/len(ct_data),replace=True)
     
     zipcodes = list(zipcode_data['Zipcode'])
@@ -75,9 +94,19 @@ def generate_semi_synthetic_theta_workload(num_patients,num_providers):
     for i in range(num_patients):
         age = np.random.choice(ages,p=age_buckets)
         location = np.random.choice(zipcodes,p=zipcode_probabilities)
-        random_patients.append({'age': age, 'location': location})
+
+        if comorbidities:
+            patient_dict = {'age': age, 'location': location}
+            age_group = get_age_num(age)
+
+            for comorbidity in population_rates:
+                patient_dict[comorbidity] = int(np.random.random()<population_rates[comorbidity][age_group])
+            random_patients.append(patient_dict)
+        else:
+            random_patients.append({'age': age, 'location': location})
 
     for i in range(num_patients):
+        print("on patient {}".format(i))
         max_distance = np.random.poisson(20.2)
         beta = max_distance/2
         our_zip = random_patients[i]
@@ -88,7 +117,19 @@ def generate_semi_synthetic_theta_workload(num_patients,num_providers):
             distance = zip_code_distances[str((our_zip['location'], other_zip))]
             distance += 0.01
             if distance <= max_distance:
-                theta[i,j] = min(max(beta/distance + noise,0),1)
+                distance_utility = min(max(beta/distance + noise,0),1)
+                if comorbidities:
+                    our_cormobidities = np.array([int(our_zip[d]) for d in cormobidity_list])
+                    provider_cormobidities = np.array([int(downsample_ct_data.iloc[j,:][d]) for d in cormobidity_list])
+                    cormobidity_score = our_cormobidities.dot(provider_cormobidities)
+
+                    if cormobidity_score > 0:
+                        utility = 0.75 + distance_utility*0.25
+                    else:
+                        utility = 0.5 + distance_utility*0.25
+                    theta[i,j] = utility
+                else:
+                    theta[i,j] = distance_utility
     age_costs = get_age_costs(ages,age_buckets)
     patient_costs = np.array([max(min(age_costs[i['age']]+np.random.normal(0,0.1),1),0) for i in random_patients])
     return theta, patient_costs, random_patients, downsample_ct_data.to_dict('records')

@@ -2,7 +2,7 @@ import numpy as np
 import random 
 from copy import deepcopy 
 import time 
-from patient.utils import safe_min, safe_max, safe_var
+from patient.utils import safe_min, safe_max, safe_var, one_shot_policy
 from patient.ordering_policies import compute_optimal_order
 from patient.semi_synthetic import generate_semi_synthetic_theta_workload
 import os
@@ -28,12 +28,13 @@ class Patient:
         Returns: Integer, -1 is exit
             And other numbers signify a particular provider"""
 
-        if choice_model == "uniform_choice" or choice_model == "threshold":
-            provider_probs = [self.all_provider_rewards[i] if menu[i] == 1 else -1 for i in range(len(menu))]
-            
+        if choice_model == "uniform_choice" or choice_model == "threshold":            
             rand_num = np.random.random()
-            if rand_num < self.choice_model_settings['true_top_choice_prob'] and np.max(provider_probs) > -1:
-                return np.argmax(provider_probs)
+            if rand_num < self.choice_model_settings['true_top_choice_prob']:
+                provider_probs = np.where(menu == 1, self.all_provider_rewards, -1)
+                max_loc = np.argmax(provider_probs)
+                if provider_probs[max_loc]>-1:
+                    return max_loc 
 
             return -1    
 
@@ -113,15 +114,14 @@ class Simulator():
             and an integer for the chosen provider"""
 
         chosen_provider = self.all_patients[patient_num].get_random_outcome(provider_list,self.choice_model)
-
         if chosen_provider >= 0:
             patient_utility = self.all_patients[patient_num].all_provider_rewards[chosen_provider]
             self.provider_workloads[chosen_provider].append(patient_utility)
             self.provider_capacities[chosen_provider] -= 1
         
-        available_providers = [1 if i > 0 else 0 for i in self.provider_capacities]
         self.raw_matched_pairs.append((patient_num,chosen_provider))
-        return self.provider_workloads, available_providers, chosen_provider
+
+        return self.provider_workloads, chosen_provider
 
     def reset_patient_order(self,trial_num):
         if self.order == "random":
@@ -164,11 +164,29 @@ class Simulator():
                 theta = np.array(data[0]) 
                 workloads = np.array(data[1])
             else:
+                print("Generating dataset!")
                 theta, workloads,random_patients, random_providers = generate_semi_synthetic_theta_workload(self.num_patients,self.num_providers)
                 data = [theta.tolist(),workloads.tolist()]
                 json.dump(data,open("../../data/{}_{}_{}.json".format(self.seed,self.num_patients,self.num_providers),"w"))
                 json.dump(random_patients,open("../../data/patient_data_{}_{}_{}.json".format(self.seed,self.num_patients,self.num_providers),"w"))
                 json.dump(random_providers,open("../../data/provider_data_{}_{}_{}.json".format(self.seed,self.num_patients,self.num_providers),"w"))
+                print("Wrote dataset!")
+            for i in range(self.num_patients):
+                patient_vector = np.random.random(self.context_dim)
+                utilities = theta[i]  
+                workload = workloads[i] 
+                self.all_patients.append(Patient(patient_vector,utilities,self.choice_model_settings,i,workload))
+        elif self.utility_function == 'semi_synthetic_comorbidity':
+            if os.path.exists("../../data/{}_{}_{}_comorbidity.json".format(self.seed,self.num_patients,self.num_providers)):
+                data = json.load(open("../../data/{}_{}_{}_comorbidity.json".format(self.seed,self.num_patients,self.num_providers)))
+                theta = np.array(data[0]) 
+                workloads = np.array(data[1])
+            else:
+                theta, workloads,random_patients, random_providers = generate_semi_synthetic_theta_workload(self.num_patients,self.num_providers,comorbidities=True)
+                data = [theta.tolist(),workloads.tolist()]
+                json.dump(data,open("../../data/{}_{}_{}_comorbidity.json".format(self.seed,self.num_patients,self.num_providers),"w"))
+                json.dump(random_patients,open("../../data/patient_data_{}_{}_{}_comorbidity.json".format(self.seed,self.num_patients,self.num_providers),"w"))
+                json.dump(random_providers,open("../../data/provider_data_{}_{}_{}_comorbidity.json".format(self.seed,self.num_patients,self.num_providers),"w"))
             for i in range(self.num_patients):
                 patient_vector = np.random.random(self.context_dim)
                 utilities = theta[i]  
@@ -183,6 +201,7 @@ class Simulator():
                 self.all_patients[i].all_provider_rewards = [int(j>threshold)*j for j in self.all_patients[i].all_provider_rewards]
         
         self.patients = self.all_patients[:self.num_patients//self.num_repetitions]
+
 
     def reset_initial(self):
         self.provider_capacities = deepcopy(self.provider_max_capacities)
@@ -236,7 +255,6 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
     if per_epoch_function != None and env.num_repetitions == 1:
         per_epoch_results = per_epoch_function(env)
 
-    top_b = np.zeros((env.num_patients,env.num_providers))
     num_times_in_position = np.zeros((env.num_patients,env.num_patients))
     matches_per = np.zeros((env.num_patients,env.num_providers))
 
@@ -246,7 +264,7 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
         env.reset_patient_order(trial_num)
         env.reset_initial()
         start = time.time()
-        available_providers  = [1 for i in range(len(env.provider_capacities))]
+        available_providers  = np.array([1 for i in range(len(env.provider_capacities))])
         matched_pairs = []
         preference_pairs = []
         unmatched_patients = []
@@ -266,45 +284,44 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
 
             for i in range(len(env.patients)):
                 env.patients[i].provider_rewards = np.array(env.patients[i].all_provider_rewards)[np.array(available_providers) == 1]
-
             if per_epoch_function != None and env.num_repetitions > 1:
-                per_epoch_results = per_epoch_function(env)
-
+                per_epoch_results = per_epoch_function(env).astype(np.int64)
+            per_epoch_results = per_epoch_results.astype(np.int64)
             current_patients_sorted = sorted([env.all_patients[env.patient_order[t]].idx for t in range(repetition*env.num_patients//env.num_repetitions,(repetition+1)*env.num_patients//env.num_repetitions)])
+
             for t in range(repetition*env.num_patients//env.num_repetitions,(repetition+1)*env.num_patients//env.num_repetitions):
+                rep_start = time.time()
+
                 current_patient = env.all_patients[env.patient_order[t]]
                 current_patient.idx = current_patients_sorted.index(current_patient.idx)
                 num_times_in_position[current_patient.idx][t] += 1
-                selected_providers,memory = policy(env,current_patient,available_providers,memory,deepcopy(per_epoch_results))
 
-                selected_provider_to_all = np.zeros(len(available_providers))
-                selected_provider_to_all[idx_to_provider_num] = selected_providers
-
-
-                selected_provider_to_all *= np.array(available_providers)
-                if np.sum(selected_provider_to_all) > env.max_menu_size:
+                if policy == one_shot_policy:
+                    selected_providers = per_epoch_results[current_patient.idx]
+                else:
+                    selected_providers,memory = policy(env,current_patient,available_providers,memory,per_epoch_results)
+                selected_provider_to_all = np.multiply(selected_providers,available_providers)
+                if env.max_menu_size<=50 and np.sum(selected_provider_to_all) > env.max_menu_size:
                     indices = np.where(selected_provider_to_all == 1)[0]  # Get indices of elements that are 1
                     to_set_zero = indices[env.max_menu_size:]
                     selected_provider_to_all[to_set_zero] = 0 
-                provider_workloads, available_providers,chosen_provider = env.step(env.patient_order[t],selected_provider_to_all)
-
-                top_b[current_patient.idx][np.argmax(np.array(available_providers)*np.array(current_patient.provider_rewards))] += 1
+                provider_workloads,chosen_provider = env.step(env.patient_order[t],selected_provider_to_all)
 
                 if np.sum(selected_provider_to_all) == 0:
                     patient_results_trial.append(-0.01)
                 elif chosen_provider >= 0:
                     patient_results_trial.append(current_patient.provider_rewards[chosen_provider])
                     matches_per[current_patient.idx][chosen_provider] += 1/num_trials
-                                        
+                    available_providers[chosen_provider] = 0
+
                 if chosen_provider >= 0:
-                    matched_pairs.append((current_patient.patient_vector,env.provider_vectors[chosen_provider]))
-                    final_workloads[trial_num][chosen_provider] += current_patient.workload
                     for i in range(len(selected_provider_to_all)):
                         if selected_provider_to_all[i] == 1 and i != chosen_provider:
                             preference_pairs.append((current_patient.patient_vector,env.provider_vectors[chosen_provider],env.provider_vectors[i]))
                 else:
                     unmatched_patients.append(env.patient_order[t])
                 env.unmatched_patients = unmatched_patients
+
         time_taken += time.time()-start 
         all_trials_workload.append(deepcopy(provider_workloads))
         patient_results.append(deepcopy(patient_results_trial))

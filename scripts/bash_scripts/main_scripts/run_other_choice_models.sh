@@ -11,12 +11,11 @@ do
         seed=$((${session}+${start_seed}))
         echo ${seed}
 
-        # TODO: Change this to 25
-        n_patients=5
-        n_providers=5
+        n_patients=25
+        n_providers=25
         utility_function=uniform
         exit_option=0.5
-        max_menu_size=25
+        max_menu_size=50
 
         for choice_prob in 0.1 0.25 0.5 0.75 0.9
         do 
