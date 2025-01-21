@@ -1,12 +1,12 @@
 #!/bin/bash 
 
-for session in 1 2
+for session in 1 2 3
 do
     tmux new-session -d -s match_${session}
     tmux send-keys -t match_${session} ENTER 
     tmux send-keys -t match_${session} "cd ~/projects/patient_provider/scripts/notebooks" ENTER
 
-    for start_seed in 42 44 46 48 50 52 54 56
+    for start_seed in 42 45 48 51 54
     do 
         seed=$((${session}+${start_seed}))
         echo ${seed}

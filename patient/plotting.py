@@ -327,7 +327,7 @@ def plot_text(ax,text,x,y,formatting):
 
     ax.text(x,y, text, color=formatting['color_palette'], fontsize=formatting['fontsize'], ha='center')
 
-def create_axes(plot_dimensions,formatting,x_labels=None,y_labels=None,titles=None,sup_x_label="",sup_y_label="",sup_title="",sup_x_label_loc=0.01):
+def create_axes(plot_dimensions,formatting,x_labels=None,y_labels=None,titles=None,sup_x_label="",sup_y_label="",sup_title="",sup_x_label_loc=0.01,sup_y_label_loc=None):
     """Create the figure and axes elements with certain labels, 
         number of subplots, and a title
         
@@ -379,7 +379,7 @@ def create_axes(plot_dimensions,formatting,x_labels=None,y_labels=None,titles=No
             ax[i][j].set_title(titles[i][j],fontsize=title_size)
 
     fig.supxlabel(sup_x_label,y=sup_x_label_loc,fontsize=label_size)
-    fig.supylabel(sup_y_label,fontsize=label_size)
+    fig.supylabel(sup_y_label,x=sup_y_label_loc,fontsize=label_size)
     fig.suptitle(sup_title,fontsize=title_size)
 
 
@@ -398,6 +398,8 @@ def create_axes(plot_dimensions,formatting,x_labels=None,y_labels=None,titles=No
             if 'y_ticks' in formatting:
                 ax[i][j].set_yticks(formatting['y_ticks'][i][j][0])
                 ax[i][j].set_yticklabels(formatting['y_ticks'][i][j][1],fontsize=tick_size)
+            if 'remove_ticks' in formatting:
+                ax[i][j].tick_params(axis='both',which='both',length=0)
 
     if 'hide_spines' in formatting and formatting['hide_spines']:
         for i in range(plot_dimensions[0]):

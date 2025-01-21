@@ -287,28 +287,29 @@ if fairness_weight > 0:
 
     print(fairness_weight,np.sum(rewards['provider_minimums'])/(num_patients*num_trials*len(seed_list)))
 
+# -
 
-# +
-policy = one_shot_policy
-per_epoch_function = group_based_policy
-name = "group_based"
-print("{} policy".format(name))
+if 'semi_synthetic' not in utility_function:
+    policy = one_shot_policy
+    per_epoch_function = group_based_policy
+    name = "group_based"
+    print("{} policy".format(name))
 
-rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+    rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
 
-results['{}_matches'.format(name)] = rewards['matches']
-results['{}_utilities'.format(name)] = rewards['patient_utilities']
-results['{}_workloads'.format(name)] = rewards['provider_workloads']
+    results['{}_matches'.format(name)] = rewards['matches']
+    results['{}_utilities'.format(name)] = rewards['patient_utilities']
+    results['{}_workloads'.format(name)] = rewards['provider_workloads']
 
-results['{}_minimums'.format(name)] = rewards['provider_minimums']
-results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
-results['{}_gaps'.format(name)] = rewards['provider_gaps']
-results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
-results['{}_variance'.format(name)] = rewards['provider_variance']
-results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
-results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
+    results['{}_minimums'.format(name)] = rewards['provider_minimums']
+    results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+    results['{}_gaps'.format(name)] = rewards['provider_gaps']
+    results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+    results['{}_variance'.format(name)] = rewards['provider_variance']
+    results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+    results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
-np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
+    np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
 
 # +
 policy = one_shot_policy 

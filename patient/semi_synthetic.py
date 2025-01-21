@@ -106,7 +106,6 @@ def generate_semi_synthetic_theta_workload(num_patients,num_providers,comorbidit
             random_patients.append({'age': age, 'location': location})
 
     for i in range(num_patients):
-        print("on patient {}".format(i))
         max_distance = np.random.poisson(20.2)
         beta = max_distance/2
         our_zip = random_patients[i]

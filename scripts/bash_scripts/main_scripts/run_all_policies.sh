@@ -3,7 +3,7 @@
 # Synthetic Scripts
 # bash ../bash_scripts/main_scripts/run_small.sh
 # bash ../bash_scripts/main_scripts/run_comparison.sh
-bash ../bash_scripts/main_scripts/run_other_choice_models.sh
+# bash ../bash_scripts/main_scripts/run_other_choice_models.sh
 bash ../bash_scripts/main_scripts/run_patients_neq_providers.sh
 
 # Semi-Synthetic Scripts
