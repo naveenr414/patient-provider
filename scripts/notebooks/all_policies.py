@@ -289,7 +289,7 @@ if fairness_weight > 0:
 
 # -
 
-if 'semi_synthetic' not in utility_function:
+if not ('semi_synthetic' in utility_function and num_patients>1000):
     policy = one_shot_policy
     per_epoch_function = group_based_policy
     name = "group_based"

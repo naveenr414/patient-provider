@@ -201,8 +201,7 @@ def plot_line(ax,x_values,y_values,y_confidence,labels,formatting):
     Side Effects: Plots a bar plot"""
 
     if formatting['color_palette'][0] == '#':
-        colors = [formatting['color_palette']]
-        assert len(x_values) == 1
+        colors = [formatting['color_palette'] for i in range(len(x_values))]
     else:
         assert formatting['color_palette'] in color_schemes
         assert len(color_schemes[formatting['color_palette']]) >= len(x_values)
