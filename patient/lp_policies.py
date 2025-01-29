@@ -167,13 +167,12 @@ def compute_swap_scores(simulator,pairs,weights):
     Returns: Numpy array; the benefit of adding on pairs of patients"""
 
     swap_score = np.zeros((len(simulator.patients),len(simulator.patients)))
+    p = simulator.choice_model_settings['top_choice_prob']
 
     for i in range(len(simulator.patients)):
         for j in range(len(simulator.patients)):
-            if i == j:
+            if i <= j:
                 continue 
-
-            p = simulator.choice_model_settings['top_choice_prob']
 
             weight_matrix = np.zeros((2,2))
             if pairs[i] >= 0:
@@ -184,21 +183,17 @@ def compute_swap_scores(simulator,pairs,weights):
                 weight_matrix[1,1] = weights[j][pairs[j]]
             
             current_expected_reward = p*(weight_matrix[0,0] + weight_matrix[1,1])
-
             swap_reward = 0
+            prob_0_1 = p*(1-p)
+            swap_reward += prob_0_1*(np.max(weight_matrix[0])+np.max(weight_matrix[1])) 
             for order in [[0,1],[1,0]]:
-                for coin_flips in [[0,0],[0,1],[1,0],[1,1]]:
-                    prob = 1/2*np.prod([p**idx*(1-p)**(1-idx) for idx in coin_flips])
-                    available_providers = [1,1]
-                    for idx in range(2):
-                        if coin_flips[idx] == 0:
-                            continue 
-                        else:
-                            utilities = weight_matrix[order[idx]]*np.array(available_providers)
-                            max_utility = max(utilities)
-                            argmax = np.argmax(utilities)
-                            swap_reward += prob*max_utility
-                            available_providers[argmax] = 0
+                prob = 1/2*p**2
+                available_providers = [1,1]
+                for idx in range(2):
+                    utilities = weight_matrix[order[idx]]*np.array(available_providers)
+                    argmax = np.argmax(utilities)
+                    swap_reward += prob*utilities[argmax]
+                    available_providers[argmax] = 0
             
             score = swap_reward - current_expected_reward
 
@@ -270,6 +265,7 @@ def add_swap_matches(swap_score,matchings,pairs,max_menu_size):
     Returns: New Matchings after adding in pairs and triplets"""
 
     used_indices = set() 
+    num_times = 0
     while len(used_indices) < len(matchings):
         all_available_patients = [i for i in range(len(matchings)) if i not in used_indices]
         model = gp.Model("Complete_Graph_Subset")
@@ -277,18 +273,18 @@ def add_swap_matches(swap_score,matchings,pairs,max_menu_size):
         x = model.addVars(num_nodes,num_nodes, vtype=GRB.BINARY, lb=0, ub=1, name="x") 
         y = model.addVars(num_nodes, vtype=GRB.CONTINUOUS, lb=0, ub=1, name="y") 
         model.setParam('OutputFlag', 0)
-
+        model.setParam('TimeLimit', 60) 
         # Set objective: maximize sum of weights w_{i,j} * x_{i,j}
-        model.setObjective(gp.quicksum(swap_score[i, j] * x[i, j] for i in range(num_nodes) for j in range(num_nodes)), GRB.MAXIMIZE)
+        valid_pairs = [(i, j) for i in range(num_nodes) for j in range(num_nodes) if swap_score[all_available_patients[i], all_available_patients[j]] != 0]
+
+        # Set optimized objective function
+        model.setObjective(gp.quicksum(swap_score[all_available_patients[i], all_available_patients[j]] * x[i, j] for i, j in valid_pairs), GRB.MAXIMIZE)
 
         # Add constraints
-        for i in range(num_nodes):
-            for j in range(num_nodes):
-                # x_{i,j} <= y_{i} and x_{i,j} <= y_{j}
-                model.addConstr(x[i, j] <= y[i], f"x_{i}_{j}_leq_y_{i}")
-                model.addConstr(x[i, j] <= y[j], f"x_{i}_{j}_leq_y_{j}")
-                # x_{i,j} >= y_{i} + y_{j} - 1
-                model.addConstr(x[i, j] >= y[i] + y[j] - 1, f"x_{i}_{j}_geq_y_{i}_plus_y_{j}_minus_1")
+        for i,j in valid_pairs:
+            model.addConstr(x[i, j] <= y[i])
+            model.addConstr(x[i, j] <= y[j])
+            model.addConstr(x[i, j] >= y[i] + y[j] - 1)
         model.addConstr(gp.quicksum(y[i] for i in range(num_nodes)) <= max_menu_size)
 
         # Optimize the model
@@ -302,10 +298,8 @@ def add_swap_matches(swap_score,matchings,pairs,max_menu_size):
                     new_nodes.add(all_available_patients[j])
         
         combo = list(new_nodes)
-        score = 0
+        score = model.objVal
 
-        for i,j in itertools.combinations(list(combo),2):
-            score += swap_score[i][j] 
         if score > 0:
             for i,j in itertools.combinations(list(combo),2):
                 if pairs[j] >= 0:
@@ -317,6 +311,11 @@ def add_swap_matches(swap_score,matchings,pairs,max_menu_size):
 
         else:
             break  
+        num_times += 1
+
+        # Rate limiting the amount of time we spend on the group based policy
+        if num_nodes >= 1000:
+            break 
     return matchings
 
 

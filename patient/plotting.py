@@ -345,7 +345,11 @@ def create_axes(plot_dimensions,formatting,x_labels=None,y_labels=None,titles=No
             has_y_grid: show only the y grid"""
 
     # Plot each model's bars with an offset
-    fig, ax = plt.subplots(plot_dimensions[0],plot_dimensions[1],figsize=formatting['figsize'])
+    if 'constrained_layout' in formatting and formatting['constrained_layout']:
+        constrained_layout = True 
+    else:
+        constrained_layout = False 
+    fig, ax = plt.subplots(plot_dimensions[0],plot_dimensions[1],figsize=formatting['figsize'],constrained_layout=constrained_layout)
 
     default = [["" for i in range(plot_dimensions[1])] for j in range(plot_dimensions[0])]
     if x_labels == None:

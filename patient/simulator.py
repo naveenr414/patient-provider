@@ -52,6 +52,7 @@ class Patient:
                 return -1 
             else:
                 return random_choice
+
         elif choice_model == "mnl_max":
             provider_probs = [self.all_provider_rewards[i] if menu[i] == 1 else -1 for i in range(len(menu))]
             if max(provider_probs) > 0:

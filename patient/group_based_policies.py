@@ -111,6 +111,7 @@ def group_based_policy(simulator,legacy=False):
             unmatched_providers.remove(j)
 
     swap_score = compute_swap_scores(simulator,pairs,weights)
+
     if legacy:
         matchings = add_swap_matches_legacy(swap_score,matchings,pairs,simulator.max_menu_size)        
     else:
