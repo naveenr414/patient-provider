@@ -25,10 +25,6 @@ do
             tmux send-keys -t match_${session} "conda activate patient; python all_policies.py --seed ${seed} --n_patients ${n_patients} --n_providers ${n_providers} --provider_capacity 1 --top_choice_prob ${top_choice_prob} --true_top_choice_prob ${true_top_choice_prob} --choice_model ${choice_model} --exit_option ${exit_option} --out_folder semi_synthetic --utility_function ${utility_function} --max_menu_size ${max_menu_size}  --batch 1" ENTER
         done
 
-        n_patients=1225
-        n_providers=700
-        utility_function=semi_synthetic_comorbidity
-
         for batch_size in 2 3 4 5
         do
             tmux send-keys -t match_${session} "conda activate patient; python all_policies.py --seed ${seed} --n_patients ${n_patients} --n_providers ${n_providers} --provider_capacity 1 --top_choice_prob ${top_choice_prob} --true_top_choice_prob ${true_top_choice_prob} --choice_model ${choice_model} --exit_option ${exit_option} --out_folder semi_synthetic --utility_function ${utility_function} --max_menu_size ${max_menu_size} --batch ${batch_size}" ENTER

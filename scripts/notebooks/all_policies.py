@@ -44,7 +44,7 @@ if is_jupyter:
     true_top_choice_prob = 0.9
     choice_model = "uniform_choice"
     exit_option = 0.5
-    utility_function = "semi_synthetic"
+    utility_function = "semi_synthetic_comorbidity"
     out_folder = "policy_comparison"
     num_repetitions = 1
     num_trials = 100
@@ -125,73 +125,50 @@ results['parameters']
 seed_list = [seed]
 restrict_resources()
 
-# +
-policy = one_shot_policy
-per_epoch_function = random_policy
-name = "random"
-print("{} policy".format(name))
+if batch_size == 1:
+    policy = one_shot_policy
+    per_epoch_function = random_policy
+    name = "random"
+    print("{} policy".format(name))
 
-rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+    rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
 
-results['{}_matches'.format(name)] = rewards['matches']
-results['{}_utilities'.format(name)] = rewards['patient_utilities']
-results['{}_workloads'.format(name)] = rewards['provider_workloads']
+    results['{}_matches'.format(name)] = rewards['matches']
+    results['{}_utilities'.format(name)] = rewards['patient_utilities']
+    results['{}_workloads'.format(name)] = rewards['provider_workloads']
 
-results['{}_minimums'.format(name)] = rewards['provider_minimums']
-results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
-results['{}_gaps'.format(name)] = rewards['provider_gaps']
-results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
-results['{}_variance'.format(name)] = rewards['provider_variance']
-results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
-results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
+    results['{}_minimums'.format(name)] = rewards['provider_minimums']
+    results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+    results['{}_gaps'.format(name)] = rewards['provider_gaps']
+    results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+    results['{}_variance'.format(name)] = rewards['provider_variance']
+    results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+    results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
-print(np.sum(rewards['matches'])/(num_patients*num_repetitions*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_repetitions*num_trials*len(seed_list)))
+    print(np.sum(rewards['matches'])/(num_patients*num_repetitions*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_repetitions*num_trials*len(seed_list)))
 
-# +
-policy = one_shot_policy
-per_epoch_function = all_ones_policy
-name = "greedy_basic"
-print("{} policy".format(name))
+if batch_size == 1:
+    policy = one_shot_policy
+    per_epoch_function = greedy_policy
 
-rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+    name = "greedy"
+    print("{} policy".format(name))
 
-results['{}_matches'.format(name)] = rewards['matches']
-results['{}_utilities'.format(name)] = rewards['patient_utilities']
-results['{}_workloads'.format(name)] = rewards['provider_workloads']
+    rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
 
-results['{}_minimums'.format(name)] = rewards['provider_minimums']
-results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
-results['{}_gaps'.format(name)] = rewards['provider_gaps']
-results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
-results['{}_variance'.format(name)] = rewards['provider_variance']
-results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
-results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
+    results['{}_matches'.format(name)] = rewards['matches']
+    results['{}_utilities'.format(name)] = rewards['patient_utilities']
+    results['{}_workloads'.format(name)] = rewards['provider_workloads']
 
-print(np.mean(results['{}_minimums_all'.format(name)]),np.mean(results['{}_gaps_all'.format(name)]),np.mean(results['{}_variance_all'.format(name)]))
+    results['{}_minimums'.format(name)] = rewards['provider_minimums']
+    results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+    results['{}_gaps'.format(name)] = rewards['provider_gaps']
+    results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+    results['{}_variance'.format(name)] = rewards['provider_variance']
+    results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+    results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
-# +
-policy = one_shot_policy
-per_epoch_function = greedy_policy
-
-name = "greedy"
-print("{} policy".format(name))
-
-rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
-
-results['{}_matches'.format(name)] = rewards['matches']
-results['{}_utilities'.format(name)] = rewards['patient_utilities']
-results['{}_workloads'.format(name)] = rewards['provider_workloads']
-
-results['{}_minimums'.format(name)] = rewards['provider_minimums']
-results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
-results['{}_gaps'.format(name)] = rewards['provider_gaps']
-results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
-results['{}_variance'.format(name)] = rewards['provider_variance']
-results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
-results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
-
-print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
-# -
+    print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
 
 if 2**(num_patients*num_providers)*2**(num_patients)*math.factorial(num_patients) < 4000000:
     policy = one_shot_policy
@@ -240,27 +217,27 @@ print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum
 
 # ## Offline
 
-# +
-policy = one_shot_policy
-per_epoch_function = lp_policy
-name = "lp"
-print("{} policy".format(name))
+if batch_size == 1:
+    policy = one_shot_policy
+    per_epoch_function = lp_policy
+    name = "lp"
+    print("{} policy".format(name))
 
-rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+    rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
 
-results['{}_matches'.format(name)] = rewards['matches']
-results['{}_utilities'.format(name)] = rewards['patient_utilities']
-results['{}_workloads'.format(name)] = rewards['provider_workloads']
+    results['{}_matches'.format(name)] = rewards['matches']
+    results['{}_utilities'.format(name)] = rewards['patient_utilities']
+    results['{}_workloads'.format(name)] = rewards['provider_workloads']
 
-results['{}_minimums'.format(name)] = rewards['provider_minimums']
-results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
-results['{}_gaps'.format(name)] = rewards['provider_gaps']
-results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
-results['{}_variance'.format(name)] = rewards['provider_variance']
-results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
-results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
+    results['{}_minimums'.format(name)] = rewards['provider_minimums']
+    results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+    results['{}_gaps'.format(name)] = rewards['provider_gaps']
+    results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+    results['{}_variance'.format(name)] = rewards['provider_variance']
+    results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+    results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
-np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)),np.max(np.mean(np.array(rewards['final_workloads'])[0],axis=0)), np.sum(rewards['provider_minimums'])/(num_patients*num_trials*len(seed_list))
+    np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)),np.max(np.mean(np.array(rewards['final_workloads'])[0],axis=0)), np.sum(rewards['provider_minimums'])/(num_patients*num_trials*len(seed_list))
 
 
 # +
@@ -289,7 +266,7 @@ if fairness_weight > 0:
 
 # -
 
-if not ('semi_synthetic' in utility_function and num_patients>1000):
+if batch_size == 1:
     policy = one_shot_policy
     per_epoch_function = group_based_policy
     name = "group_based"
@@ -309,31 +286,30 @@ if not ('semi_synthetic' in utility_function and num_patients>1000):
     results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
     results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
 
-    np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list))
+    print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
 
-# +
-policy = one_shot_policy 
-per_epoch_function = gradient_descent_policy_fast
-name = "gradient_descent_fast"
-print("{} policy".format(name))
+if batch_size == 1:
+    policy = one_shot_policy 
+    per_epoch_function = gradient_descent_policy_fast
+    name = "gradient_descent_fast"
+    print("{} policy".format(name))
 
-rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+    rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
 
-results['{}_matches'.format(name)] = rewards['matches']
-results['{}_utilities'.format(name)] = rewards['patient_utilities']
-results['{}_workloads'.format(name)] = rewards['provider_workloads']
+    results['{}_matches'.format(name)] = rewards['matches']
+    results['{}_utilities'.format(name)] = rewards['patient_utilities']
+    results['{}_workloads'.format(name)] = rewards['provider_workloads']
 
-results['{}_minimums'.format(name)] = rewards['provider_minimums']
-results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
-results['{}_gaps'.format(name)] = rewards['provider_gaps']
-results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
-results['{}_variance'.format(name)] = rewards['provider_variance']
-results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
-results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
-results['{}_matches_per'.format(name)] = rewards['matches_per']
+    results['{}_minimums'.format(name)] = rewards['provider_minimums']
+    results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+    results['{}_gaps'.format(name)] = rewards['provider_gaps']
+    results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+    results['{}_variance'.format(name)] = rewards['provider_variance']
+    results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+    results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
+    results['{}_matches_per'.format(name)] = rewards['matches_per']
 
-print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
-# -
+    print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
 
 # ## Save Data
 

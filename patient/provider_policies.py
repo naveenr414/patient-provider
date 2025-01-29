@@ -62,7 +62,7 @@ def objective_fast(z, theta, p, sorted_theta,lamb=1, smooth_reg='entropy', epsil
     # Compute the main term
     term1 = (term1_num / term1_den)
         
-    term1 = torch.sum(term1) / theta.shape[1]  # Normalize by number of columns
+    term1 = torch.sum(term1) / theta.shape[0]  # Normalize by number of columns
 
     reg_term = 0
     # Add smooth regularization term
@@ -102,15 +102,12 @@ def gradient_descent_policy_fast(simulator):
     best_x = None
     best_loss = 1000
     num_trials = 3
-
+    max_gradients = 0
     for _ in range(num_trials): 
-        if _ == 0:
-            x = torch.Tensor(lp_policy(simulator))*10-10/2  
-        else:
-            x = torch.rand(N, M, requires_grad=True)  
+        x = torch.rand(N, M, requires_grad=True)  
         x.requires_grad = True
         scale = 10
-
+        
         # Optimizer
         if scale == 10:
             optimizer = optim.Adam([x], lr=0.25)
@@ -121,7 +118,8 @@ def gradient_descent_policy_fast(simulator):
         values_by_loss = []
 
         # Training loop
-        for epoch in range(10*scale):  # Adjust number of iterations as needed
+        # TODO: Change this back to 10*scale
+        for epoch in range(100*scale):  # Adjust number of iterations as needed
             optimizer.zero_grad()
             if epoch > 8*scale:
                 lamb = 1
@@ -136,6 +134,8 @@ def gradient_descent_policy_fast(simulator):
 
             # Backpropagation
             loss.backward()
+            max_gradients = max(max_gradients,torch.max(x.grad).numpy())
+
             torch.nn.utils.clip_grad_norm_([x], max_norm=10)
 
             # Gradient step
