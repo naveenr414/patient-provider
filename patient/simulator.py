@@ -395,7 +395,7 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None):
         num_matches = [len([j for j in i if j != []]) for i in utilities_by_provider]
         patient_utilities = [sum([np.sum(j) if len(j)>0 else 0 for j in i]) for i in utilities_by_provider]
         
-        list_of_utilities = [[j for j in i if j>=0] for i in patient_results]
+        list_of_utilities = [[j for j in i if j>0] for i in patient_results]
         list_of_utilities_all = [[max(j,0) for j in i] for i in patient_results]
         min_utilities = [safe_min(i) for i in list_of_utilities]
         min_utilities_all = [safe_min(i) for i in list_of_utilities_all]

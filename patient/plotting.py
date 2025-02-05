@@ -207,9 +207,18 @@ def plot_line(ax,x_values,y_values,y_confidence,labels,formatting):
         assert len(color_schemes[formatting['color_palette']]) >= len(x_values)
 
         colors = color_schemes[formatting['color_palette']]
-
+    
+    linewidth = 0.6
+    if 'linewidth' in formatting:
+        linewidth = formatting['linewidth']
     for i in range(len(x_values)):
-        ax.plot(x_values[i],y_values[i],label=labels[i],linewidth=0.6,color=colors[i],marker=markers[i])
+        marker = markers[i]
+        linestyle='-'
+        if 'no_marker' in formatting:
+            marker = None
+        if 'linestyle' in formatting:
+            linestyle = formatting['linestyle']
+        ax.plot(x_values[i],y_values[i],label=labels[i],linewidth=linewidth,color=colors[i],marker=marker,linestyle=linestyle)
         ax.fill_between(x_values[i],np.array(y_values[i])-np.array(y_confidence[i]),np.array(y_values[i])+np.array(y_confidence[i]), alpha=0.2,color=colors[i])
 
 def plot_scatter(ax,x_values,y_values,labels,formatting):
@@ -374,6 +383,7 @@ def create_axes(plot_dimensions,formatting,x_labels=None,y_labels=None,titles=No
         label_size = 18
         title_size = 18
         tick_size = 14
+        
 
     for i in range(plot_dimensions[0]):
         for j in range(plot_dimensions[1]):
@@ -396,8 +406,9 @@ def create_axes(plot_dimensions,formatting,x_labels=None,y_labels=None,titles=No
             if 'y_lim' in formatting:
                 ax[i][j].set_ylim(formatting['y_lim'][i][j])
             if 'x_ticks' in formatting:
-                ax[i][j].set_xticks(formatting['x_ticks'][i][j][0])
-                ax[i][j].set_xticklabels(formatting['x_ticks'][i][j][1],fontsize=tick_size)
+                if formatting['x_ticks'][i][j] is not None:
+                    ax[i][j].set_xticks(formatting['x_ticks'][i][j][0])
+                    ax[i][j].set_xticklabels(formatting['x_ticks'][i][j][1],fontsize=tick_size)
             if 'y_ticks' in formatting:
                 ax[i][j].set_yticks(formatting['y_ticks'][i][j][0])
                 ax[i][j].set_yticklabels(formatting['y_ticks'][i][j][1],fontsize=tick_size)
@@ -453,6 +464,9 @@ def create_legend(fig,ax,plot_dimensions,formatting):
         legend_size = 12
     elif formatting['style_size'] == 'presentation':
         legend_size = 16
+    
+    if 'fontsize' in formatting:
+        legend_size = formatting['fontsize']
 
     if formatting['type'] == 'is_global':
         handles, labels = ax[0][0].get_legend_handles_labels()
@@ -481,8 +495,9 @@ def create_legend(fig,ax,plot_dimensions,formatting):
                         fontsize=legend_size)
 
                 else:
-                    ax[i][j].legend(loc=formatting['loc'],
-                        ncol=formatting['ncol'],
-                        bbox_to_anchor=formatting['bbox_to_anchor'],
-                        fontsize=legend_size)
+                    if len(ax[i][j].get_legend_handles_labels()[0]) > 0:
+                        ax[i][j].legend(loc=formatting['loc'],
+                            ncol=formatting['ncol'],
+                            bbox_to_anchor=formatting['bbox_to_anchor'][i][j],
+                            fontsize=legend_size)
     return fig, ax
