@@ -383,6 +383,9 @@ def create_axes(plot_dimensions,formatting,x_labels=None,y_labels=None,titles=No
         label_size = 18
         title_size = 18
         tick_size = 14
+    
+    if 'label_size' in formatting:
+        label_size = formatting['label_size']
         
 
     for i in range(plot_dimensions[0]):
