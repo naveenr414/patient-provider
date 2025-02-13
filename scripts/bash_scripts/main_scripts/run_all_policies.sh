@@ -8,8 +8,4 @@ bash ../bash_scripts/main_scripts/run_patients_neq_providers.sh
 bash ../bash_scripts/main_scripts/run_misspecification.sh
 
 # Semi-Synthetic Scripts
-# bash ../bash_scripts/main_scripts/run_semi_synthetic.sh
-
-# Ablation
-# bash ../bash_scripts/main_scripts/run_multi_iteration.sh
-# bash ../bash_scripts/main_scripts/run_ordering.sh
+bash ../bash_scripts/main_scripts/run_semi_synthetic.sh

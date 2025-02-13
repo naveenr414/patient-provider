@@ -1,0 +1,25 @@
+name: patient
+channels:
+  - https://conda.anaconda.org/gurobi
+  - defaults
+  - pytorch
+dependencies:
+  - python=3.7
+  - git
+  - cpuonly
+  - pytorch
+  - torchaudio
+  - torchvision
+  - jupyter
+  - numpy
+  - matplotlib
+  - gurobi
+  - conda-forge::jupytext
+  - scipy
+  - pandas
+  - seaborn
+  - ca-certificates
+  - certifi
+  - openssl
+  - geopandas
+prefix: /usr0/home/naveenr/miniconda3/envs/patient
