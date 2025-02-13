@@ -23,7 +23,8 @@ Then to install, run the following:
 ```$ conda env create --file environment.yaml
 $ conda activate pateint
 $ pip install -e .
-$ bash scripts/bash_scripts/main_scripts/create_folders.sh```
+$ bash scripts/bash_scripts/main_scripts/create_folders.sh
+```
 
 This will create a new environment, called `patient`, from which to run the code
 To test whether the installation was successful, run 
