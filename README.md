@@ -20,15 +20,17 @@ To run experiments with our patient-provider matching setup, first clone this re
 ```$ git clone https://github.com/naveenr414/patient-provider``` 
 
 Then to install, run the following: 
-```$ conda env create --file environment.yaml
-$ conda activate pateint
+```
+$ conda env create --file environment.yaml
+$ conda activate patient
 $ pip install -e .
 $ bash scripts/bash_scripts/main_scripts/create_folders.sh
 ```
 
 This will create a new environment, called `patient`, from which to run the code
 To test whether the installation was successful, run 
-```import patient
+```
+import patient
 ```
 
 #### Evaluating Policies
