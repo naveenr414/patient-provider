@@ -79,7 +79,7 @@ class Simulator():
     """Simulator class that allows for evaluation of policies
         Both with and without re-entry"""
 
-    def __init__(self,num_patients,num_providers,provider_capacity,choice_model_settings,choice_model,context_dim,max_menu_size,utility_function,order,num_repetitions,previous_patients_per_provider,num_trials,batch_size,seed):
+    def __init__(self,num_patients,num_providers,provider_capacity,choice_model_settings,choice_model,context_dim,max_menu_size,utility_function,order,num_repetitions,previous_patients_per_provider,num_trials,batch_size,assumption_relaxation,seed):
         self.num_patients = num_patients*num_repetitions
         self.num_providers = num_providers
         self.provider_max_capacity = provider_capacity
@@ -96,6 +96,7 @@ class Simulator():
         self.num_trials = num_trials
         self.seed = seed
         self.batch_size = batch_size
+        self.assumption_relaxation = assumption_relaxation
 
         self.matched_pairs = []
         self.unmatched_pairs = []
@@ -134,7 +135,10 @@ class Simulator():
                 self.patient_order = np.random.permutation(list(range(self.num_patients)))
             else:
                 self.patient_order = self.custom_patient_order[trial_num]
-
+        elif self.order == "proportional":
+            max_rewards = [np.mean(i.all_provider_rewards) for i in self.all_patients]
+            max_rewards = np.array(max_rewards)/np.sum(max_rewards)
+            self.patient_order = np.random.choice(list(range(len(max_rewards))), size=len(max_rewards), replace=False, p=max_rewards)
 
     def reset_patient_utility(self):
         self.all_patients = []
@@ -144,14 +148,22 @@ class Simulator():
                 patient_vector = np.random.random(self.context_dim)
                 utilities = [np.random.random() for j in range(self.num_providers)]       
                 workload = np.random.random()     
-                self.all_patients.append(Patient(patient_vector,utilities,self.choice_model_settings,i,workload))
+                choice_model_settings = deepcopy(self.choice_model_settings)
+                if self.assumption_relaxation == 'varied_p':
+                    choice_model_settings['true_top_choice_prob'] += np.random.normal(0,0.1)
+                    choice_model_settings['true_top_choice_prob'] = max(min(choice_model_settings['true_top_choice_prob'],1),0)
+                self.all_patients.append(Patient(patient_vector,utilities,choice_model_settings,i,workload))
         elif self.utility_function == 'normal':
             means = [np.random.random() for i in range(self.num_providers)]
             for i in range(self.num_patients):
                 patient_vector = np.random.random(self.context_dim)
                 utilities = [np.clip(np.random.normal(means[j],0.1),0,1) for j in range(self.num_providers)]     
                 workload = np.random.random()       
-                self.all_patients.append(Patient(patient_vector,utilities,self.choice_model_settings,i,workload))
+                choice_model_settings = deepcopy(self.choice_model_settings)
+                if self.assumption_relaxation == 'varied_p':
+                    choice_model_settings['true_top_choice_prob'] += np.random.normal(0,0.1)
+                    choice_model_settings['true_top_choice_prob'] = max(min(choice_model_settings['true_top_choice_prob'],1),0)
+                self.all_patients.append(Patient(patient_vector,utilities,choice_model_settings,i,workload))
         elif self.utility_function == 'fixed':
             a = 0.4
             rewards = np.array([[1,1,1,1],[a,a,a,a],[a,a,a,a],[a,a,a,a]])
@@ -313,7 +325,8 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
                 elif chosen_provider >= 0:
                     patient_results_trial.append(current_patient.provider_rewards[chosen_provider])
                     matches_per[current_patient.idx][chosen_provider] += 1/num_trials
-                    available_providers[chosen_provider] = 0
+                    if env.provider_capacities[chosen_provider] == 0:
+                        available_providers[chosen_provider] = 0
 
                 if chosen_provider >= 0:
                     for i in range(len(selected_provider_to_all)):
@@ -379,6 +392,7 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None):
     order = parameters['order']
     previous_patients_per_provider = parameters['previous_patients_per_provider']
     batch_size = parameters['batch_size']
+    assumption_relaxation = parameters['assumption_relaxation']
 
     choice_model_settings = {
         'top_choice_prob': top_choice_prob,
@@ -387,12 +401,16 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None):
     }
 
     for seed in seed_list:
-        simulator = Simulator(num_patients,num_providers,provider_capacity,choice_model_settings,choice_model,context_dim,max_menu_size,utility_function,order,num_repetitions,previous_patients_per_provider,num_trials,batch_size,seed)
+        simulator = Simulator(num_patients,num_providers,provider_capacity,choice_model_settings,choice_model,context_dim,max_menu_size,utility_function,order,num_repetitions,previous_patients_per_provider,num_trials,batch_size,assumption_relaxation,seed)
 
         policy_results, patient_results, initial_workloads, final_workloads, matches_per = run_heterogenous_policy(simulator,policy,seed,num_trials,per_epoch_function=per_epoch_function,second_seed=seed) 
         utilities_by_provider = policy_results
 
-        num_matches = [len([j for j in i if j != []]) for i in utilities_by_provider]
+        if 'misspecified_theta' in parameters['assumption_relaxation']:
+            shift = float(parameters['assumption_relaxation'].split("_")[-1])
+            utilities_by_provider = [[[min(max(k+np.random.normal(0,shift),0),1) if k >0 else k for k in j ] for j in i] for i in utilities_by_provider]
+
+        num_matches = [sum([len(j) for j in i]) for i in utilities_by_provider]
         patient_utilities = [sum([np.sum(j) if len(j)>0 else 0 for j in i]) for i in utilities_by_provider]
         
         list_of_utilities = [[j for j in i if j>0] for i in patient_results]

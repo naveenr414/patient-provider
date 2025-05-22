@@ -1,6 +1,7 @@
 import numpy as np
 import gurobipy as gp
 from gurobipy import GRB
+import math
 
 import torch
 import torch.nn as nn
@@ -9,7 +10,7 @@ import torch.optim as optim
 from patient.lp_policies import lp_policy
 from patient.baseline_policies import greedy_policy
 
-def objective_fast(z, theta, p, sorted_theta,lamb=1, smooth_reg='entropy', epsilon=1e-5):
+def objective_fast(z, theta, p, sorted_theta,max_per_provider,lamb=1, smooth_reg='entropy', epsilon=1e-5):
     """Our Lower-Bound policy, which computes the lower bound given a proposed assortment
     
     Arguments:
@@ -32,7 +33,25 @@ def objective_fast(z, theta, p, sorted_theta,lamb=1, smooth_reg='entropy', epsil
     row_sums = torch.sum(x, dim=0, keepdim=True)  # Shape: (rows, 1)
     
     # Normalize x by row sums
-    normalized_x = x / (p*torch.maximum(row_sums, torch.tensor(1.0, device=x.device)))*(1-(1-p)**(torch.maximum(row_sums, torch.tensor(1.0, device=x.device)))) 
+    normalized_x = x / (p*torch.maximum(row_sums, torch.tensor(1.0, device=x.device)))
+
+    if max_per_provider > 1:
+        row_sums = torch.maximum(row_sums, torch.tensor(1.0, device=x.device))
+        kp = row_sums * p
+        condition = max_per_provider > kp  # Boolean mask
+        case1 = torch.pow(1 - p, row_sums)
+
+        stddev = torch.sqrt(kp * (1 - p))
+        z = (kp - max_per_provider) / stddev
+        denom = z**2 + 1
+        normal_factor = 1 / math.sqrt(2 * math.pi)
+        case2 = (z / denom) * normal_factor * torch.exp(-0.5 * z**2)
+        result = torch.where(condition, case1, case2)
+        result = 1-result
+    else:
+        result = (1-(1-p)**(torch.maximum(row_sums, torch.tensor(1.0, device=x.device))))
+
+    normalized_x = normalized_x *result 
 
     sorted_normalized_x = normalized_x.gather(1, sorted_theta)
 
@@ -84,6 +103,7 @@ def gradient_descent_policy_fast(simulator):
     Returns: Assortment, 0-1 matrix of size patients x providers"""
 
     p = simulator.choice_model_settings['top_choice_prob']
+    max_per_provider = simulator.provider_max_capacity
 
     theta = [p.provider_rewards for p in simulator.patients]
     theta = torch.Tensor(theta)
@@ -128,9 +148,9 @@ def gradient_descent_policy_fast(simulator):
             else:
                 lamb = 0
             # Compute the objective
-            loss = -objective_fast(x, theta, p,sorted_theta,lamb=lamb)
+            loss = -objective_fast(x, theta, p,sorted_theta,max_per_provider,lamb=lamb)
 
-            true_loss = -objective_fast(torch.round(torch.sigmoid(x))*1000-500, theta, p,sorted_theta,lamb=0)
+            true_loss = -objective_fast(torch.round(torch.sigmoid(x))*1000-500, theta, p,sorted_theta,max_per_provider,lamb=0)
 
             # Backpropagation
             loss.backward()

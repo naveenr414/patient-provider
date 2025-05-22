@@ -378,7 +378,7 @@ def create_axes(plot_dimensions,formatting,x_labels=None,y_labels=None,titles=No
     if formatting['style_size'] == 'paper':
         label_size = 14
         title_size = 14
-        tick_size = 10
+        tick_size = 14
     elif formatting['style_size'] == 'presentation':
         label_size = 18
         title_size = 18
