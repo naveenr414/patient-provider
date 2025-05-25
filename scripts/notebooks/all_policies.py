@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.16.1
+#       jupytext_version: 1.15.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -41,11 +41,11 @@ is_jupyter = 'ipykernel' in sys.modules
 # +
 if is_jupyter: 
     seed        = 43
-    num_patients = 20
-    num_providers = 20
-    provider_capacity = 4
-    top_choice_prob = 0.1
-    true_top_choice_prob = 0.1
+    num_patients = 25
+    num_providers = 25
+    provider_capacity = 1
+    top_choice_prob = 0.5
+    true_top_choice_prob = 0.5
     choice_model = "uniform_choice"
     exit_option = 0.5
     utility_function = "normal"
@@ -56,8 +56,8 @@ if is_jupyter:
     max_menu_size = 1000
     previous_patients_per_provider = 10
     batch_size = 1
-    order="proportional"
-    assumption_relaxation = ""
+    order="custom"
+    assumption_relaxation = "dynamic_lp"
     fairness_weight=0
 else:
     parser = argparse.ArgumentParser()
@@ -230,6 +230,29 @@ if batch_size == 1:
     policy = one_shot_policy
     per_epoch_function = lp_policy
     name = "lp"
+    print("{} policy".format(name))
+
+    rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+
+    results['{}_matches'.format(name)] = rewards['matches']
+    results['{}_utilities'.format(name)] = rewards['patient_utilities']
+    results['{}_workloads'.format(name)] = rewards['provider_workloads']
+
+    results['{}_minimums'.format(name)] = rewards['provider_minimums']
+    results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
+    results['{}_gaps'.format(name)] = rewards['provider_gaps']
+    results['{}_gaps_all'.format(name)] = rewards['provider_gaps_all']
+    results['{}_variance'.format(name)] = rewards['provider_variance']
+    results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
+    results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
+
+    print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)),np.max(np.mean(np.array(rewards['final_workloads'])[0],axis=0)), np.sum(rewards['provider_minimums'])/(num_patients*num_trials*len(seed_list)))
+
+
+if assumption_relaxation == "dynamic_lp":
+    policy = dynamic_lp_policy
+    per_epoch_function = lambda s: 1
+    name = "lp_dynamic"
     print("{} policy".format(name))
 
     rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)

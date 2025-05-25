@@ -1,5 +1,5 @@
 import numpy as np 
-from patient.utils import solve_linear_program
+from patient.utils import solve_linear_program, solve_linear_program_dynamic
 import gurobipy as gp
 from gurobipy import GRB
 import itertools 
@@ -21,6 +21,36 @@ def lp_policy(simulator):
     for (i,j) in LP_solution:
         matchings[i,j] = 1
     return matchings  
+
+
+def dynamic_lp_policy(simulator,patient,available_providers,memory,per_epoch_function):
+    """Helper function for policies that only need to run once initially
+    
+    Arguments:
+        simulator: Simulator for patient-provider matching
+        patient: Particular patient we're finding menu for
+        available_providers: 0-1 List of available providers
+        memory: Stores which matches, as online policies compute in one-shot fashion
+        per_epoch_function: Stores the matches from running the policy once
+
+    Returns: The Menu, from the per epoch function 
+    """
+    weights = np.array([p.provider_rewards for p in simulator.patients])
+
+    max_per_provider = simulator.provider_max_capacity
+    available_patients = [1 for i in range(simulator.num_patients)]
+    curr_idx = simulator.patient_order.tolist().index(patient.idx)
+    for i in range(curr_idx):
+        available_patients[simulator.patient_order[i]] = 0
+
+    LP_solution = solve_linear_program_dynamic(weights,max_per_provider,available_patients,available_providers)
+
+    matchings = np.zeros((len(simulator.patients),simulator.num_providers))
+
+    for (i,j) in LP_solution:
+        matchings[i,j] = 1
+
+    return matchings[patient.idx], None  
 
 def lp_workload_policy(simulator,lamb=1):
     """Policy which selects according to the LP, in an offline fashion

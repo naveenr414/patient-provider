@@ -149,8 +149,10 @@ class Simulator():
                 utilities = [np.random.random() for j in range(self.num_providers)]       
                 workload = np.random.random()     
                 choice_model_settings = deepcopy(self.choice_model_settings)
-                if self.assumption_relaxation == 'varied_p':
-                    choice_model_settings['true_top_choice_prob'] += np.random.normal(0,0.1)
+                
+                if 'varied_p' in self.assumption_relaxation:
+                    shift = float(self.assumption_relaxation.split("_")[-1])
+                    choice_model_settings['true_top_choice_prob'] += np.random.normal(0,shift)
                     choice_model_settings['true_top_choice_prob'] = max(min(choice_model_settings['true_top_choice_prob'],1),0)
                 self.all_patients.append(Patient(patient_vector,utilities,choice_model_settings,i,workload))
         elif self.utility_function == 'normal':
@@ -160,8 +162,9 @@ class Simulator():
                 utilities = [np.clip(np.random.normal(means[j],0.1),0,1) for j in range(self.num_providers)]     
                 workload = np.random.random()       
                 choice_model_settings = deepcopy(self.choice_model_settings)
-                if self.assumption_relaxation == 'varied_p':
-                    choice_model_settings['true_top_choice_prob'] += np.random.normal(0,0.1)
+                if 'varied_p' in self.assumption_relaxation:
+                    shift = float(self.assumption_relaxation.split("_")[-1])
+                    choice_model_settings['true_top_choice_prob'] += np.random.normal(0,shift)
                     choice_model_settings['true_top_choice_prob'] = max(min(choice_model_settings['true_top_choice_prob'],1),0)
                 self.all_patients.append(Patient(patient_vector,utilities,choice_model_settings,i,workload))
         elif self.utility_function == 'fixed':
@@ -299,7 +302,7 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
                 env.patients[i].provider_rewards = np.array(env.patients[i].all_provider_rewards)[np.array(available_providers) == 1]
             if per_epoch_function != None and env.num_repetitions > 1:
                 per_epoch_results = per_epoch_function(env).astype(np.int64)
-            per_epoch_results = per_epoch_results.astype(np.int64)
+                per_epoch_results = per_epoch_results.astype(np.int64)
             current_patients_sorted = sorted([env.all_patients[env.patient_order[t]].idx for t in range(repetition*env.num_patients//env.num_repetitions,(repetition+1)*env.num_patients//env.num_repetitions)])
 
             for t in range(repetition*env.num_patients//env.num_repetitions,(repetition+1)*env.num_patients//env.num_repetitions):

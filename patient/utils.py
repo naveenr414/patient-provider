@@ -196,6 +196,43 @@ def solve_linear_program(weights,max_per_provider,lamb=0):
                 solution.append((i, j))
     return solution 
 
+
+
+def solve_linear_program_dynamic(weights,max_per_provider,available_patients,available_providers,lamb=0):
+    """Solve a Linear Program which maximizes weights + balance
+    
+    Arguments:
+        weights: Numpy array of size patients x providers
+        max_per_provider: Maximum # of patients per provider, >=1
+        lamb: Weight placed on the balance objective
+    
+    Returns: List of tuples, pairs of patient-provider matches"""
+
+    N,P = weights.shape 
+
+    m = gp.Model("bipartite_matching")
+    m.setParam('OutputFlag', 0)
+    x = m.addVars(N, P, vtype=GRB.BINARY, name="x")
+
+    m.setObjective(gp.quicksum(weights[i, j] * x[i, j] for i in range(N) for j in range(P)), GRB.MAXIMIZE)
+
+    for j in range(P):
+        m.addConstr(gp.quicksum(x[i, j] for i in range(N)) <= max_per_provider*available_providers[j], name=f"match_{j}_limit")
+
+    for i in range(N):
+        m.addConstr(gp.quicksum(x[i, j] for j in range(P)) <= 1*available_patients[i], name=f"match_{j}")
+
+    m.optimize()
+
+    # Extract the solution
+    solution = []
+    for i in range(N):
+        for j in range(P):
+            if x[i, j].X > 0.5:
+                solution.append((i, j))
+    return solution 
+
+
 def one_shot_policy(simulator,patient,available_providers,memory,per_epoch_function):
     """Helper function for policies that only need to run once initially
     
