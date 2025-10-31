@@ -159,7 +159,11 @@ class Simulator():
             means = [np.random.random() for i in range(self.num_providers)]
             for i in range(self.num_patients):
                 patient_vector = np.random.random(self.context_dim)
-                utilities = [np.clip(np.random.normal(means[j],0.1),0,1) for j in range(self.num_providers)]     
+                if 'varied_std' in self.assumption_relaxation:
+                    std = float(self.assumption_relaxation.split("_")[-1])
+                else:
+                    std = 0.1
+                utilities = [np.clip(np.random.normal(means[j],std),0,1) for j in range(self.num_providers)]     
                 workload = np.random.random()       
                 choice_model_settings = deepcopy(self.choice_model_settings)
                 if 'varied_p' in self.assumption_relaxation:
@@ -273,6 +277,8 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
 
     num_times_in_position = np.zeros((env.num_patients,env.num_patients))
     matches_per = np.zeros((env.num_patients,env.num_providers))
+    all_assortments = []
+    regret = []
 
     for trial_num in range(num_trials):
         env.num_providers = M 
@@ -316,6 +322,12 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
                     selected_providers = per_epoch_results[current_patient.idx]
                 else:
                     selected_providers,memory = policy(env,current_patient,available_providers,memory,per_epoch_results)
+                
+                
+                ideal_rewards = np.multiply(selected_providers,current_patient.all_provider_rewards)
+                curr_rewards = np.multiply(np.multiply(selected_providers,available_providers),current_patient.all_provider_rewards)
+                regret.append(np.max(ideal_rewards)-np.max(curr_rewards))
+                all_assortments.append(selected_providers)
                 selected_provider_to_all = np.multiply(selected_providers,available_providers)
                 if env.max_menu_size<=50 and np.sum(selected_provider_to_all) > env.max_menu_size:
                     indices = np.where(selected_provider_to_all == 1)[0]  # Get indices of elements that are 1
@@ -345,7 +357,7 @@ def run_heterogenous_policy(env,policy,seed,num_trials,per_epoch_function=None,s
     
     print("Took {} time".format(time_taken))
 
-    return all_trials_workload, patient_results, initial_workloads, final_workloads, matches_per
+    return all_trials_workload, patient_results, initial_workloads, final_workloads, matches_per, all_assortments, regret
 
 
 def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None):
@@ -366,6 +378,8 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None):
     
     scores = {
         'matches': [],
+        'assortment_sizes': [],
+        'regrets': [],
         'patient_utilities': [], 
         'provider_minimums': [],
         'provider_minimums_all': [],
@@ -406,7 +420,7 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None):
     for seed in seed_list:
         simulator = Simulator(num_patients,num_providers,provider_capacity,choice_model_settings,choice_model,context_dim,max_menu_size,utility_function,order,num_repetitions,previous_patients_per_provider,num_trials,batch_size,assumption_relaxation,seed)
 
-        policy_results, patient_results, initial_workloads, final_workloads, matches_per = run_heterogenous_policy(simulator,policy,seed,num_trials,per_epoch_function=per_epoch_function,second_seed=seed) 
+        policy_results, patient_results, initial_workloads, final_workloads, matches_per, assortments, regrets = run_heterogenous_policy(simulator,policy,seed,num_trials,per_epoch_function=per_epoch_function,second_seed=seed) 
         utilities_by_provider = policy_results
 
         if 'misspecified_theta' in parameters['assumption_relaxation']:
@@ -431,6 +445,9 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None):
             provider_workloads = np.mean(np.array(provider_workloads),axis=0).tolist()
         else:
             provider_workloads = [sum([len(j) for j in i])/len(i) for i in np.array(utilities_by_provider).T]
+
+        scores['assortment_sizes'].append(assortments)
+        scores['regrets'].append(regrets)
 
         scores['initial_workloads'].append(initial_workloads)
         scores['final_workloads'].append(final_workloads)

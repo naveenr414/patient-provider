@@ -41,14 +41,14 @@ is_jupyter = 'ipykernel' in sys.modules
 # +
 if is_jupyter: 
     seed        = 43
-    num_patients = 25
-    num_providers = 25
+    num_patients = 1225
+    num_providers = 700
     provider_capacity = 1
-    top_choice_prob = 0.5
-    true_top_choice_prob = 0.5
+    top_choice_prob = 0.75
+    true_top_choice_prob = 0.75
     choice_model = "uniform_choice"
     exit_option = 0.5
-    utility_function = "normal"
+    utility_function = "semi_synthetic"
     out_folder = "policy_comparison"
     num_repetitions = 1
     num_trials = 100
@@ -57,7 +57,7 @@ if is_jupyter:
     previous_patients_per_provider = 10
     batch_size = 1
     order="custom"
-    assumption_relaxation = "dynamic_lp"
+    assumption_relaxation = ""
     fairness_weight=0
 else:
     parser = argparse.ArgumentParser()
@@ -135,17 +135,20 @@ results['parameters']
 seed_list = [seed]
 # restrict_resources()
 
-if batch_size == 1 and fairness_weight == 0:
+if fairness_weight == 0:
     policy = one_shot_policy
     per_epoch_function = random_policy
     name = "random"
     print("{} policy".format(name))
 
+    results['parameters']['batch_size'] = 1
     rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
 
     results['{}_matches'.format(name)] = rewards['matches']
     results['{}_utilities'.format(name)] = rewards['patient_utilities']
     results['{}_workloads'.format(name)] = rewards['provider_workloads']
+    results['{}_assortment_sizes'.format(name)] = np.mean(rewards['assortment_sizes'])
+    results['{}_regrets'.format(name)] = np.mean(rewards['regrets'])
 
     results['{}_minimums'.format(name)] = rewards['provider_minimums']
     results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
@@ -154,6 +157,8 @@ if batch_size == 1 and fairness_weight == 0:
     results['{}_variance'.format(name)] = rewards['provider_variance']
     results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
     results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
+
+    results['parameters']['batch_size'] = batch_size
 
     print(np.sum(rewards['matches'])/(num_patients*num_repetitions*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_repetitions*num_trials*len(seed_list)))
 
@@ -169,6 +174,8 @@ if batch_size == 1 and fairness_weight == 0:
     results['{}_matches'.format(name)] = rewards['matches']
     results['{}_utilities'.format(name)] = rewards['patient_utilities']
     results['{}_workloads'.format(name)] = rewards['provider_workloads']
+    results['{}_assortment_sizes'.format(name)] = np.mean(rewards['assortment_sizes'])
+    results['{}_regrets'.format(name)] = np.mean(rewards['regrets'])
 
     results['{}_minimums'.format(name)] = rewards['provider_minimums']
     results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
@@ -177,6 +184,7 @@ if batch_size == 1 and fairness_weight == 0:
     results['{}_variance'.format(name)] = rewards['provider_variance']
     results['{}_variance_all'.format(name)] = rewards['provider_variance_all']
     results['{}_workload_diff'.format(name)] = [max(rewards['final_workloads'][0][i])-max(rewards['initial_workloads'][0][i]) for i in range(len(rewards['final_workloads'][0]))]
+    results['{}_matches_per'.format(name)] = rewards['matches_per']
 
     print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
 
@@ -191,6 +199,8 @@ if 2**(num_patients*num_providers)*2**(num_patients)*math.factorial(num_patients
     results['{}_matches'.format(name)] = rewards['matches']
     results['{}_utilities'.format(name)] = rewards['patient_utilities']
     results['{}_workloads'.format(name)] = rewards['provider_workloads']
+    results['{}_assortment_sizes'.format(name)] = np.mean(rewards['assortment_sizes'])
+    results['{}_regrets'.format(name)] = np.mean(rewards['regrets'])
 
     results['{}_minimums'.format(name)] = rewards['provider_minimums']
     results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
@@ -213,6 +223,8 @@ if fairness_weight == 0:
     results['{}_matches'.format(name)] = rewards['matches']
     results['{}_utilities'.format(name)] = rewards['patient_utilities']
     results['{}_workloads'.format(name)] = rewards['provider_workloads']
+    results['{}_assortment_sizes'.format(name)] = np.mean(rewards['assortment_sizes'])
+    results['{}_regrets'.format(name)] = np.mean(rewards['regrets'])
 
     results['{}_minimums'.format(name)] = rewards['provider_minimums']
     results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
@@ -237,6 +249,8 @@ if batch_size == 1:
     results['{}_matches'.format(name)] = rewards['matches']
     results['{}_utilities'.format(name)] = rewards['patient_utilities']
     results['{}_workloads'.format(name)] = rewards['provider_workloads']
+    results['{}_assortment_sizes'.format(name)] = np.mean(rewards['assortment_sizes'])
+    results['{}_regrets'.format(name)] = np.mean(rewards['regrets'])
 
     results['{}_minimums'.format(name)] = rewards['provider_minimums']
     results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
@@ -260,6 +274,8 @@ if assumption_relaxation == "dynamic_lp":
     results['{}_matches'.format(name)] = rewards['matches']
     results['{}_utilities'.format(name)] = rewards['patient_utilities']
     results['{}_workloads'.format(name)] = rewards['provider_workloads']
+    results['{}_assortment_sizes'.format(name)] = np.mean(rewards['assortment_sizes'])
+    results['{}_regrets'.format(name)] = np.mean(rewards['regrets'])
 
     results['{}_minimums'.format(name)] = rewards['provider_minimums']
     results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
@@ -285,6 +301,8 @@ if fairness_weight > 0:
     results['{}_matches'.format(name)] = rewards['matches']
     results['{}_utilities'.format(name)] = rewards['patient_utilities']
     results['{}_workloads'.format(name)] = rewards['provider_workloads']
+    results['{}_assortment_sizes'.format(name)] = np.mean(rewards['assortment_sizes'])
+    results['{}_regrets'.format(name)] = np.mean(rewards['regrets'])
 
     results['{}_minimums'.format(name)] = rewards['provider_minimums']
     results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
@@ -309,6 +327,8 @@ if batch_size == 1 and fairness_weight == 0:
     results['{}_matches'.format(name)] = rewards['matches']
     results['{}_utilities'.format(name)] = rewards['patient_utilities']
     results['{}_workloads'.format(name)] = rewards['provider_workloads']
+    results['{}_assortment_sizes'.format(name)] = np.mean(rewards['assortment_sizes'])
+    results['{}_regrets'.format(name)] = np.mean(rewards['regrets'])
 
     results['{}_minimums'.format(name)] = rewards['provider_minimums']
     results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
@@ -331,6 +351,8 @@ if batch_size == 1 and fairness_weight == 0:
     results['{}_matches'.format(name)] = rewards['matches']
     results['{}_utilities'.format(name)] = rewards['patient_utilities']
     results['{}_workloads'.format(name)] = rewards['provider_workloads']
+    results['{}_assortment_sizes'.format(name)] = np.mean(rewards['assortment_sizes'])
+    results['{}_regrets'.format(name)] = np.mean(rewards['regrets'])
 
     results['{}_minimums'.format(name)] = rewards['provider_minimums']
     results['{}_minimums_all'.format(name)] = rewards['provider_minimums_all']
@@ -342,6 +364,8 @@ if batch_size == 1 and fairness_weight == 0:
     results['{}_matches_per'.format(name)] = rewards['matches_per']
 
     print(np.sum(rewards['matches'])/(num_patients*num_trials*len(seed_list)),np.sum(rewards['patient_utilities'])/(num_patients*num_trials*len(seed_list)))
+
+len(str(results))
 
 # ## Save Data
 

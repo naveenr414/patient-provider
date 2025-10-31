@@ -51,7 +51,7 @@ def objective_fast(z, theta, p, sorted_theta,max_per_provider,lamb=1, smooth_reg
     else:
         result = (1-(1-p)**(torch.maximum(row_sums, torch.tensor(1.0, device=x.device))))
 
-    normalized_x = normalized_x *result 
+    normalized_x = normalized_x *result
 
     sorted_normalized_x = normalized_x.gather(1, sorted_theta)
 
@@ -69,7 +69,7 @@ def objective_fast(z, theta, p, sorted_theta,max_per_provider,lamb=1, smooth_reg
     normalized_x = torch.zeros_like(normalized_x)
     normalized_x.scatter_(1, sorted_theta, scaled_normalized_x)
     # Normalize row-wise
-
+    print(normalized_x)
     prod = p*torch.sum(normalized_x,dim=0)
 
     # Compute numerator for the first term (using normalized x)
