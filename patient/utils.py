@@ -162,7 +162,7 @@ def aggregate_normalize_data(results,baseline=None):
 
     return aggregate_data(results_copy)
 
-def solve_linear_program(weights,max_per_provider,lamb=0):
+def solve_linear_program(weights,max_per_provider):
     """Solve a Linear Program which maximizes weights + balance
     
     Arguments:
@@ -171,30 +171,59 @@ def solve_linear_program(weights,max_per_provider,lamb=0):
         lamb: Weight placed on the balance objective
     
     Returns: List of tuples, pairs of patient-provider matches"""
-
-    N,P = weights.shape 
-
+    N, M_plus_1 = weights.shape 
+    M = M_plus_1 - 1
+    
     m = gp.Model("bipartite_matching")
     m.setParam('OutputFlag', 0)
-    x = m.addVars(N, P, vtype=GRB.BINARY, name="x")
-
-    m.setObjective(gp.quicksum(weights[i, j] * x[i, j] for i in range(N) for j in range(P)), GRB.MAXIMIZE)
-
-    for j in range(P):
-        m.addConstr(gp.quicksum(x[i, j] for i in range(N)) <= max_per_provider, name=f"match_{j}_limit")
-
+    
+    # Binary variables for matching (decision variables)
+    x = m.addVars(N, M, vtype=GRB.BINARY, name="x")
+    
+    # Auxiliary variables w_i - these are NOT decision variables, they're automatically
+    # determined by the constraints below to be max(matching reward, outside option)
+    w = m.addVars(N, vtype=GRB.CONTINUOUS, name="w", lb=-GRB.INFINITY)
+    
+    # Objective: maximize sum of w_i
+    m.setObjective(gp.quicksum(w[i] for i in range(N)), GRB.MAXIMIZE)
+    
+    # Constraints: w_i >= sum_j weights[i,j] * x[i,j] (matching reward)
     for i in range(N):
-        m.addConstr(gp.quicksum(x[i, j] for j in range(P)) <= 1, name=f"match_{j}")
-
+        m.addConstr(w[i] >= gp.quicksum(weights[i, j] * x[i, j] for j in range(M)), 
+                   name=f"w_match_{i}")
+    
+    # Constraints: w_i >= weights[i,M] (outside option)
+    for i in range(N):
+        m.addConstr(w[i] >= weights[i, M], name=f"w_outside_{i}")
+    
+    # Upper bound: w_i <= sum_j weights[i,j] * x[i,j] + weights[i,M] * (1 - sum_j x[i,j])
+    # This ensures w_i equals the matching reward if matched, or outside option if not matched
+    for i in range(N):
+        m.addConstr(
+            w[i] <= gp.quicksum(weights[i, j] * x[i, j] for j in range(M)) + 
+                    weights[i, M] * (1 - gp.quicksum(x[i, j] for j in range(M))),
+            name=f"w_upper_{i}"
+        )
+    
+    # Provider capacity constraints
+    for j in range(M):
+        m.addConstr(gp.quicksum(x[i, j] for i in range(N)) <= max_per_provider, 
+                   name=f"provider_{j}_capacity")
+    
+    # Each patient matches with at most one provider
+    for i in range(N):
+        m.addConstr(gp.quicksum(x[i, j] for j in range(M)) <= 1, 
+                   name=f"patient_{i}_single_match")
+    
     m.optimize()
-
+        
     # Extract the solution
     solution = []
     for i in range(N):
-        for j in range(P):
+        for j in range(M):
             if x[i, j].X > 0.5:
                 solution.append((i, j))
-    return solution 
+    return solution
 
 
 

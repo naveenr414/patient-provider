@@ -2,9 +2,10 @@ import random
 import numpy as np 
 import itertools
 import math
+from patient.utils import solve_linear_program
 
 
-def random_policy(simulator):
+def random_policy(weights,max_per_provider):
     """Randomly give a menu of available providers
     
     Arguments:
@@ -12,23 +13,13 @@ def random_policy(simulator):
         provider_capacities: List of integers, how much space each provider has
         
     Returns: List of integers, 0-1 vector of which providers to show """
-    random_matrix = np.random.random((simulator.num_patients,simulator.num_providers))
+    N,M = weights.shape
+    M-=1
+    random_matrix = np.random.random((N,M))
     random_provider = np.round(random_matrix)
     return random_provider 
 
-def all_ones_policy(simulator):
-    """A policy which shows all providers
-    
-    Arguments:
-        patient: Patient object with information on their utilities
-        provider_capacities: List of integers, how much space each provider has
-        
-    Returns: List of integers, which providers to show them """
-
-    ret = np.ones((simulator.num_patients,simulator.num_providers))
-    return ret 
-
-def greedy_policy(simulator):
+def greedy_policy(weights,max_per_provider):
     """A policy which shows providers greedily
         This shows the top based on the utility
     
@@ -37,20 +28,10 @@ def greedy_policy(simulator):
         provider_capacities: List of integers, how much space each provider has
         
     Returns: List of integers, which providers to show them """
+    N,M = weights.shape
+    M-=1
 
-    if simulator.max_menu_size >= simulator.num_providers:
-        return np.ones((simulator.num_patients,simulator.num_providers))
-
-    all_menus = []
-
-    for patient in simulator.patients:
-        utilities = patient.provider_rewards
-        menu = np.zeros(simulator.num_providers)
-        top_menu = np.argsort(utilities)[-simulator.max_menu_size:][::-1]
-        menu[top_menu] = 1
-        all_menus.append(menu)
-    return np.array(all_menus)
-
+    return np.ones((N,M))
 
 
 def get_all_menus(N, M):
@@ -65,7 +46,7 @@ def get_all_menus(N, M):
     binary_strings = itertools.product([0, 1], repeat=N * M)
     return [np.array(arr).reshape(N, M) for arr in binary_strings]
 
-def optimal_policy(simulator):
+def optimal_policy(weights,max_per_provider):
     """The optimal policy; we compute this by iterating through
         all combinations of policies and selecting the best one
     
@@ -75,44 +56,12 @@ def optimal_policy(simulator):
         
     Returns: List of integers, which providers to show them """
 
-    p = simulator.choice_model_settings['top_choice_prob']
-
-    weights = [p.provider_rewards for p in simulator.patients]
-    weights = np.array(weights)
-    N = len(simulator.patients)
-    M = weights.shape[1]
-
-    all_orders = list(itertools.permutations(list(range(N))))
-    all_selections = list(itertools.product([0, 1], repeat=N))
-    probabilities = [p**(sum(i))*(1-p)**(N-sum(i)) for i in all_selections]
-
-    scores = []
-    all_menus = get_all_menus(N,M)
-
-    for j,menu in enumerate(all_menus):
-        total_reward = 0
-        for ordering in all_orders:
-            for s in range(len(all_selections)):
-                selection = all_selections[s] 
-                simulated_available_providers = np.ones(M)
-
-                score = 0
-                for i in range(N):
-                    curr_patient = ordering[i]
-                    available_providers = menu[curr_patient]*simulated_available_providers
-                    
-                    if np.sum(available_providers) == 0 or selection[i] == 0:
-                        continue 
-                    available_providers *= weights[curr_patient]
-                    selected_provider = np.argmax(available_providers)
-                    score += available_providers[selected_provider]
-                    simulated_available_providers[selected_provider] = 0
-
-                score *= probabilities[s]/(math.factorial(N))
-                total_reward += score 
-        scores.append(total_reward)
-    scores = np.array(scores)
-    scores/=N 
-    best_menu = np.argmax(scores)
-    menu = all_menus[best_menu]
-    return menu 
+    N,M = weights.shape 
+    M -= 1 
+    lp_solution = solve_linear_program(weights,max_per_provider)
+    assortment = np.zeros((N,M))
+    
+    for (i,j) in lp_solution:
+        assortment[i,j] = 1
+    
+    return np.array(assortment)
