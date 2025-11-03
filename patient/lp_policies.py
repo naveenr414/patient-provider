@@ -4,16 +4,18 @@ import gurobipy as gp
 from gurobipy import GRB
 import itertools 
 
-def lp_policy(weights,max_per_provider):
+def lp_policy(parameters):
     """Policy which selects according to the LP, in an offline fashion
     
     Arguments:
         simulator: Simulator for patient-provider matching
     
     Returns: List of providers on the menu"""
+    weights = parameters['weights']
+    capacities = parameters['capacities']
     N,M = weights.shape 
     M -= 1 
-    lp_solution = solve_linear_program(weights,max_per_provider)
+    lp_solution = solve_linear_program(weights,capacities)
     assortment = np.zeros((N,M))
     
     for (i,j) in lp_solution:

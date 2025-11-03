@@ -1,7 +1,6 @@
 from patient.lp_policies import *
 import numpy as np 
 from patient.utils import solve_linear_program
-from patient.lp_policies import compute_swap_scores, add_swap_matches
 import gurobipy as gp
 from gurobipy import GRB
 

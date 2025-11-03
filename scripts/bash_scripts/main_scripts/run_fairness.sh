@@ -9,8 +9,8 @@ tmux send-keys -t patient_fairness "cd scripts/notebooks" ENTER
 tmux send-keys -t patient_fairness "export PYTHONWARNINGS='ignore'" ENTER
 tmux send-keys -t patient_fairness "export GYMNASIUM_DISABLE_WARNINGS=1" ENTER
 
-N=300
-M=150
+N=1225
+M=700
 
 for seed in 43 
 do 

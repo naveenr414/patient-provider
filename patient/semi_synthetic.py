@@ -47,7 +47,7 @@ def get_age_costs(ages,age_buckets):
 
     return cost_per_age
 
-def generate_semi_synthetic_theta_workload(num_patients,num_providers,comorbidities=False):
+def generate_semi_synthetic_theta_workload(num_patients,num_providers,comorbidities=False,average_distance = 20.2):
     """Generate a semi synthetic dataset based on medicare
     Sample providers from the medicare dataset, and place
     patients randomly in different locations in CT
@@ -59,12 +59,12 @@ def generate_semi_synthetic_theta_workload(num_patients,num_providers,comorbidit
     Returns: Two things: 
         1) \theta, Numpy array of size num_patients x num_providers
         2) workload, patient-by-patient workloads"""
-    
     medicare_data = pd.read_csv("../../data/medicare_data.csv")
     zipcode_data = pd.read_csv("../../data/connecticut_zipcode.csv")
     age_distro = pd.read_csv("../../data/ct_age.csv")
     zip_code_distances = json.load(open("../../data/ct_zipcode_distance.json"))
     theta = np.zeros((num_patients,num_providers))
+
 
     ct_data = medicare_data[medicare_data['State'] == 'CT']
     ct_data = ct_data[ct_data['sec_spec_all'].str.contains('INTERNAL MEDICINE|GENERAL PRACTICE|FAMILY', case=False, na=False)]
@@ -106,14 +106,14 @@ def generate_semi_synthetic_theta_workload(num_patients,num_providers,comorbidit
             random_patients.append({'age': age, 'location': location})
 
     for i in range(num_patients):
-        max_distance = np.random.poisson(20.2)
+        max_distance = np.random.poisson(average_distance)
         beta = max_distance/2
         our_zip = random_patients[i]
         noise = np.random.normal(0,0.1)
         for j in range(len(downsample_ct_data)):
             other_zip = str(downsample_ct_data.iloc[j,:]['ZIP Code'])
             other_zip = (('0'*(9-len(other_zip)) + other_zip)[:5])
-            distance = zip_code_distances[str((our_zip['location'], other_zip))]
+            distance = zip_code_distances[str((str(our_zip['location']), other_zip))]
             distance += 0.01
             if distance <= max_distance:
                 distance_utility = min(max(beta/distance + noise,0),1)

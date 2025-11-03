@@ -1,11 +1,9 @@
-import random 
 import numpy as np 
 import itertools
-import math
-from patient.utils import solve_linear_program
+from patient.utils import solve_linear_program, solve_linear_program_online
 
 
-def random_policy(weights,max_per_provider):
+def random_policy(parameters):
     """Randomly give a menu of available providers
     
     Arguments:
@@ -13,13 +11,14 @@ def random_policy(weights,max_per_provider):
         provider_capacities: List of integers, how much space each provider has
         
     Returns: List of integers, 0-1 vector of which providers to show """
+    weights = parameters['weights']
     N,M = weights.shape
     M-=1
     random_matrix = np.random.random((N,M))
     random_provider = np.round(random_matrix)
     return random_provider 
 
-def greedy_policy(weights,max_per_provider):
+def greedy_policy(parameters):
     """A policy which shows providers greedily
         This shows the top based on the utility
     
@@ -28,6 +27,8 @@ def greedy_policy(weights,max_per_provider):
         provider_capacities: List of integers, how much space each provider has
         
     Returns: List of integers, which providers to show them """
+    weights = parameters['weights']
+
     N,M = weights.shape
     M-=1
 
@@ -46,7 +47,12 @@ def get_all_menus(N, M):
     binary_strings = itertools.product([0, 1], repeat=N * M)
     return [np.array(arr).reshape(N, M) for arr in binary_strings]
 
-def optimal_policy(weights,max_per_provider):
+def get_fair_optimal_policy(fairness_constraint,seed):
+    def policy(parameters):
+        return optimal_policy(parameters,fairness_constraint=fairness_constraint,seed=seed)
+    return policy 
+
+def optimal_policy(parameters,fairness_constraint=-1,seed=43):
     """The optimal policy; we compute this by iterating through
         all combinations of policies and selecting the best one
     
@@ -55,10 +61,17 @@ def optimal_policy(weights,max_per_provider):
         provider_capacities: List of integers, how much space each provider has
         
     Returns: List of integers, which providers to show them """
+    weights = parameters['weights']
+    capacities = parameters['capacities']
+    online_arrival = parameters['online_arrival']
 
     N,M = weights.shape 
     M -= 1 
-    lp_solution = solve_linear_program(weights,max_per_provider)
+
+    if online_arrival:
+        lp_solution = solve_linear_program_online(weights,capacities)
+    else:
+        lp_solution = solve_linear_program(weights,capacities,fairness_constraint=fairness_constraint,seed=seed)
     assortment = np.zeros((N,M))
     
     for (i,j) in lp_solution:

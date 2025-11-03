@@ -43,11 +43,12 @@ if is_jupyter:
     noise = 0.5
     fairness_constraint = -1
     num_trials = 10
-    utility_function = "uniform"
+    utility_function = "semi_synthetic_comorbidity"
     order="uniform"
     online_arrival = False  
     new_provider = True 
     out_folder = "policy_comparison"
+    average_distance = 15
 else:
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', help='Random Seed', type=int, default=42)
@@ -55,6 +56,7 @@ else:
     parser.add_argument('--n_providers',        help='Number of providers', type=int, default=100)
     parser.add_argument('--provider_capacity', help='Provider Capacity', type=int, default=1)
     parser.add_argument('--noise', help='Noise in theta', type=float, default=0.1)
+    parser.add_argument('--average_distance', help='Maximum distance patients are willing to go', type=float, default=20.2)
     parser.add_argument('--fairness_constraint', help='Maximum difference in average utility between groups', type=float, default=-1)
     parser.add_argument('--num_trials', help='Number of trials', type=int, default=100)
     parser.add_argument('--utility_function', help='Which folder to write results to', type=str, default='uniform')
@@ -70,6 +72,7 @@ else:
     num_providers = args.n_providers 
     num_trials = args.num_trials
     noise = args.noise
+    average_distance = args.average_distance
     fairness_constraint = args.fairness_constraint
     provider_capacity = args.provider_capacity
     utility_function = args.utility_function
@@ -91,6 +94,7 @@ results['parameters'] = {'seed'      : seed,
         'order': order, 
         'num_trials': num_trials, 
         'noise': noise, 
+        'average_distance': average_distance,
         'online_arrival': online_arrival,
         'new_provider': new_provider,
         'fairness_constraint': fairness_constraint} 
@@ -99,6 +103,30 @@ results['parameters'] = {'seed'      : seed,
 
 seed_list = [seed]
 restrict_resources()
+
+# # +
+# policy = one_shot_policy
+# per_epoch_function = random_policy
+# name = "random"
+# print("{} policy".format(name))
+
+# rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+
+# for key in rewards:
+#     results['{}_{}'.format(name,key)] = rewards[key]
+# print("Matches {}, Utilities {}".format(np.mean(results['random_num_matches'])/num_patients,np.mean(results['random_patient_utilities'])))
+
+# # +
+# policy = one_shot_policy
+# per_epoch_function = greedy_policy
+# name = "greedy"
+# print("{} policy".format(name))
+
+# rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+
+# for key in rewards:
+#     results['{}_{}'.format(name,key)] = rewards[key]
+# print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
 
 # +
 policy = one_shot_policy
@@ -116,6 +144,19 @@ for key in rewards:
 print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
 # -
 
+# ## Optimization-Based
+
+# +
+# policy = one_shot_policy
+# per_epoch_function = lp_policy
+# name = "lp"
+# print("{} policy".format(name))
+
+# rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+
+# for key in rewards:
+#     results['{}_{}'.format(name,key)] = rewards[key]
+# print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
 
 # +
 # policy = one_shot_policy
