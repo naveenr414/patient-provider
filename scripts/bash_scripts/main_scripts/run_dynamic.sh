@@ -14,7 +14,6 @@ M=700
 
 for seed in 43 
 do 
-    # tmux send-keys -t patient_dynamic "conda activate ${environment}; python -u all_policies.py --seed ${seed} --n_patients ${N} --n_providers ${M} --provider_capacity 1 --noise 0.1 --num_trials 100 --utility_function semi_synthetic_comorbidity --order uniform  --out_folder dynamic --online_arrival >> ${LOGFILE} 2>&1"  ENTER 
-    tmux send-keys -t patient_dynamic "conda activate ${environment}; python -u all_policies.py --seed ${seed} --n_patients ${N} --n_providers ${M} --provider_capacity 1 --noise 0.1 --num_trials 100 --utility_function semi_synthetic_comorbidity --order uniform  --out_folder dynamic --new_provider >> ${LOGFILE} 2>&1"  ENTER 
-
+    tmux send-keys -t patient_dynamic "conda activate ${environment}; python -u all_policies.py --seed ${seed} --n_patients ${N} --n_providers ${M} --provider_capacity 1 --noise 0.1 --num_trials 100 --utility_function semi_synthetic_comorbidity --order uniform  --out_folder dynamic --online_arrival >> ${LOGFILE} 2>&1"  ENTER 
+    # tmux send-keys -t patient_dynamic "conda activate ${environment}; python -u all_policies.py --seed ${seed} --n_patients ${N} --n_providers ${M} --provider_capacity 1 --noise 0.1 --num_trials 100 --utility_function semi_synthetic_comorbidity --order uniform  --out_folder dynamic --new_provider >> ${LOGFILE} 2>&1"  ENTER 
 done 
