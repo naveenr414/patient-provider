@@ -37,18 +37,18 @@ is_jupyter = 'ipykernel' in sys.modules
 # +
 if is_jupyter: 
     seed        = 43
-    num_patients = 20
-    num_providers = 20
+    num_patients = 5
+    num_providers = 5
     provider_capacity = 1
-    noise = 0.5
+    noise = 0
     fairness_constraint = -1
     num_trials = 10
-    utility_function = "semi_synthetic_comorbidity"
+    utility_function = "normal"
     order="uniform"
     online_arrival = False  
-    new_provider = True 
+    new_provider = False 
     out_folder = "policy_comparison"
-    average_distance = 15
+    average_distance = 20.2
 else:
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', help='Random Seed', type=int, default=42)
@@ -128,25 +128,25 @@ restrict_resources()
 #     results['{}_{}'.format(name,key)] = rewards[key]
 # print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
 
-# +
-policy = one_shot_policy
-if fairness_constraint != -1:
-    per_epoch_function = get_fair_optimal_policy(fairness_constraint,seed)
-else:
-    per_epoch_function = optimal_policy
-name = "omniscient_optimal"
-print("{} policy".format(name))
+# # +
+# policy = one_shot_policy
+# if fairness_constraint != -1:
+#     per_epoch_function = get_fair_optimal_policy(fairness_constraint,seed)
+# else:
+#     per_epoch_function = optimal_policy
+# name = "omniscient_optimal"
+# print("{} policy".format(name))
 
-rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function,use_real=True)
+# rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function,use_real=True)
 
-for key in rewards:
-    results['{}_{}'.format(name,key)] = rewards[key]
-print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
+# for key in rewards:
+#     results['{}_{}'.format(name,key)] = rewards[key]
+# print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
 # -
 
-# ## Optimization-Based
+# # ## Optimization-Based
 
-# +
+# # +
 # policy = one_shot_policy
 # per_epoch_function = lp_policy
 # name = "lp"
@@ -159,28 +159,19 @@ print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(
 # print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
 
 # +
-# policy = one_shot_policy
-# per_epoch_function = gradient_policy
-# name = "gradient_descent"
-# print("{} policy".format(name))
+policy = one_shot_policy
+if fairness_constraint != -1:
+    per_epoch_function = get_gradient_policy(num_patients,num_providers,fairness_constraint,seed)
+else:
+    per_epoch_function = gradient_policy
+name = "gradient_descent"
+print("{} policy".format(name))
 
-# rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function,use_real=True)
 
-# for key in rewards:
-#     results['{}_{}'.format(name,key)] = rewards[key]
-# print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
-
-# +
-# policy = one_shot_policy
-# per_epoch_function = gradient_policy_fast
-# name = "gradient_descent_fast"
-# print("{} policy".format(name))
-
-# rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
-
-# for key in rewards:
-#     results['{}_{}'.format(name,key)] = rewards[key]
-# print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
+for key in rewards:
+    results['{}_{}'.format(name,key)] = rewards[key]
+print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
 # -
 
 # ## Save Data

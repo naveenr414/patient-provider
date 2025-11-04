@@ -1,8 +1,222 @@
 random policy
-Matches 0.5714285714285714, Utilities 0.5417657485870142
+Matches 0.5600163265306123, Utilities 0.5368631963944689
 greedy policy
-Matches 0.5714285714285714, Utilities 0.5432003335336808
+Matches 0.5619428571428572, Utilities 0.5393453096910957
 omniscient_optimal policy
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+Matches 0.5689795918367347, Utilities 0.5537987358776663
+lp policy
+Matches 0.5689795918367347, Utilities 0.5399604345338236
+gradient_descent policy
+Matches 0.5622938775510203, Utilities 0.5391696220061909
+random policy
+On trial 0
+On trial 1
+On trial 2
+On trial 3
+On trial 4
+On trial 5
+On trial 6
+On trial 7
+On trial 8
+On trial 9
+On trial 10
+On trial 11
+On trial 12
+On trial 13
+On trial 14
+On trial 15
+On trial 16
+On trial 17
+On trial 18
+On trial 19
+On trial 20
+On trial 21
+On trial 22
+On trial 23
+On trial 24
+On trial 25
+On trial 26
+On trial 27
+On trial 28
+On trial 29
+On trial 30
+On trial 31
+On trial 32
+On trial 33
+On trial 34
+On trial 35
+On trial 36
+On trial 37
+On trial 38
+On trial 39
+On trial 40
+On trial 41
+On trial 42
+On trial 43
+On trial 44
+On trial 45
+On trial 46
+On trial 47
+On trial 48
+On trial 49
+On trial 50
+On trial 51
+On trial 52
+On trial 53
+On trial 54
+On trial 55
+On trial 56
+On trial 57
+On trial 58
+On trial 59
+On trial 60
+On trial 61
+On trial 62
+On trial 63
+On trial 64
+On trial 65
+On trial 66
+On trial 67
+On trial 68
+On trial 69
+On trial 70
+On trial 71
+On trial 72
+On trial 73
+On trial 74
+On trial 75
+On trial 76
+On trial 77
+On trial 78
+On trial 79
+On trial 80
+On trial 81
+On trial 82
+On trial 83
+On trial 84
+On trial 85
+On trial 86
+On trial 87
+On trial 88
+On trial 89
+On trial 90
+On trial 91
+On trial 92
+On trial 93
+On trial 94
+On trial 95
+On trial 96
+On trial 97
+On trial 98
+On trial 99
+Matches 0.5609142857142857, Utilities 0.532812464938401
+greedy policy
+On trial 0
+On trial 1
+On trial 2
+On trial 3
+On trial 4
+On trial 5
+On trial 6
+On trial 7
+On trial 8
+On trial 9
+On trial 10
+On trial 11
+On trial 12
+On trial 13
+On trial 14
+On trial 15
+On trial 16
+On trial 17
+On trial 18
+On trial 19
+On trial 20
+On trial 21
+On trial 22
+On trial 23
+On trial 24
+On trial 25
+On trial 26
+On trial 27
+On trial 28
+On trial 29
+On trial 30
+On trial 31
+On trial 32
+On trial 33
+On trial 34
+On trial 35
+On trial 36
+On trial 37
+On trial 38
+On trial 39
+On trial 40
+On trial 41
+On trial 42
+On trial 43
+On trial 44
+On trial 45
+On trial 46
+On trial 47
+On trial 48
+On trial 49
+On trial 50
+On trial 51
+On trial 52
+On trial 53
+On trial 54
+On trial 55
+On trial 56
+On trial 57
+On trial 58
+On trial 59
+On trial 60
+On trial 61
+On trial 62
+On trial 63
+On trial 64
+On trial 65
+On trial 66
+On trial 67
+On trial 68
+On trial 69
+On trial 70
+On trial 71
+On trial 72
+On trial 73
+On trial 74
+On trial 75
+On trial 76
+On trial 77
+On trial 78
+On trial 79
+On trial 80
+On trial 81
+On trial 82
+On trial 83
+On trial 84
+On trial 85
+On trial 86
+On trial 87
+On trial 88
+On trial 89
+On trial 90
+On trial 91
+On trial 92
+On trial 93
+On trial 94
+On trial 95
+On trial 96
+On trial 97
+On trial 98
+On trial 99
+Matches 0.5625061224489797, Utilities 0.5351859595171113
+omniscient_optimal policy
+On trial 0
 Set parameter Username
 Set parameter LicenseID to value 2709943
 Academic license - for non-commercial use only - expires 2026-09-17

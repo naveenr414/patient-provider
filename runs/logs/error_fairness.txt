@@ -1,35 +1,14 @@
-omniscient_optimal policy
-Set parameter Username
-Set parameter LicenseID to value 2709943
-Academic license - for non-commercial use only - expires 2026-09-17
-Matches 0.5159183673469387, Utilities 0.5030131603440627
-omniscient_optimal policy
-Set parameter Username
-Set parameter LicenseID to value 2709943
-Academic license - for non-commercial use only - expires 2026-09-17
-Matches 0.5706122448979591, Utilities 0.537653871505029
-omniscient_optimal policy
-Set parameter Username
-Set parameter LicenseID to value 2709943
-Academic license - for non-commercial use only - expires 2026-09-17
-Matches 0.5714285714285714, Utilities 0.5504417931534112
-omniscient_optimal policy
-Set parameter Username
-Set parameter LicenseID to value 2709943
-Academic license - for non-commercial use only - expires 2026-09-17
-Matches 0.5714285714285714, Utilities 0.5516573749717526
-omniscient_optimal policy
-Set parameter Username
-Set parameter LicenseID to value 2709943
-Academic license - for non-commercial use only - expires 2026-09-17
-Matches 0.5714285714285714, Utilities 0.5516573749717525
-omniscient_optimal policy
-Set parameter Username
-Set parameter LicenseID to value 2709943
-Academic license - for non-commercial use only - expires 2026-09-17
-Matches 0.5714285714285714, Utilities 0.5516573749717526
-omniscient_optimal policy
-Set parameter Username
-Set parameter LicenseID to value 2709943
-Academic license - for non-commercial use only - expires 2026-09-17
-Matches 0.5714285714285714, Utilities 0.5516573749717525
+gradient_descent policy
+Matches 0.1063265306122449, Utilities 0.3016066063478946
+gradient_descent policy
+Matches 0.1063265306122449, Utilities 0.3016066063478946
+gradient_descent policy
+Matches 0.5625061224489797, Utilities 0.5351859595171113
+gradient_descent policy
+Matches 0.5625061224489797, Utilities 0.5351859595171113
+gradient_descent policy
+Matches 0.5625061224489797, Utilities 0.5351859595171113
+gradient_descent policy
+Matches 0.5625061224489797, Utilities 0.5351859595171113
+gradient_descent policy
+Matches 0.5625061224489797, Utilities 0.5351859595171113

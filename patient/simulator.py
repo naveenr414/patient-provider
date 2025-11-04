@@ -174,6 +174,8 @@ def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=No
     new_providers = []
 
     for trial_num in range(num_trials):
+        if online_arrival:
+            print("On trial {}".format(trial_num))
         env.num_providers = M 
         env.num_patients = N
         env.reset_patient_order(trial_num)
@@ -182,7 +184,6 @@ def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=No
         
         unmatched_patients = []
         patient_results_trial = []
-        patient_to_idx = {}
 
         memory = None 
                 
@@ -196,9 +197,9 @@ def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=No
             new_providers.append(-1)
         available_providers = (np.array(env.provider_capacities) > 0).astype(int)
 
+        patient_results_trial = [() for i in range(env.num_patients)]
         for t in range(env.num_patients):
             current_patient = env.all_patients[env.patient_order[t]]
-            patient_to_idx[env.patient_order[t]] = t
 
             # Get policy decision
             if online_arrival:
@@ -225,29 +226,21 @@ def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=No
             chosen_provider = env.step(env.patient_order[t], selected_provider_to_all)
             
             # Record results
-            if np.sum(selected_provider_to_all) == 0:
-                # No providers available - patient unmatched
-                patient_results_trial.append((chosen_provider, -0.01))
-                unmatched_patients.append(env.patient_order[t])
-            elif chosen_provider >= 0:
-                # Successful match
-                reward = current_patient.provider_rewards[chosen_provider]
-                if new_provider_mode:
-                    patient_results_trial.append((chosen_provider, chosen_provider,reward))
-                else:
-                    patient_results_trial.append((chosen_provider, reward))
-                
-                # Update availability if capacity reached
-                if env.provider_capacities[chosen_provider] == 0:
-                    available_providers[chosen_provider] = 0
+            reward = current_patient.provider_rewards[chosen_provider]
+            if new_provider_mode:
+                patient_results_trial[env.patient_order[t]] = (chosen_provider, chosen_provider,reward)
             else:
-                raise Exception("Chosen Provider is negative")
+                patient_results_trial[env.patient_order[t]] = (chosen_provider, reward)
+            
+            # Update availability if capacity reached
+            if env.provider_capacities[chosen_provider] == 0:
+                available_providers[chosen_provider] = 0
             env.unmatched_patients = unmatched_patients
         if new_provider_mode:
             env.provider_capacities[new_provider_idx] = available_providers[new_provider_idx] = int(round(np.sqrt(N)))
             new_weights = np.zeros((N,3))
             for idx,i in enumerate(patient_results_trial):
-                new_weights[env.patient_order[idx],0] = i[2]
+                new_weights[idx,0] = i[2]
             new_weights[:,1] = weights[:,new_provider_idx]
 
             new_capacities = [N,env.provider_capacities[new_provider_idx]]
@@ -267,15 +260,15 @@ def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=No
                 assert len(selected_providers) == 2, "Expected 2 providers in new-provider stage"
 
                 selected_provider_to_all = np.array(selected_providers) * np.array([1, available_providers[new_provider_idx]])
-
                 current_reward = new_weights[env.patient_order[t], 0]
 
 
                 # Record results
                 if current_patient.provider_rewards[new_provider_idx] > current_reward and available_providers[new_provider_idx] > 0:
                     reward = current_patient.provider_rewards[new_provider_idx]
-                    old_provider = patient_results_trial[patient_to_idx[env.patient_order[t]]][0]
-                    patient_results_trial[patient_to_idx[env.patient_order[t]]] = (old_provider,np.int64(new_provider_idx),current_reward,reward)
+
+                    old_provider = patient_results_trial[env.patient_order[t]][0]
+                    patient_results_trial[env.patient_order[t]] = (old_provider,np.int64(new_provider_idx),current_reward,reward)
                     env.provider_capacities[new_provider_idx] -= 1
                     available_providers[new_provider_idx] -= 1
 

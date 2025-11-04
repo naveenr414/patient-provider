@@ -1,11 +1,13 @@
 random policy
-Matches 0.5708489795918367, Utilities 0.5383071718217923
+Matches 0.5607102040816326, Utilities 0.5325980366425086
 greedy policy
-Matches 0.5713061224489796, Utilities 0.5399556561515131
+Matches 0.5625061224489797, Utilities 0.5351859595171113
 omniscient_optimal policy
 Set parameter Username
 Set parameter LicenseID to value 2709943
 Academic license - for non-commercial use only - expires 2026-09-17
-Matches 0.5714285714285714, Utilities 0.5516573749717525
+Matches 0.5697959183673469, Utilities 0.5508076015452822
 lp policy
-Matches 0.5714285714285714, Utilities 0.5383430883683157
+Matches 0.5697959183673469, Utilities 0.5364071161644592
+gradient_descent policy
+Matches 0.5625061224489797, Utilities 0.5351859595171113
