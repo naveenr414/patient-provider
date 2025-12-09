@@ -3,7 +3,7 @@ import itertools
 from patient.utils import solve_linear_program, solve_linear_program_online
 
 
-def random_policy(parameters):
+def offer_everything(parameters):
     """Randomly give a menu of available providers
     
     Arguments:
@@ -14,8 +14,7 @@ def random_policy(parameters):
     weights = parameters['weights']
     N,M = weights.shape
     M-=1
-    random_matrix = np.random.random((N,M))
-    random_provider = np.round(random_matrix)
+    random_provider = np.ones((N,M))
     return random_provider 
 
 def greedy_policy(parameters):
@@ -28,12 +27,18 @@ def greedy_policy(parameters):
         
     Returns: List of integers, which providers to show them """
     weights = parameters['weights']
+    max_shown = parameters['max_shown']
 
-    N,M = weights.shape
-    M-=1
+    N, M_plus1 = weights.shape
+    M = M_plus1 - 1  # ignore last column
+    mask = np.zeros((N,M), dtype=int)
+    
+    for i in range(N):
+        row = weights[i, :M]
+        top_idx = np.argpartition(-row, min(max_shown, M)-1)[:min(max_shown, M)]
+        mask[i, top_idx] = 1
 
-    return np.ones((N,M))
-
+    return mask
 
 def get_all_menus(N, M):
     """Given N patients and M providers, find all the 0-1 combinations

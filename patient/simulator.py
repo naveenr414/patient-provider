@@ -8,12 +8,23 @@ from patient.semi_synthetic import generate_semi_synthetic_theta_workload
 import os
 import json
 
+
+def create_random_weights(weights,epsilon):
+    noisy = weights + np.random.uniform(-epsilon, epsilon, weights.shape)
+    noisy = np.clip(noisy, 0, 1)
+    margin = 1e-6   # much larger than bonus
+    noisy = margin + (1 - 2*margin) * noisy
+    bonus_eps = 1e-12
+    J = weights.shape[1]
+    bonus = bonus_eps * np.arange(J)[None, :]
+    noisy = noisy + bonus
+    return noisy 
+
 class Patient:
     """Class to represent the Patient and their information"""
 
     def __init__(self, provider_rewards, idx):
         self.provider_rewards = provider_rewards
-        self.all_provider_rewards = provider_rewards
         self.idx = idx 
     
     def get_random_outcome(self, menu):
@@ -25,7 +36,7 @@ class Patient:
         Returns: Integer, -1 is exit
             And other numbers signify a particular provider"""
 
-        provider_probs = np.where(menu == 1, self.all_provider_rewards, -1)
+        provider_probs = np.where(menu == 1, self.provider_rewards, -1)
         max_loc = np.argmax(provider_probs)
         return max_loc 
 
@@ -33,7 +44,7 @@ class Simulator():
     """Simulator class that allows for evaluation of policies
         Both with and without re-entry"""
 
-    def __init__(self,num_patients,num_providers,provider_capacity,num_trials,utility_function,order,noise,online_arrival,new_provider,average_distance,seed):
+    def __init__(self,num_patients,num_providers,provider_capacity,num_trials,utility_function,order,noise,online_arrival,new_provider,average_distance,max_shown,seed):
         self.num_patients = num_patients
         self.num_providers = num_providers
         self.provider_max_capacity = provider_capacity
@@ -47,6 +58,7 @@ class Simulator():
         self.online_arrival = online_arrival
         self.new_provider = new_provider
         self.average_distance = average_distance
+        self.max_shown = max_shown 
 
     def step(self,patient_num,provider_list):
         """Update the workload by provider, after a patient receives a menu
@@ -72,7 +84,7 @@ class Simulator():
             else:
                 self.patient_order = self.custom_patient_order[trial_num]
         elif self.order == "proportional":
-            max_rewards = [np.mean(i.all_provider_rewards) for i in self.all_patients]
+            max_rewards = [np.mean(i.provider_rewards) for i in self.all_patients]
             max_rewards = np.array(max_rewards)/np.sum(max_rewards)
             self.patient_order = np.random.choice(list(range(len(max_rewards))), size=len(max_rewards), replace=False, p=max_rewards)
 
@@ -156,19 +168,16 @@ def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=No
     time_taken = 0
     
     per_epoch_results = None 
-    weights = [p.provider_rewards for p in env.all_patients]
-    weights = np.array(weights)
-    noise = env.noise 
-    weight_noisy = weights+np.random.normal(0,noise,weights.shape)
-    weight_noisy = np.clip(weight_noisy,0,1)
+    weights_noisy = [p.provider_rewards for p in env.all_patients]
+    weights_noisy = np.array(weights_noisy)
 
-    if per_epoch_function is not None and not online_arrival:
-        if use_real:
-            parameters = {'weights': weights, 'capacities': env.provider_capacities, 'online_arrival': env.online_arrival}
-            per_epoch_results = per_epoch_function(parameters)
-        else:
-            parameters = {'weights': weight_noisy, 'capacities': env.provider_capacities, 'online_arrival': env.online_arrival}
-            per_epoch_results = per_epoch_function(parameters)
+    if per_epoch_function is not None and not online_arrival and not use_real:
+        parameters = {'weights': weights_noisy, 
+                        'capacities': env.provider_capacities, 
+                        'online_arrival': env.online_arrival,
+                        'max_shown': env.max_shown,
+                        'noise': env.noise}
+        per_epoch_results = per_epoch_function(parameters)
     
     new_provider_mode = env.new_provider
     new_providers = []
@@ -180,6 +189,23 @@ def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=No
         env.num_patients = N
         env.reset_patient_order(trial_num)
         env.reset_initial()
+        noise = env.noise 
+        np.random.seed(trial_num)
+        weights = create_random_weights(weights_noisy,noise)
+        env.patient_order = np.random.permutation(N)
+        weights = np.clip(weights,0,1)
+
+        for i in range(len(env.all_patients)):
+            env.all_patients[i].provider_rewards = weights[i]
+        if use_real and per_epoch_function is not None and not online_arrival :
+            parameters = {'weights': weights, 
+                          'capacities': env.provider_capacities, 
+                          'online_arrival': env.online_arrival, 
+                          'max_shown': env.max_shown,
+                          'noise': env.noise}
+            per_epoch_results = per_epoch_function(parameters)
+
+        
         start = time.time()
         
         unmatched_patients = []
@@ -207,26 +233,40 @@ def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=No
                     selected_providers = per_epoch_function({'weights': weights[env.patient_order[t:t+1]], 
                                         'max_capacity': env.provider_max_capacity, 
                                         'online_arrival': env.online_arrival, 
-                                        'capacities': env.provider_capacities})[0]
+                                        'capacities': env.provider_capacities,
+                                        'noise': env.noise,
+                                        'max_shown': env.max_shown})[0]
                 else:
-                    selected_providers = per_epoch_function({'weights': weight_noisy[env.patient_order[t:t+1]], 
+                    selected_providers = per_epoch_function({'weights': weights_noisy[env.patient_order[t:t+1]], 
                                                             'max_capacity': env.provider_max_capacity, 
                                                             'online_arrival': env.online_arrival, 
-                                                            'capacities': env.provider_capacities})[0]
+                                                            'capacities': env.provider_capacities,
+                                                            'noise': env.noise,
+                                                            'max_shown': env.max_shown})[0]
             elif policy == one_shot_policy:
                 selected_providers = per_epoch_results[current_patient.idx]
             else:
                 selected_providers, memory = policy(env, current_patient, available_providers, 
                                                     memory, per_epoch_results)
 
+            initial_selected = np.concatenate([selected_providers, [1]])
+            total_ones = np.sum(initial_selected)
+            if total_ones > env.max_shown+1:
+                first_N = initial_selected[:-1]
+                one_indices = np.flatnonzero(first_N)
+                keep_indices = np.random.choice(one_indices, size=env.max_shown, replace=False)
+                first_N[:] = 0
+                first_N[keep_indices] = 1
+                initial_selected = np.concatenate([first_N, [1]])
+
             # Apply menu size constraint if needed
-            selected_provider_to_all = np.multiply(np.concatenate([selected_providers,[1]]), available_providers)
-            
+            selected_provider_to_all = np.multiply(initial_selected, available_providers)
+
             # Execute step
             chosen_provider = env.step(env.patient_order[t], selected_provider_to_all)
-            
             # Record results
             reward = current_patient.provider_rewards[chosen_provider]
+
             if new_provider_mode:
                 patient_results_trial[env.patient_order[t]] = (chosen_provider, chosen_provider,reward)
             else:
@@ -248,7 +288,7 @@ def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=No
             if use_real:
                 parameters = {'weights': new_weights, 'capacities': new_capacities, 'online_arrival': env.online_arrival}
             else:
-                parameters = {'weights': np.clip(new_weights + np.random.normal(0, noise, new_weights.shape),0,1),
+                parameters = {'weights': create_random_weights(new_weights,noise),
                             'capacities': new_capacities, 'online_arrival': env.online_arrival}
             
             single_provider_results = per_epoch_function(parameters)
@@ -317,9 +357,10 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None,use_real=
     online_arrival = parameters['online_arrival']
     new_provider = parameters['new_provider']
     average_distance = parameters['average_distance']
+    max_shown = parameters['max_shown']
 
     for seed in seed_list:
-        simulator = Simulator(num_patients,num_providers,provider_capacity,num_trials,utility_function,order,noise,online_arrival,new_provider,average_distance,seed)
+        simulator = Simulator(num_patients,num_providers,provider_capacity,num_trials,utility_function,order,noise,online_arrival,new_provider,average_distance,max_shown,seed)
         patient_results, patient_orders, new_providers, assortment = run_heterogenous_policy(simulator,policy,seed,num_trials,per_epoch_function=per_epoch_function,use_real=use_real) 
 
         if new_provider:
