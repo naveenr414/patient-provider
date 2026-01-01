@@ -44,7 +44,7 @@ class Simulator():
     """Simulator class that allows for evaluation of policies
         Both with and without re-entry"""
 
-    def __init__(self,num_patients,num_providers,provider_capacity,num_trials,utility_function,order,noise,online_arrival,new_provider,average_distance,max_shown,seed):
+    def __init__(self,num_patients,num_providers,provider_capacity,num_trials,utility_function,order,noise,online_arrival,new_provider,average_distance,max_shown,online_scale,seed):
         self.num_patients = num_patients
         self.num_providers = num_providers
         self.provider_max_capacity = provider_capacity
@@ -59,6 +59,7 @@ class Simulator():
         self.new_provider = new_provider
         self.average_distance = average_distance
         self.max_shown = max_shown 
+        self.online_scale = online_scale
 
     def step(self,patient_num,provider_list):
         """Update the workload by provider, after a patient receives a menu
@@ -139,6 +140,15 @@ class Simulator():
     def reset_initial(self):
         self.provider_capacities = deepcopy(self.provider_max_capacities)
 
+def get_target_plus_random(row,scale_ours):
+    scale_others = 1/scale_ours
+
+    row = deepcopy(row)
+    row[0][:-1]*=scale_ours 
+    row[0][-1] *= scale_others
+    return row 
+
+
 def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=None,use_real=False):
     """Wrapper to run policies without needing to go through boilerplate code
     
@@ -157,6 +167,7 @@ def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=No
     N = env.num_patients
     M = env.num_providers   
     online_arrival = env.online_arrival
+    online_scale = env.online_scale
 
     random.seed(seed)
     np.random.seed(seed)
@@ -165,6 +176,7 @@ def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=No
 
     patient_results = []
     patient_orders = []
+    patient_options = []
     time_taken = 0
     
     per_epoch_results = None 
@@ -181,6 +193,8 @@ def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=No
     
     new_provider_mode = env.new_provider
     new_providers = []
+    new_provider_idx = np.random.randint(M)
+    all_weights = []
 
     for trial_num in range(num_trials):
         if online_arrival:
@@ -194,6 +208,7 @@ def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=No
         weights = create_random_weights(weights_noisy,noise)
         env.patient_order = np.random.permutation(N)
         weights = np.clip(weights,0,1)
+        all_weights.append(weights.tolist())
 
         for i in range(len(env.all_patients)):
             env.all_patients[i].provider_rewards = weights[i]
@@ -210,13 +225,12 @@ def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=No
         
         unmatched_patients = []
         patient_results_trial = []
+        patient_options_trial = [[] for i in range(N)]
 
         memory = None 
                 
         # If so, randomly hide one provider for the first phase
-        new_provider_idx = None
         if new_provider_mode:
-            new_provider_idx = np.random.randint(M)
             env.provider_capacities[new_provider_idx] = 0
             new_providers.append(new_provider_idx)
         else:
@@ -226,7 +240,7 @@ def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=No
         patient_results_trial = [() for i in range(env.num_patients)]
         for t in range(env.num_patients):
             current_patient = env.all_patients[env.patient_order[t]]
-
+            R = 0
             # Get policy decision
             if online_arrival:
                 if use_real:
@@ -237,7 +251,7 @@ def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=No
                                         'noise': env.noise,
                                         'max_shown': env.max_shown})[0]
                 else:
-                    selected_providers = per_epoch_function({'weights': weights_noisy[env.patient_order[t:t+1]], 
+                    selected_providers = per_epoch_function({'weights': get_target_plus_random(weights[env.patient_order[t:t+1]], online_scale),
                                                             'max_capacity': env.provider_max_capacity, 
                                                             'online_arrival': env.online_arrival, 
                                                             'capacities': env.provider_capacities,
@@ -254,6 +268,7 @@ def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=No
             if total_ones > env.max_shown+1:
                 first_N = initial_selected[:-1]
                 one_indices = np.flatnonzero(first_N)
+
                 keep_indices = np.random.choice(one_indices, size=env.max_shown, replace=False)
                 first_N[:] = 0
                 first_N[keep_indices] = 1
@@ -261,6 +276,7 @@ def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=No
 
             # Apply menu size constraint if needed
             selected_provider_to_all = np.multiply(initial_selected, available_providers)
+            patient_options_trial[env.patient_order[t]] = [i for i in range(len(selected_provider_to_all)) if selected_provider_to_all[i] == 1]
 
             # Execute step
             chosen_provider = env.step(env.patient_order[t], selected_provider_to_all)
@@ -286,10 +302,10 @@ def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=No
             new_capacities = [N,env.provider_capacities[new_provider_idx]]
 
             if use_real:
-                parameters = {'weights': new_weights, 'capacities': new_capacities, 'online_arrival': env.online_arrival}
+                parameters = {'weights': new_weights, 'capacities': new_capacities, 'online_arrival': env.online_arrival, 'max_shown': env.max_shown, 'noise': noise}
             else:
                 parameters = {'weights': create_random_weights(new_weights,noise),
-                            'capacities': new_capacities, 'online_arrival': env.online_arrival}
+                            'capacities': new_capacities, 'online_arrival': env.online_arrival, 'max_shown': env.max_shown, 'noise': noise}
             
             single_provider_results = per_epoch_function(parameters)
 
@@ -318,9 +334,9 @@ def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=No
         time_taken += time.time() - start 
         patient_results.append(patient_results_trial)
         patient_orders.append(env.patient_order.tolist())
-    
+        patient_options.append(patient_options_trial)
 
-    return patient_results, patient_orders, new_providers, per_epoch_results
+    return patient_results, patient_orders, new_providers, per_epoch_results, patient_options, all_weights
 
 
 
@@ -345,6 +361,8 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None,use_real=
         'assortments': [],
         'patient_orders': [],
         'new_providers': [],
+        'options': [],
+        'weights': [],
     }
 
     num_patients = parameters['num_patients']
@@ -358,10 +376,12 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None,use_real=
     new_provider = parameters['new_provider']
     average_distance = parameters['average_distance']
     max_shown = parameters['max_shown']
+    online_scale = parameters['online_scale']
+    verbose = parameters['verbose']
 
     for seed in seed_list:
-        simulator = Simulator(num_patients,num_providers,provider_capacity,num_trials,utility_function,order,noise,online_arrival,new_provider,average_distance,max_shown,seed)
-        patient_results, patient_orders, new_providers, assortment = run_heterogenous_policy(simulator,policy,seed,num_trials,per_epoch_function=per_epoch_function,use_real=use_real) 
+        simulator = Simulator(num_patients,num_providers,provider_capacity,num_trials,utility_function,order,noise,online_arrival,new_provider,average_distance,max_shown,online_scale,seed)
+        patient_results, patient_orders, new_providers, assortment, options, weights = run_heterogenous_policy(simulator,policy,seed,num_trials,per_epoch_function=per_epoch_function,use_real=use_real) 
 
         if new_provider:
             def double_tuple(t):
@@ -382,6 +402,10 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None,use_real=
         scores['num_matches'].append(num_matches)
         scores['patient_orders'].append(patient_orders)
         scores['new_providers'].append(new_providers)
+
+        if verbose:
+            scores['options'].append(options)
+            scores['weights'].append(weights)
 
     return scores, simulator
 

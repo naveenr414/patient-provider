@@ -69,7 +69,7 @@ def get_results_matching_parameters(folder_name,result_name,parameters):
         first_few = first_few.split("}")[0]+"}}"
         load_file = json.loads(first_few)
         for p in parameters:
-            if p not in load_file['parameters'] or load_file['parameters'][p] != parameters[p]:
+            if (p not in load_file['parameters'] and parameters[p] != False) or (p in load_file['parameters'] and load_file['parameters'][p] != parameters[p]):
                 break 
         else:
             load_file = json.load(open(file_name,"r"))
@@ -325,6 +325,7 @@ def solve_linear_program(weights,capacities,fairness_constraint=-1,seed=43):
         for j in range(M):
             if x[i, j].X > 0.5:
                 solution.append((i, j))
+
     return solution
 
 
@@ -422,3 +423,10 @@ def get_age_num(age):
         return 2
     else:
         return 3
+    
+def get_zip(z):
+    z = str(z)
+    if len(z) == 5:
+        return z
+    z = '0'*(9-len(z))+z 
+    return z[:5]

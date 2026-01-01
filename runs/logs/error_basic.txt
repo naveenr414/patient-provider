@@ -1,13 +1,117 @@
-random policy
-Matches 0.5607102040816326, Utilities 0.5325980366425086
+offer_everything policyoffer_everything policy
+
+offer_everything policy
+offer_everything policy
+offer_everything policy
+offer_everything policy
+offer_everything policy
+offer_everything policy
+offer_everything policy
+Matches 0.5708734693877552, Utilities 0.5482652059753979
 greedy policy
-Matches 0.5625061224489797, Utilities 0.5351859595171113
+Matches 0.5704816326530613, Utilities 0.5469356179894944
+greedy policy
+Matches 0.5703836734693878, Utilities 0.548886133636384
+greedy policy
+Matches 0.5705469387755102, Utilities 0.5490267821939234
+greedy policy
+Matches 0.5708734693877552, Utilities 0.5522624099382754
+greedy policy
+Matches 0.5706448979591836, Utilities 0.549414121513772
+greedy policy
+Matches 0.5707102040816326, Utilities 0.5465669174314182
+greedy policy
+Matches 0.5704163265306122, Utilities 0.5496843290057347
+greedy policy
+Matches 0.5708081632653061, Utilities 0.5489015697085341
+greedy policy
+Matches 0.4699428571428571, Utilities 0.5545991262003672
+omniscient_optimal policy
+Matches 0.483265306122449, Utilities 0.5655581509304166
+omniscient_optimal policy
+Matches 0.464065306122449, Utilities 0.5497523020013424
+omniscient_optimal policy
+Matches 0.48845714285714287, Utilities 0.5694384005504824
 omniscient_optimal policy
 Set parameter Username
 Set parameter LicenseID to value 2709943
 Academic license - for non-commercial use only - expires 2026-09-17
-Matches 0.5697959183673469, Utilities 0.5508076015452822
+Matches 0.4611265306122449, Utilities 0.5528123366449033
+omniscient_optimal policy
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+Matches 0.48871836734693874, Utilities 0.5689047910308916
+omniscient_optimal policy
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+Matches 0.4658285714285714, Utilities 0.5552588599966316
+omniscient_optimal policy
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+Matches 0.4859755102040817, Utilities 0.5648727573956861
+omniscient_optimal policy
+Matches 0.48757551020408163, Utilities 0.569222974262807
+omniscient_optimal policy
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+Matches 0.5714285714285714, Utilities 0.7249502474372966
 lp policy
-Matches 0.5697959183673469, Utilities 0.5364071161644592
-gradient_descent policy
-Matches 0.5625061224489797, Utilities 0.5351859595171113
+Matches 0.5714285714285714, Utilities 0.5497443228478636
+greedy_justified policy
+Matches 0.5714285714285714, Utilities 0.7257019210858181
+lp policy
+Matches 0.5714285714285714, Utilities 0.724666610894043
+lp policy
+Matches 0.5704489795918367, Utilities 0.6205585942226773
+Matches 0.5714285714285714, Utilities 0.724603173487096
+lp policy
+Matches 0.5714285714285714, Utilities 0.726451054169722
+lp policy
+Matches 0.5714285714285714, Utilities 0.7245357515223534
+lp policy
+Matches 0.5713959183673469, Utilities 0.5487678756474033
+greedy_justified policy
+Matches 0.5714285714285714, Utilities 0.7273023823291092
+lp policy
+Matches 0.5714285714285714, Utilities 0.7254826260354972
+lp policy
+Matches 0.5714285714285714, Utilities 0.5511509123423586
+greedy_justified policy
+Matches 0.5714285714285714, Utilities 0.548462236294668
+greedy_justified policy
+Matches 0.5711020408163265, Utilities 0.624075735608102
+Matches 0.5705795918367347, Utilities 0.6214115080415625
+Matches 0.5714285714285714, Utilities 0.5500365393488782
+greedy_justified policy
+Matches 0.5703836734693878, Utilities 0.6219754055869846
+Matches 0.5706448979591836, Utilities 0.6242066298189982
+Matches 0.5714285714285714, Utilities 0.7269319322621357
+lp policy
+Matches 0.5713632653061225, Utilities 0.550942347181783
+greedy_justified policy
+Matches 0.5705142857142858, Utilities 0.6224520117946372
+Matches 0.5714285714285714, Utilities 0.550173222362356
+greedy_justified policy
+Matches 0.5714285714285714, Utilities 0.5483515790801899
+greedy_justified policy
+Matches 0.569469387755102, Utilities 0.6246486157054609
+Matches 0.5707428571428571, Utilities 0.6236909305050584
+Matches 0.5714285714285714, Utilities 0.5501180225971782
+greedy_justified policy
+Matches 0.5685551020408164, Utilities 0.6236033830569269

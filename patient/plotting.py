@@ -218,7 +218,7 @@ def plot_line(ax,x_values,y_values,y_confidence,labels,formatting):
             marker = None
         if 'linestyle' in formatting:
             linestyle = formatting['linestyle']
-        ax.plot(x_values[i],y_values[i],label=labels[i],linewidth=linewidth,color=colors[i],marker=marker,linestyle=linestyle)
+        ax.plot(x_values[i],y_values[i],label=labels[i],linewidth=linewidth,color=colors[i],linestyle=linestyle)#,marker=marker,linestyle=linestyle)
         ax.fill_between(x_values[i],np.array(y_values[i])-np.array(y_confidence[i]),np.array(y_values[i])+np.array(y_confidence[i]), alpha=0.2,color=colors[i])
 
 def plot_scatter(ax,x_values,y_values,labels,formatting):

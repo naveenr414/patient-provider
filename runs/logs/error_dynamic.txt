@@ -1,342 +1,1568 @@
-random policy
-Matches 0.5600163265306123, Utilities 0.5368631963944689
+offer_everything policy
+offer_everything policy
+offer_everything policy
+offer_everything policy
+offer_everything policy
+offer_everything policy
+offer_everything policy
+offer_everything policy
+offer_everything policy
+Matches 0.5700244897959184, Utilities 0.5529675895447567
 greedy policy
-Matches 0.5619428571428572, Utilities 0.5393453096910957
+Matches 0.569665306122449, Utilities 0.5510390194876396
+greedy policy
+Matches 0.5700571428571429, Utilities 0.5555579534768321
+greedy policy
+Matches 0.5700571428571429, Utilities 0.5518469935774081
+greedy policy
+Matches 0.569730612244898, Utilities 0.5530350132758483
+greedy policy
+Matches 0.5695673469387755, Utilities 0.5526195106608524
+greedy policy
+Matches 0.569665306122449, Utilities 0.5526154598813017
+greedy policy
+Matches 0.5699591836734694, Utilities 0.550671154670533
+greedy policy
+Matches 0.5698285714285714, Utilities 0.5535697813407401
+greedy policy
+Matches 0.4879020408163265, Utilities 0.5731066047331752
+omniscient_optimal policy
+Matches 0.48568163265306125, Utilities 0.5693524415169455
+omniscient_optimal policy
+Matches 0.46324897959183675, Utilities 0.5541639510363146
+omniscient_optimal policy
+Matches 0.46912653061224485, Utilities 0.5578379587178959
+omniscient_optimal policy
+Matches 0.46109387755102044, Utilities 0.5577538888707374
+omniscient_optimal policy
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+Academic license - for non-commercial use only - expires 2026-09-17
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Matches 0.4881632653061225, Utilities 0.5732897655859513
 omniscient_optimal policy
 Set parameter Username
 Set parameter LicenseID to value 2709943
 Academic license - for non-commercial use only - expires 2026-09-17
-Matches 0.5689795918367347, Utilities 0.5537987358776663
-lp policy
-Matches 0.5689795918367347, Utilities 0.5399604345338236
-gradient_descent policy
-Matches 0.5622938775510203, Utilities 0.5391696220061909
-random policy
-On trial 0
-On trial 1
-On trial 2
-On trial 3
-On trial 4
-On trial 5
-On trial 6
-On trial 7
-On trial 8
-On trial 9
-On trial 10
-On trial 11
-On trial 12
-On trial 13
-On trial 14
-On trial 15
-On trial 16
-On trial 17
-On trial 18
-On trial 19
-On trial 20
-On trial 21
-On trial 22
-On trial 23
-On trial 24
-On trial 25
-On trial 26
-On trial 27
-On trial 28
-On trial 29
-On trial 30
-On trial 31
-On trial 32
-On trial 33
-On trial 34
-On trial 35
-On trial 36
-On trial 37
-On trial 38
-On trial 39
-On trial 40
-On trial 41
-On trial 42
-On trial 43
-On trial 44
-On trial 45
-On trial 46
-On trial 47
-On trial 48
-On trial 49
-On trial 50
-On trial 51
-On trial 52
-On trial 53
-On trial 54
-On trial 55
-On trial 56
-On trial 57
-On trial 58
-On trial 59
-On trial 60
-On trial 61
-On trial 62
-On trial 63
-On trial 64
-On trial 65
-On trial 66
-On trial 67
-On trial 68
-On trial 69
-On trial 70
-On trial 71
-On trial 72
-On trial 73
-On trial 74
-On trial 75
-On trial 76
-On trial 77
-On trial 78
-On trial 79
-On trial 80
-On trial 81
-On trial 82
-On trial 83
-On trial 84
-On trial 85
-On trial 86
-On trial 87
-On trial 88
-On trial 89
-On trial 90
-On trial 91
-On trial 92
-On trial 93
-On trial 94
-On trial 95
-On trial 96
-On trial 97
-On trial 98
-On trial 99
-Matches 0.5609142857142857, Utilities 0.532812464938401
-greedy policy
-On trial 0
-On trial 1
-On trial 2
-On trial 3
-On trial 4
-On trial 5
-On trial 6
-On trial 7
-On trial 8
-On trial 9
-On trial 10
-On trial 11
-On trial 12
-On trial 13
-On trial 14
-On trial 15
-On trial 16
-On trial 17
-On trial 18
-On trial 19
-On trial 20
-On trial 21
-On trial 22
-On trial 23
-On trial 24
-On trial 25
-On trial 26
-On trial 27
-On trial 28
-On trial 29
-On trial 30
-On trial 31
-On trial 32
-On trial 33
-On trial 34
-On trial 35
-On trial 36
-On trial 37
-On trial 38
-On trial 39
-On trial 40
-On trial 41
-On trial 42
-On trial 43
-On trial 44
-On trial 45
-On trial 46
-On trial 47
-On trial 48
-On trial 49
-On trial 50
-On trial 51
-On trial 52
-On trial 53
-On trial 54
-On trial 55
-On trial 56
-On trial 57
-On trial 58
-On trial 59
-On trial 60
-On trial 61
-On trial 62
-On trial 63
-On trial 64
-On trial 65
-On trial 66
-On trial 67
-On trial 68
-On trial 69
-On trial 70
-On trial 71
-On trial 72
-On trial 73
-On trial 74
-On trial 75
-On trial 76
-On trial 77
-On trial 78
-On trial 79
-On trial 80
-On trial 81
-On trial 82
-On trial 83
-On trial 84
-On trial 85
-On trial 86
-On trial 87
-On trial 88
-On trial 89
-On trial 90
-On trial 91
-On trial 92
-On trial 93
-On trial 94
-On trial 95
-On trial 96
-On trial 97
-On trial 98
-On trial 99
-Matches 0.5625061224489797, Utilities 0.5351859595171113
+Academic license - for non-commercial use only - expires 2026-09-17
+Academic license - for non-commercial use only - expires 2026-09-17
+Matches 0.4867591836734694, Utilities 0.5717676133845946
 omniscient_optimal policy
-On trial 0
+Matches 0.4825469387755102, Utilities 0.5697268061762879
+omniscient_optimal policy
 Set parameter Username
 Set parameter LicenseID to value 2709943
 Academic license - for non-commercial use only - expires 2026-09-17
-On trial 1
-On trial 2
-On trial 3
-On trial 4
-On trial 5
-On trial 6
-On trial 7
-On trial 8
-On trial 9
-On trial 10
-On trial 11
-On trial 12
-On trial 13
-On trial 14
-On trial 15
-On trial 16
-On trial 17
-On trial 18
-On trial 19
-On trial 20
-On trial 21
-On trial 22
-On trial 23
-On trial 24
-On trial 25
-On trial 26
-On trial 27
-On trial 28
-On trial 29
-On trial 30
-On trial 31
-On trial 32
-On trial 33
-On trial 34
-On trial 35
-On trial 36
-On trial 37
-On trial 38
-On trial 39
-On trial 40
-On trial 41
-On trial 42
-On trial 43
-On trial 44
-On trial 45
-On trial 46
-On trial 47
-On trial 48
-On trial 49
-On trial 50
-On trial 51
-On trial 52
-On trial 53
-On trial 54
-On trial 55
-On trial 56
-On trial 57
-On trial 58
-On trial 59
-On trial 60
-On trial 61
-On trial 62
-On trial 63
-On trial 64
-On trial 65
-On trial 66
-On trial 67
-On trial 68
-On trial 69
-On trial 70
-On trial 71
-On trial 72
-On trial 73
-On trial 74
-On trial 75
-On trial 76
-On trial 77
-On trial 78
-On trial 79
-On trial 80
-On trial 81
-On trial 82
-On trial 83
-On trial 84
-On trial 85
-On trial 86
-On trial 87
-On trial 88
-On trial 89
-On trial 90
-On trial 91
-On trial 92
-On trial 93
-On trial 94
-On trial 95
-On trial 96
-On trial 97
-On trial 98
-On trial 99
-Matches 0.5619020408163266, Utilities 0.5339517530382657
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Matches 0.46504489795918363, Utilities 0.559897507896622
+omniscient_optimal policy
+Academic license - for non-commercial use only - expires 2026-09-17
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+Matches 0.5706122448979591, Utilities 0.7280802297714841
 lp policy
+Matches 0.5706122448979591, Utilities 0.729992546218328
+lp policy
+Matches 0.5706122448979591, Utilities 0.7279856371177595
+lp policy
+Matches 0.5706122448979591, Utilities 0.7306985154895733
+lp policy
+Matches 0.5706122448979591, Utilities 0.7293614666873299
+lp policy
+Matches 0.5706122448979591, Utilities 0.7283946065631004
+lp policy
+Matches 0.5706122448979591, Utilities 0.7316390589881293
+lp policy
+Matches 0.5706122448979591, Utilities 0.7280703711640717
+lp policy
+Matches 0.5706122448979591, Utilities 0.5534574419982574
+greedy_justified policy
+Matches 0.5705795918367347, Utilities 0.552154662910817
+greedy_justified policy
+Matches 0.5697632653061224, Utilities 0.6255369986935317
+Matches 0.5706122448979591, Utilities 0.5514842271024423
+greedy_justified policy
+Matches 0.5706122448979591, Utilities 0.5533558224573204
+greedy_justified policy
+Matches 0.5702857142857143, Utilities 0.6279674629200198
+Matches 0.5706122448979591, Utilities 0.5531384122119432
+greedy_justified policy
+Matches 0.5706122448979591, Utilities 0.5521275612770455
+greedy_justified policy
+greedy_justified policy
+On trial 0
+Matches 0.5695673469387755, Utilities 0.6268479382114637
+Matches 0.5706122448979591, Utilities 0.7301247264210526
+lp policy
+Matches 0.5706122448979591, Utilities 0.5530638051209882
+greedy_justified policy
+Matches 0.5677387755102041, Utilities 0.6279287051837742
+On trial 1
+greedy_justified policy
+Matches 0.5696326530612245, Utilities 0.6247731260597326
+On trial 0
+Matches 0.5699265306122449, Utilities 0.6279909140552651
+greedy_justified policy
+On trial 2
+On trial 0
+Matches 0.5686530612244898, Utilities 0.6287040505159217
+greedy_justified policy
+On trial 0
+On trial 1
+greedy_justified policy
+On trial 0
+Matches 0.5705469387755102, Utilities 0.5543762883560488
+greedy_justified policy
+On trial 1
+On trial 3
+greedy_justified policy
 On trial 0
 On trial 1
 On trial 2
+greedy_justified policy
+On trial 0
+On trial 1
+On trial 2
+On trial 4
+On trial 1
+On trial 2
+On trial 3
+Matches 0.5696979591836735, Utilities 0.6265808867118127
+On trial 1
+On trial 3
+On trial 2
+On trial 5
+On trial 2
+On trial 3
+On trial 4
+On trial 2
+On trial 4
+On trial 3
+greedy_justified policy
+On trial 6
+On trial 0
 On trial 3
 On trial 4
 On trial 5
+On trial 3
+On trial 5
+On trial 4
+On trial 7
+On trial 1
+On trial 4
+On trial 5
+On trial 6
+Matches 0.5706122448979591, Utilities 0.553752626068542
+greedy_justified policy
+On trial 6
+On trial 4
+On trial 5
+On trial 8
+On trial 2
+On trial 5
+On trial 6
+On trial 7
+On trial 7
+On trial 5
+Matches 0.5698285714285714, Utilities 0.6286963470178507
+On trial 9
+On trial 6
+On trial 3
 On trial 6
 On trial 7
 On trial 8
+On trial 8
+On trial 6
+On trial 10
+On trial 7
+On trial 4
+On trial 7
 On trial 9
+On trial 8
+greedy_justified policy
+On trial 0
+On trial 9
+On trial 7
+On trial 11
+On trial 8
+On trial 5
+On trial 8
+On trial 10
+On trial 9
+On trial 1
+On trial 10
+On trial 12
+On trial 8
+On trial 9
+On trial 6
+On trial 9
+On trial 11
+On trial 10
+On trial 2
+On trial 11
+On trial 13
+On trial 10
+On trial 9
+On trial 7
+On trial 12
 On trial 10
 On trial 11
+On trial 3
+On trial 12
+On trial 14
+On trial 11
+On trial 10
+On trial 8
+On trial 13
+On trial 11
+On trial 12
+On trial 4
+On trial 13
+On trial 15
+On trial 12
+On trial 9
+On trial 11
+On trial 14
+On trial 12
+On trial 13
+On trial 5
+On trial 14
+On trial 16
+On trial 13
+On trial 10
+On trial 15
 On trial 12
 On trial 13
 On trial 14
 On trial 15
+On trial 6
+On trial 17
+On trial 11
+On trial 14
+On trial 16
+On trial 13
+On trial 14
+On trial 15
+On trial 16
+On trial 7
+On trial 18
+On trial 17
+On trial 15
+On trial 12
+On trial 14
+On trial 15
+On trial 16
+On trial 17
+On trial 8
+On trial 19
+On trial 18
+On trial 13
+On trial 16
+On trial 15
+On trial 16
+On trial 17
+On trial 18
+On trial 9
+On trial 20
+On trial 19
+On trial 14
+On trial 17
+On trial 16
+On trial 17
+On trial 18
+On trial 19
+On trial 10
+On trial 21
+On trial 20
+On trial 15
+On trial 18
+On trial 17
+On trial 18
+On trial 19
+On trial 20
+On trial 11
+On trial 22
+On trial 21
+On trial 16
+On trial 19
+On trial 18
+On trial 19
+On trial 20
+On trial 21
+On trial 23
+On trial 12
+On trial 22
+On trial 17
+On trial 20
+On trial 20
+On trial 19
+On trial 21
+On trial 22
+On trial 24
+On trial 23
+On trial 13
+On trial 18
+On trial 21
+On trial 21
+On trial 22
+On trial 20
+On trial 23
+Matches 0.10171428571428572, Utilities 0.3418481856494126
+On trial 24
+On trial 14
+On trial 19
+On trial 22
+On trial 22
+On trial 23
+On trial 21
+On trial 24
+greedy_justified policy
+On trial 0
+Matches 0.10142040816326531, Utilities 0.34175568346344243
+On trial 15
+On trial 20
+On trial 23
+On trial 24
+On trial 23
+On trial 22
+Matches 0.10164897959183673, Utilities 0.34162972813174014
+On trial 1
+greedy_justified policy
+On trial 0
+On trial 16
+On trial 21
+On trial 24
+On trial 24
+Matches 0.1017795918367347, Utilities 0.34200753267255213
+greedy_justified policy
+On trial 23
+On trial 0
+On trial 2
+On trial 1
+On trial 17
+On trial 22
+Matches 0.10109387755102041, Utilities 0.341187458279082
+greedy_justified policy
+On trial 1
+On trial 0
+On trial 3
+Matches 0.10148571428571428, Utilities 0.34136079736423525
+On trial 24
+On trial 2
+On trial 18
+On trial 23
+greedy_justified policy
+On trial 2
+On trial 1
+On trial 0
+On trial 4
+greedy_justified policy
+On trial 0
+On trial 3
+Matches 0.10204081632653061, Utilities 0.34290639951036667
+On trial 19
+On trial 3
+On trial 2
+On trial 24
+On trial 1
+On trial 5
+On trial 1
+On trial 4
+greedy_justified policy
+On trial 0
+On trial 4
+On trial 3
+On trial 6
+On trial 20
+On trial 2
+On trial 2
+On trial 5
+Matches 0.10164897959183673, Utilities 0.3418240410430136
+On trial 1
+On trial 5
+On trial 4
+On trial 7
+On trial 3
+On trial 6
+On trial 3
+On trial 21
+greedy_justified policy
+On trial 0
+On trial 2
+On trial 6
+On trial 5
+On trial 8
+On trial 7
+On trial 4
+On trial 4
+On trial 3
+On trial 1
+On trial 22
+On trial 7
+On trial 6
+On trial 9
+On trial 8
+On trial 5
+On trial 5
+On trial 4
+On trial 2
+On trial 23
+On trial 8
+On trial 7
+On trial 10
+On trial 9
+On trial 6
+On trial 6
+On trial 5
+On trial 3
+On trial 24
+On trial 10
+On trial 11
+On trial 9
+On trial 7
+On trial 8
+On trial 7
+On trial 6
+On trial 4
+Matches 0.1014530612244898, Utilities 0.3420557120154495
+On trial 11
+On trial 10
+On trial 12
+On trial 9
+On trial 8
+On trial 8
+On trial 7
+On trial 5
+On trial 13
+On trial 12
+On trial 10
+On trial 11
+greedy_justified policy
+On trial 0
+On trial 9
+On trial 9
+On trial 8
+On trial 6
+On trial 14
+On trial 12
+On trial 13
+On trial 11
+On trial 10
+On trial 1
+On trial 10
+On trial 9
+On trial 7
+On trial 14
+On trial 15
+On trial 13
+On trial 12
+On trial 11
+On trial 2
+On trial 10
+On trial 11
+On trial 8
+On trial 15
+On trial 16
+On trial 14
+On trial 13
+On trial 12
+On trial 3
+On trial 11
+On trial 12
+On trial 9
+On trial 16
+On trial 17
+On trial 15
+On trial 13
+On trial 14
+On trial 12
+On trial 4
+On trial 13
+On trial 10
+On trial 17
+On trial 14
+On trial 16
+On trial 18
+On trial 15
+On trial 13
+On trial 5
+On trial 14
+On trial 11
+On trial 18
+On trial 15
+On trial 19
+On trial 17
+On trial 16
+On trial 14
+On trial 6
+On trial 12
+On trial 15
+On trial 19
+On trial 16
+On trial 20
+On trial 15
+On trial 18
+On trial 17
+On trial 7
+On trial 13
+On trial 16
+On trial 20
+On trial 16
+On trial 17
+On trial 21
+On trial 19
+On trial 18
+On trial 8
+On trial 14
+On trial 17
+On trial 21
+On trial 17
+On trial 18
+On trial 22
+On trial 20
+On trial 19
+On trial 9
+On trial 15
+On trial 18
+On trial 22
+On trial 18
+On trial 19
+On trial 21
+On trial 23
+On trial 20
+On trial 16
+On trial 10
+On trial 19
+On trial 23
+On trial 19
+On trial 20
+On trial 22
+On trial 24
+On trial 21
+On trial 17
+On trial 11
+On trial 20
+On trial 24
+On trial 20
+On trial 21
+On trial 23
+Matches 0.3007673469387755, Utilities 0.5088012495157056
+On trial 22
+On trial 18
+On trial 12
+On trial 21
+Matches 0.30096326530612244, Utilities 0.5084803882191307
+On trial 21
+On trial 22
+On trial 24
+On trial 23
+greedy_justified policy
+On trial 19
+On trial 0
+On trial 13
+On trial 22
+greedy_justified policy
+On trial 22
+On trial 0
+On trial 1
+On trial 23
+Matches 0.30119183673469385, Utilities 0.5082998040034484
+On trial 24
+On trial 20
+On trial 14
+On trial 23
+On trial 2
+On trial 1
+On trial 23
+On trial 24
+greedy_justified policy
+Matches 0.3004734693877551, Utilities 0.5093182838248086
+On trial 21
+On trial 0
+On trial 3
+On trial 15
+On trial 2
+On trial 24
+On trial 1
+On trial 24
+Matches 0.30249795918367345, Utilities 0.5101372408885334
+On trial 4
+On trial 3
+On trial 22
+greedy_justified policy
+On trial 0
+On trial 16
+Matches 0.3011591836734694, Utilities 0.5084505935447883
+On trial 2
+On trial 5
+On trial 4
+Matches 0.3019428571428571, Utilities 0.5118665589111272
+On trial 1
+greedy_justified policy
+On trial 0
+On trial 23
+On trial 3
+On trial 17
+On trial 6
+On trial 5
+greedy_justified policy
+On trial 2
+On trial 0
+On trial 1
+On trial 4
+greedy_justified policy
+On trial 0
+On trial 7
+On trial 6
+On trial 24
+On trial 3
+On trial 18
+On trial 1
+On trial 2
+On trial 5
+On trial 1
+On trial 8
+On trial 7
+On trial 4
+On trial 2
+On trial 3
+Matches 0.300865306122449, Utilities 0.5084888115713418
+On trial 6
+On trial 2
+On trial 19
+On trial 9
+On trial 8
+On trial 5
+On trial 3
+On trial 4
+On trial 7
+On trial 3
+On trial 10
+On trial 9
+greedy_justified policy
+On trial 0
+On trial 4
+On trial 6
+On trial 20
+On trial 5
+On trial 8
+On trial 4
+On trial 11
+On trial 10
+On trial 1
+On trial 5
+On trial 7
+On trial 6
+On trial 9
+On trial 5
+On trial 12
+On trial 21
+On trial 11
+On trial 2
+On trial 6
+On trial 8
+On trial 7
+On trial 10
+On trial 6
+On trial 13
+On trial 12
+On trial 3
+On trial 7
+On trial 9
+On trial 22
+On trial 8
+On trial 7
+On trial 11
+On trial 14
+On trial 13
+On trial 4
+On trial 8
+On trial 10
+On trial 9
+On trial 8
+On trial 12
+On trial 15
+On trial 23
+On trial 14
+On trial 9
+On trial 5
+On trial 11
+On trial 9
+On trial 10
+On trial 13
+On trial 16
+On trial 15
+On trial 10
+On trial 6
+On trial 12
+On trial 24
+On trial 10
+On trial 11
+On trial 14
+On trial 17
+On trial 11
+On trial 16
+On trial 7
+On trial 13
+On trial 11
+On trial 12
+On trial 15
+On trial 18
+Matches 0.30155102040816323, Utilities 0.510816515924985
+On trial 12
+On trial 17
+On trial 8
+On trial 14
+On trial 12
+On trial 13
+On trial 16
+On trial 19
+On trial 13
+On trial 18
+On trial 9
+On trial 15
+On trial 13
+greedy_justified policy
+On trial 0
+On trial 14
+On trial 17
+On trial 20
+On trial 14
+On trial 19
+On trial 10
+On trial 16
+On trial 14
+On trial 1
+On trial 21
+On trial 15
+On trial 18
+On trial 15
+On trial 20
+On trial 17
+On trial 11
+On trial 15
+On trial 22
+On trial 2
+On trial 16
+On trial 19
+On trial 16
+On trial 21
+On trial 12
+On trial 18
+On trial 16
+On trial 3
+On trial 23
+On trial 17
+On trial 20
+On trial 17
+On trial 19
+On trial 13
+On trial 22
+On trial 17
+On trial 4
+On trial 24
+On trial 21
+On trial 18
+On trial 18
+On trial 14
+On trial 20
+On trial 23
+On trial 18
+Matches 0.5714285714285714, Utilities 0.6713547922498427
+On trial 5
+On trial 22
+On trial 19
+On trial 19
+On trial 21
+On trial 15
+On trial 24
+On trial 19
+On trial 6
+On trial 23
+On trial 20
+On trial 20
+greedy_justified policy
+On trial 0
+On trial 22
+On trial 16
+Matches 0.5714285714285714, Utilities 0.6752157579153432
+On trial 20
+On trial 7
+On trial 24
+On trial 21
+On trial 21
+On trial 1
+On trial 23
+On trial 17
+On trial 21
+On trial 8
+Matches 0.5714285714285714, Utilities 0.6733190756317492
+On trial 22
+greedy_justified policy
+On trial 0
+On trial 22
+On trial 2
+On trial 24
+On trial 18
+On trial 22
+On trial 9
+On trial 1
+On trial 23
+On trial 3
+On trial 23
+greedy_justified policy
+On trial 0
+Matches 0.5714285714285714, Utilities 0.677412394282308
+On trial 23
+On trial 19
+On trial 10
+On trial 2
+On trial 4
+On trial 24
+On trial 24
+On trial 1
+On trial 24
+On trial 20
+On trial 3
+On trial 5
+On trial 11
+Matches 0.5714285714285714, Utilities 0.6752258658787887
+On trial 2
+greedy_justified policy
+Matches 0.5714285714285714, Utilities 0.6726668589323058
+On trial 0
+On trial 4
+On trial 6
+Matches 0.5714285714285714, Utilities 0.67736538446039
+On trial 21
+On trial 12
+On trial 3
+On trial 1
+On trial 5
+On trial 7
+greedy_justified policy
+On trial 0
+On trial 22
+On trial 13
+greedy_justified policy
+On trial 4
+On trial 0
+On trial 2
+On trial 6
+On trial 8
+greedy_justified policy
+On trial 0
+On trial 1
+On trial 5
+On trial 23
+On trial 1
+On trial 3
+On trial 14
+On trial 7
+On trial 9
+On trial 1
+On trial 2
+On trial 6
+On trial 2
+On trial 4
+On trial 24
+On trial 15
+On trial 8
+On trial 10
+On trial 2
+On trial 3
+On trial 7
+On trial 3
+On trial 5
+On trial 9
+Matches 0.571330612244898, Utilities 0.6721906061729549
+On trial 16
+On trial 11
+On trial 3
+On trial 4
+On trial 8
+On trial 4
+On trial 6
+On trial 10
+On trial 12
+On trial 17
+On trial 4
+On trial 5
+On trial 9
+On trial 5
+On trial 7
+greedy_justified policy
+On trial 0
+On trial 11
+On trial 13
+On trial 5
+On trial 10
+On trial 6
+On trial 18
+On trial 6
+On trial 8
+On trial 1
+On trial 12
+On trial 6
+On trial 14
+On trial 11
+On trial 7
+On trial 19
+On trial 7
+On trial 9
+On trial 2
+On trial 13
+On trial 7
+On trial 12
+On trial 15
+On trial 8
+On trial 10
+On trial 8
+On trial 3
+On trial 20
+On trial 14
+On trial 8
+On trial 13
+On trial 16
+On trial 9
+On trial 11
+On trial 9
+On trial 4
+On trial 15
+On trial 21
+On trial 9
+On trial 14
+On trial 17
+On trial 10
+On trial 12
+On trial 10
+On trial 5
+On trial 16
+On trial 10
+On trial 15
+On trial 22
+On trial 18
+On trial 11
+On trial 13
+On trial 11
+On trial 6
+On trial 17
+On trial 11
+On trial 16
+On trial 19
+On trial 12
+On trial 23
+On trial 14
+On trial 12
+On trial 7
+On trial 18
+On trial 12
+On trial 17
+On trial 20
+On trial 13
+On trial 24
+On trial 15
+On trial 13
+On trial 8
+On trial 19
+On trial 13
+On trial 18
+On trial 21
+On trial 14
+Matches 0.5714285714285714, Utilities 0.6766147664860452
+On trial 16
+On trial 14
+On trial 9
+On trial 14
+On trial 20
+On trial 19
+On trial 22
+On trial 15
+On trial 17
+On trial 10
+On trial 15
+On trial 15
+On trial 21
+On trial 20
+On trial 23
+On trial 16
+greedy_justified policy
+On trial 0
+On trial 18
+On trial 16
+On trial 11
+On trial 16
+On trial 22
+On trial 21
+On trial 24
+On trial 17
+On trial 1
+On trial 19
+On trial 17
+On trial 12
+On trial 22
+On trial 17
+On trial 23
+Matches 0.5714285714285714, Utilities 0.6321182077533334
+On trial 18
+On trial 2
+On trial 18
+On trial 20
+On trial 23
+On trial 13
+On trial 24
+On trial 18
+On trial 19
+On trial 3
+On trial 19
+On trial 21
+On trial 24
+On trial 14
+Matches 0.5714285714285714, Utilities 0.6355920690802783
+On trial 19
+greedy_justified policy
+On trial 0
+On trial 20
+On trial 4
+On trial 20
+Matches 0.5714285714285714, Utilities 0.6352778170059207
+On trial 22
+On trial 15
+On trial 20
+On trial 1
+On trial 21
+On trial 5
+On trial 21
+greedy_justified policy
+On trial 0
+On trial 23
+On trial 16
+On trial 21
+On trial 2
+On trial 22
+On trial 6
+On trial 22
+greedy_justified policy
+On trial 0
+On trial 24
+On trial 1
+On trial 17
+On trial 22
+On trial 3
+On trial 23
+On trial 7
+On trial 23
+On trial 1
+On trial 2
+Matches 0.5714285714285714, Utilities 0.6400894262799651
+On trial 18
+On trial 23
+On trial 4
+On trial 24
+On trial 8
+On trial 24
+On trial 2
+On trial 3
+On trial 19
+On trial 24
+On trial 5
+Matches 0.5714285714285714, Utilities 0.6359042791919868
+On trial 9
+Matches 0.5714285714285714, Utilities 0.6382086166182063
+greedy_justified policy
+On trial 3
+On trial 4
+On trial 0
+On trial 20
+Matches 0.5714285714285714, Utilities 0.6358110707014576
+On trial 6
+On trial 10
+On trial 1
+On trial 4
+On trial 5
+On trial 21
+greedy_justified policy
+On trial 0
+On trial 7
+On trial 11
+greedy_justified policy
+On trial 0
+On trial 5
+greedy_justified policy
+On trial 2
+On trial 6
+On trial 0
+On trial 22
+On trial 8
+On trial 1
+On trial 12
+On trial 1
+On trial 6
+On trial 3
+On trial 7
+On trial 1
+On trial 23
+On trial 9
+On trial 2
+On trial 13
+On trial 2
+On trial 7
+On trial 4
+On trial 8
+On trial 2
+On trial 24
+On trial 10
+On trial 14
+On trial 3
+On trial 8
+On trial 3
+On trial 5
+On trial 9
+On trial 3
+Matches 0.5714285714285714, Utilities 0.6337324220076465
+On trial 11
+On trial 15
+On trial 4
+On trial 9
+On trial 4
+On trial 6
+On trial 10
+On trial 4
+On trial 12
+On trial 16
+On trial 5
+On trial 10
+On trial 5
+greedy_justified policy
+On trial 0
+On trial 7
+On trial 11
+On trial 5
+On trial 13
+On trial 17
+On trial 6
+On trial 11
+On trial 6
+On trial 8
+On trial 1
+On trial 12
+On trial 6
+On trial 14
+On trial 18
+On trial 7
+On trial 12
+On trial 7
+On trial 9
+On trial 13
+On trial 7
+On trial 2
+On trial 15
+On trial 19
+On trial 8
+On trial 13
+On trial 8
+On trial 14
+On trial 10
+On trial 8
+On trial 3
+On trial 20
+On trial 16
+On trial 9
+On trial 14
+On trial 9
+On trial 15
+On trial 11
+On trial 9
+On trial 4
+On trial 21
+On trial 17
+On trial 10
+On trial 15
+On trial 10
+On trial 16
+On trial 10
+On trial 12
+On trial 5
+On trial 22
+On trial 18
+On trial 11
+On trial 16
+On trial 11
+On trial 11
+On trial 17
+On trial 13
+On trial 23
+On trial 6
+On trial 12
+On trial 19
+On trial 17
+On trial 12
+On trial 12
+On trial 14
+On trial 18
+On trial 24
+On trial 7
+On trial 13
+On trial 20
+On trial 18
+On trial 13
+On trial 13
+On trial 15
+On trial 19
+Matches 0.5714285714285714, Utilities 0.6367140614176094
+On trial 14
+On trial 8
+On trial 21
+On trial 19
+On trial 14
+On trial 16
+On trial 14
+On trial 20
+On trial 15
+On trial 9
+On trial 22
+On trial 20
+On trial 15
+greedy_justified policy
+On trial 17
+On trial 0
+On trial 15
+On trial 21
+On trial 16
+On trial 10
+On trial 23
+On trial 21
+On trial 16
+On trial 18
+On trial 16
+On trial 1
+On trial 17
+On trial 22
+On trial 24
+On trial 11
+On trial 22
+On trial 17
+On trial 17
+On trial 18
+On trial 19
+On trial 2
+On trial 23
+Matches 0.5714285714285714, Utilities 0.6283848430637303
+On trial 12
+On trial 23
+On trial 18
+On trial 20
+On trial 19
+On trial 18
+On trial 3
+On trial 24
+On trial 13
+On trial 24
+On trial 19
+On trial 20
+On trial 21
+On trial 19
+greedy_justified policy
+On trial 4
+On trial 0
+Matches 0.5714285714285714, Utilities 0.6317104169381579
+On trial 14
+Matches 0.5714285714285714, Utilities 0.6319282980156478
+On trial 20
+On trial 21
+On trial 22
+On trial 20
+On trial 5
+On trial 1
+On trial 15
+On trial 21
+On trial 22
+On trial 23
+greedy_justified policy
+On trial 21
+On trial 6
+On trial 0
+On trial 2
+On trial 16
+greedy_justified policy
+On trial 0
+On trial 22
+On trial 23
+On trial 24
+On trial 22
+On trial 7
+On trial 1
+On trial 3
+On trial 17
+On trial 1
+On trial 23
+On trial 24
+Matches 0.5714285714285714, Utilities 0.6368355778504864
+On trial 23
+On trial 8
+On trial 2
+On trial 4
+On trial 18
+On trial 2
+On trial 24
+Matches 0.5714285714285714, Utilities 0.6323107183276069
+On trial 24
+On trial 9
+On trial 3
+On trial 5
+On trial 19
+On trial 3
+Matches 0.5714285714285714, Utilities 0.6345498550506751
+greedy_justified policy
+On trial 0
+Matches 0.5714285714285714, Utilities 0.6317978362749178
+On trial 10
+On trial 4
+On trial 6
+On trial 20
+On trial 4
+greedy_justified policy
+On trial 0
+On trial 1
+On trial 11
+On trial 5
+On trial 7
+On trial 21
+On trial 5
+greedy_justified policy
+On trial 0
+greedy_justified policy
+On trial 1
+On trial 0
+On trial 2
+On trial 12
+On trial 6
+On trial 8
+On trial 22
+On trial 6
+On trial 1
+On trial 2
+On trial 1
+On trial 3
+On trial 13
+On trial 7
+On trial 9
+On trial 7
+On trial 23
+On trial 2
+On trial 3
+On trial 2
+On trial 4
+On trial 8
+On trial 14
+On trial 10
+On trial 8
+On trial 24
+On trial 3
+On trial 3
+On trial 4
+On trial 5
+On trial 9
+On trial 11
+On trial 15
+On trial 9
+Matches 0.5714285714285714, Utilities 0.6308398856671887
+On trial 4
+On trial 4
+On trial 5
+On trial 6
+On trial 10
+On trial 12
+On trial 16
+On trial 10
+On trial 5
+On trial 5
+On trial 11
+On trial 13
+On trial 7
+On trial 6
+On trial 17
+greedy_justified policy
+On trial 11
+On trial 0
+On trial 6
+On trial 6
+On trial 12
+On trial 14
+On trial 7
+On trial 8
+On trial 18
+On trial 12
+On trial 1
+On trial 7
+On trial 7
+On trial 13
+On trial 15
+On trial 9
+On trial 8
+On trial 19
+On trial 13
+On trial 2
+On trial 8
+On trial 8
+On trial 14
+On trial 16
+On trial 10
+On trial 9
+On trial 14
+On trial 20
+On trial 3
+On trial 9
+On trial 9
+On trial 15
+On trial 17
+On trial 11
+On trial 10
+On trial 15
+On trial 21
+On trial 4
+On trial 10
+On trial 10
+On trial 18
+On trial 16
+On trial 12
+On trial 11
+On trial 16
+On trial 22
+On trial 5
+On trial 11
+On trial 11
+On trial 17
+On trial 19
+On trial 13
+On trial 17
+On trial 12
+On trial 23
+On trial 6
+On trial 12
+On trial 12
+On trial 18
+On trial 20
+On trial 14
+On trial 18
+On trial 13
+On trial 24
+On trial 7
+On trial 13
+On trial 13
+On trial 19
+On trial 21
+On trial 15
+On trial 19
+On trial 14
+Matches 0.5714285714285714, Utilities 0.6331269859597862
+On trial 8
+On trial 14
+On trial 14
+On trial 20
+On trial 22
+On trial 16
+On trial 20
+On trial 15
+On trial 9
+On trial 15
+On trial 15
+On trial 21
+On trial 23
+On trial 17
+On trial 21
+On trial 16
+greedy_justified policy
+On trial 0
+On trial 16
+On trial 10
+On trial 16
+On trial 22
+On trial 24
+On trial 18
+On trial 22
+On trial 17
+On trial 1
+On trial 17
+On trial 11
+On trial 17
+On trial 23
+Matches 0.5714285714285714, Utilities 0.6278456437304504
+On trial 23
+On trial 19
+On trial 18
+On trial 2
+On trial 18
+On trial 12
+On trial 18
+On trial 24
+On trial 24
+On trial 20
+On trial 19
+On trial 19
+On trial 3
+On trial 13
+On trial 19
+Matches 0.5714285714285714, Utilities 0.6310881348331162
+Matches 0.5714285714285714, Utilities 0.6310301624091328
+On trial 21
+On trial 20
+On trial 20
+On trial 4
+On trial 14
+On trial 20
+On trial 22
+On trial 21
+On trial 21
+On trial 5
+On trial 15
+On trial 21
+On trial 23
+On trial 22
+On trial 22
+On trial 6
+On trial 16
+On trial 22
+On trial 24
+On trial 23
+On trial 23
+On trial 7
+On trial 23
+On trial 17
+Matches 0.5714285714285714, Utilities 0.6359930483253448
+On trial 24
+On trial 24
+On trial 8
+On trial 24
+On trial 18
+Matches 0.5714285714285714, Utilities 0.6335844337196631
+Matches 0.5714285714285714, Utilities 0.6315567371108519
+On trial 9
+Matches 0.5714285714285714, Utilities 0.6311825864527686
+On trial 19
+On trial 10
+On trial 20
+On trial 11
+On trial 21
+On trial 12
+On trial 22
+On trial 13
+On trial 23
+On trial 14
+On trial 24
+On trial 15
+Matches 0.5714285714285714, Utilities 0.6299856182753267
 On trial 16
 On trial 17
 On trial 18
@@ -346,181 +1572,4 @@ On trial 21
 On trial 22
 On trial 23
 On trial 24
-On trial 25
-On trial 26
-On trial 27
-On trial 28
-On trial 29
-On trial 30
-On trial 31
-On trial 32
-On trial 33
-On trial 34
-On trial 35
-On trial 36
-On trial 37
-On trial 38
-On trial 39
-On trial 40
-On trial 41
-On trial 42
-On trial 43
-On trial 44
-On trial 45
-On trial 46
-On trial 47
-On trial 48
-On trial 49
-On trial 50
-On trial 51
-On trial 52
-On trial 53
-On trial 54
-On trial 55
-On trial 56
-On trial 57
-On trial 58
-On trial 59
-On trial 60
-On trial 61
-On trial 62
-On trial 63
-On trial 64
-On trial 65
-On trial 66
-On trial 67
-On trial 68
-On trial 69
-On trial 70
-On trial 71
-On trial 72
-On trial 73
-On trial 74
-On trial 75
-On trial 76
-On trial 77
-On trial 78
-On trial 79
-On trial 80
-On trial 81
-On trial 82
-On trial 83
-On trial 84
-On trial 85
-On trial 86
-On trial 87
-On trial 88
-On trial 89
-On trial 90
-On trial 91
-On trial 92
-On trial 93
-On trial 94
-On trial 95
-On trial 96
-On trial 97
-On trial 98
-On trial 99
-Matches 0.5714285714285714, Utilities 0.5343313601058821
-gradient_descent policy
-On trial 0
-On trial 1
-On trial 2
-On trial 3
-On trial 4
-On trial 5
-On trial 6
-On trial 7
-On trial 8
-On trial 9
-On trial 10
-On trial 11
-On trial 12
-On trial 13
-On trial 14
-On trial 15
-On trial 16
-On trial 17
-On trial 18
-On trial 19
-On trial 20
-On trial 21
-On trial 22
-On trial 23
-On trial 24
-On trial 25
-On trial 26
-On trial 27
-On trial 28
-On trial 29
-On trial 30
-On trial 31
-On trial 32
-On trial 33
-On trial 34
-On trial 35
-On trial 36
-On trial 37
-On trial 38
-On trial 39
-On trial 40
-On trial 41
-On trial 42
-On trial 43
-On trial 44
-On trial 45
-On trial 46
-On trial 47
-On trial 48
-On trial 49
-On trial 50
-On trial 51
-On trial 52
-On trial 53
-On trial 54
-On trial 55
-On trial 56
-On trial 57
-On trial 58
-On trial 59
-On trial 60
-On trial 61
-On trial 62
-On trial 63
-On trial 64
-On trial 65
-On trial 66
-On trial 67
-On trial 68
-On trial 69
-On trial 70
-On trial 71
-On trial 72
-On trial 73
-On trial 74
-On trial 75
-On trial 76
-On trial 77
-On trial 78
-On trial 79
-On trial 80
-On trial 81
-On trial 82
-On trial 83
-On trial 84
-On trial 85
-On trial 86
-On trial 87
-On trial 88
-On trial 89
-On trial 90
-On trial 91
-On trial 92
-On trial 93
-On trial 94
-On trial 95
-On trial 96
-On trial 97
-On trial 98
-On trial 99
-Matches 0.5714285714285714, Utilities 0.5432003335336808
+Matches 0.5714285714285714, Utilities 0.6322598676678712
