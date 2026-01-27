@@ -52,12 +52,14 @@ if is_jupyter:
     max_shown = 25
     online_scale = 1
     verbose = False 
+    num_samples = 10
 else:
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', help='Random Seed', type=int, default=42)
     parser.add_argument('--n_patients',         '-N', help='Number of patients', type=int, default=100)
     parser.add_argument('--n_providers',        help='Number of providers', type=int, default=100)
     parser.add_argument('--max_shown',        help='How many providers to show at most', type=int, default=25)
+    parser.add_argument('--num_samples',        help='How many samples to run', type=int, default=10)
     parser.add_argument('--provider_capacity', help='Provider Capacity', type=int, default=1)
     parser.add_argument('--noise', help='Noise in theta', type=float, default=0.1)
     parser.add_argument('--average_distance', help='Maximum distance patients are willing to go', type=float, default=20.2)
@@ -89,6 +91,7 @@ else:
     online_scale = args.online_scale
     verbose = args.verbose 
     out_folder = args.out_folder
+    num_samples = args.num_samples
     
 assert not(online_arrival and new_provider)
 save_name = secrets.token_hex(4)  
@@ -109,7 +112,8 @@ results['parameters'] = {'seed'      : seed,
         'new_provider': new_provider,
         'fairness_constraint': fairness_constraint,
         'online_scale': online_scale, 
-        'verbose': verbose} 
+        'verbose': verbose, 
+        'num_samples': num_samples} 
 
 # ## Baselines
 
@@ -118,7 +122,7 @@ restrict_resources()
 
 if fairness_constraint == -1:
     policy = one_shot_policy
-    per_epoch_function = greedy_justified
+    per_epoch_function = lambda m: greedy_justified(m,K=num_samples)
     name = "greedy_justified"
     print("{} policy".format(name))
 

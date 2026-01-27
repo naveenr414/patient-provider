@@ -583,3 +583,183 @@ lp policy
 Matches 0.5714285714285714, Utilities 0.5501180225971782
 greedy_justified policy
 Matches 0.5699591836734694, Utilities 0.6377574965129474
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+Traceback (most recent call last):
+  File "/usr0/home/naveenr/projects/patient_provider/scripts/notebooks/all_policies_small.py", line 18, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
