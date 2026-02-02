@@ -1,144 +1,1195 @@
-offer_everything policy
-offer_everything policy
-offer_everything policy
-offer_everything policy
-offer_everything policy
-offer_everything policy
-offer_everything policy
-offer_everything policy
-offer_everything policy
-Matches 0.569665306122449, Utilities 0.5311253382104674
-greedy policy
-Matches 0.5697959183673469, Utilities 0.5308258460994615
-greedy policy
-Matches 0.5699918367346939, Utilities 0.5309173343189466
-greedy policy
-Matches 0.5696326530612245, Utilities 0.5280137429286976
-greedy policy
-Matches 0.569665306122449, Utilities 0.5311897350546464
-greedy policy
-Matches 0.5695673469387755, Utilities 0.5311268131469755
-greedy policy
-Matches 0.5696326530612245, Utilities 0.5307042808629212
-greedy policy
-Matches 0.5699265306122449, Utilities 0.5339741677358681
-greedy policy
-Matches 0.5697632653061224, Utilities 0.5303018354622138
-greedy policy
-Matches 0.47794285714285717, Utilities 0.5578382330575721
+Matches 0.47794285714285717, Utilities 0.555398474613437
 omniscient_optimal policy
-Matches 0.48551836734693876, Utilities 0.5621081711743265
-omniscient_optimal policy
+Solving LP
+Starting solve
 Set parameter Username
 Set parameter LicenseID to value 2709943
 Academic license - for non-commercial use only - expires 2026-09-17
-Matches 0.47797551020408163, Utilities 0.5605492574988197
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Matches 0.5675755102040816, Utilities 0.5102945100723446
+greedy policy
+Solving LP
+Starting solve
+Matches 0.5675102040816327, Utilities 0.5098904755436265
+greedy policy
+Matches 0.5677061224489797, Utilities 0.5089024263518026
+greedy policy
+Matches 0.5671836734693877, Utilities 0.5077414179453711
+greedy policy
+Matches 0.5675428571428571, Utilities 0.5106142987629797
+greedy policy
+Matches 0.4819918367346939, Utilities 0.5571116524146059
 omniscient_optimal policy
+Matches 0.5676408163265306, Utilities 0.5076195271521199
+greedy policy
+Solving LP
+Starting solve
 Set parameter Username
 Set parameter LicenseID to value 2709943
 Academic license - for non-commercial use only - expires 2026-09-17
-Matches 0.4699428571428571, Utilities 0.5518896520748983
+Matches 0.47252244897959184, Utilities 0.550005698028228
 omniscient_optimal policy
+Matches 0.568, Utilities 0.5126726978108888
+greedy policy
+Solving LP
+Starting solve
 Set parameter Username
 Set parameter LicenseID to value 2709943
-Matches 0.45851428571428565, Utilities 0.5478341918631354
+Academic license - for non-commercial use only - expires 2026-09-17
+Matches 0.5684571428571429, Utilities 0.5111953775686261
+greedy policy
+Matches 0.45619591836734696, Utilities 0.5428695931817231
 omniscient_optimal policy
-Academic license - for non-commercial use only - expires 2026-09-17
-Matches 0.4924734693877551, Utilities 0.5691876965050667
+Matches 0.4720326530612245, Utilities 0.5532730738013727
 omniscient_optimal policy
+Solving LP
+Starting solve
 Set parameter Username
 Set parameter LicenseID to value 2709943
 Academic license - for non-commercial use only - expires 2026-09-17
-Set parameter Username
-Set parameter LicenseID to value 2709943
-Academic license - for non-commercial use only - expires 2026-09-17
-Matches 0.45505306122448985, Utilities 0.5452709144982423
+Matches 0.45675102040816323, Utilities 0.5422093290163541
 omniscient_optimal policy
+Solving LP
+Starting solve
 Set parameter Username
 Set parameter LicenseID to value 2709943
 Academic license - for non-commercial use only - expires 2026-09-17
-Matches 0.4807836734693878, Utilities 0.561441214055285
+Solving LP
+Starting solve
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+Matches 0.47771428571428576, Utilities 0.5548713236984002
 omniscient_optimal policy
+Solving LP
+Starting solve
 Set parameter Username
 Set parameter LicenseID to value 2709943
 Academic license - for non-commercial use only - expires 2026-09-17
-Set parameter Username
-Set parameter LicenseID to value 2709943
-Matches 0.46364081632653065, Utilities 0.5474348840136828
+Matches 0.48284081632653064, Utilities 0.5617257005036148
 omniscient_optimal policy
-Academic license - for non-commercial use only - expires 2026-09-17
+Solving LP
+Starting solve
 Set parameter Username
 Set parameter LicenseID to value 2709943
 Academic license - for non-commercial use only - expires 2026-09-17
-Matches 0.5714285714285714, Utilities 0.7193738168573002
+Matches 0.46393469387755104, Utilities 0.5464318058453281
+omniscient_optimal policy
+Solving LP
+Starting solve
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Matches 0.5714285714285714, Utilities 0.7127476400498375
 lp policy
-Matches 0.5714285714285714, Utilities 0.718584979476696
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Matches 0.5713959183673469, Utilities 0.5485660442708248
+greedy_justified policy
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Matches 0.5707428571428571, Utilities 0.6088168498170985
+greedy_justified_new policy
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Matches 0.5714285714285714, Utilities 0.7133587805443492
 lp policy
-Matches 0.5714285714285714, Utilities 0.7226656362206393
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Matches 0.5714285714285714, Utilities 0.7153306842261371
 lp policy
-Matches 0.5714285714285714, Utilities 0.7202915124049212
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Solving LP
+Starting solve
+Finished Solve
+Finished Solve
+Matches 0.5714285714285714, Utilities 0.7159156109651068
 lp policy
-Matches 0.5714285714285714, Utilities 0.7187811424206092
+Starting solve
+Finished Solve
+Finished Solve
+Finished Solve
+Finished Solve
+Solving LP
+Starting solve
+Solving LP
+Starting solve
+Finished Solve
+Matches 0.5714285714285714, Utilities 0.7092536021325335
 lp policy
-Matches 0.26102857142857144, Utilities 0.38769243900182404
+Starting solve
+Matches 0.5714285714285714, Utilities 0.547437866559762
 greedy_justified policy
-Matches 0.26001632653061224, Utilities 0.3853749452150807
-greedy_justified policy
-Matches 0.30197551020408164, Utilities 0.4094674302184035
-greedy_justified policy
-Matches 0.5714285714285714, Utilities 0.7206040989702963
+Matches 0.5714285714285714, Utilities 0.7107828116198714
 lp policy
-Matches 0.5175510204081633, Utilities 0.43072570953795525
+Starting solve
+Matches 0.5714285714285714, Utilities 0.5506334174674611
+greedy_justified policy
+Finished Solve
+Matches 0.5712, Utilities 0.6097647898338522
 greedy_justified_new policy
-Matches 0.5175836734693877, Utilities 0.4288033566221535
-greedy_justified_new policy
-Matches 0.5300897959183674, Utilities 0.4473187274982829
-greedy_justified_new policy
-Matches 0.5714285714285714, Utilities 0.7223102126059701
+Finished Solve
+Matches 0.5714285714285714, Utilities 0.712771490002422
 lp policy
-Matches 0.28813061224489794, Utilities 0.4002238404951829
+Starting solve
+Matches 0.5691428571428572, Utilities 0.6109830078185068
+greedy_justified_new policy
+Finished Solve
+Finished Solve
+Finished Solve
+Matches 0.5714285714285714, Utilities 0.5514352422192156
 greedy_justified policy
-Matches 0.5714285714285714, Utilities 0.718955107693274
+Finished Solve
+Matches 0.5714285714285714, Utilities 0.7116331918231615
 lp policy
-Matches 0.2559673469387755, Utilities 0.38476173044328094
-greedy_justified policy
-Matches 0.5714285714285714, Utilities 0.7206736640726339
+Starting solve
+Matches 0.5714285714285714, Utilities 0.7090083760248282
 lp policy
-Matches 0.5238857142857143, Utilities 0.4438860025667382
-greedy_justified_new policy
-Matches 0.515265306122449, Utilities 0.4251420619683204
-greedy_justified_new policy
-Matches 0.2733387755102041, Utilities 0.3933580577691653
+Starting solve
+Matches 0.5705795918367347, Utilities 0.5498276927117173
 greedy_justified policy
-Matches 0.2707918367346939, Utilities 0.3925474506643974
+Matches 0.569730612244898, Utilities 0.6127291030580955
+greedy_justified_new policy
+Matches 0.571330612244898, Utilities 0.5474612045721529
 greedy_justified policy
-Matches 0.5197387755102041, Utilities 0.4317800271194591
+Finished Solve
+Matches 0.5702204081632652, Utilities 0.6046462299568064
 greedy_justified_new policy
-Matches 0.28959999999999997, Utilities 0.40330481931418133
+Matches 0.5707755102040817, Utilities 0.6053348019436972
+greedy_justified_new policy
+Finished Solve
+Matches 0.5714285714285714, Utilities 0.5506363835407415
 greedy_justified policy
-Matches 0.28806530612244896, Utilities 0.4002234542602728
+Finished Solve
+Matches 0.5713959183673469, Utilities 0.5505903168887739
 greedy_justified policy
-Matches 0.5208489795918367, Utilities 0.43323339236652125
+Matches 0.5698938775510204, Utilities 0.6075020701931882
 greedy_justified_new policy
-Matches 0.5232, Utilities 0.43838036443362477
+Matches 0.5664, Utilities 0.5472518901004204
+greedy_justified policy
+Matches 0.5705795918367347, Utilities 0.606271868367793
 greedy_justified_new policy
-Matches 0.5248979591836734, Utilities 0.439775148789864
+Matches 0.5687510204081633, Utilities 0.6040862907997401
 greedy_justified_new policy
+[700]
+Matches 0.5685877551020408, Utilities 0.6049556853314978
+offer_everything policy
+Matches 0.5673142857142858, Utilities 0.5097612479888443
+greedy policy
+Matches 0.47794285714285717, Utilities 0.555398474613437
+omniscient_optimal policy
+Solving LP
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+[700]
+Solving LP
+[700]
+Matches 0.5649306122448979, Utilities 0.6041135614455404
+[700]
+offer_everything policy
+[700]
+Solving LP
+[700]
+Matches 0.5681632653061225, Utilities 0.6078923329433805
+Matches 0.5675102040816327, Utilities 0.5098904755436265
+greedy policy
+offer_everything policy
+Matches 0.5593795918367347, Utilities 0.6043224607698306
+Matches 0.47252244897959184, Utilities 0.550005698028228
+omniscient_optimal policy
+Solving LP
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+[700]
+Matches 0.5675755102040816, Utilities 0.5102945100723446
+greedy policy
+Matches 0.5563102040816327, Utilities 0.5949358182347315
+Solving LP
+Matches 0.5652897959183674, Utilities 0.5991268962795335
+offer_everything policy
+Matches 0.4819918367346939, Utilities 0.5571116524146059
+omniscient_optimal policy
+Solving LP
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+[700]
+offer_everything policy
+Matches 0.568, Utilities 0.5126726978108888
+greedy policy
+offer_everything policy
+Solving LP
+[700]
+Matches 0.5539918367346939, Utilities 0.5961284415945737
+Matches 0.48284081632653064, Utilities 0.5617257005036148
+omniscient_optimal policy
+Solving LP
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+Matches 0.5671836734693877, Utilities 0.5077414179453711
+greedy policy
+Matches 0.5684571428571429, Utilities 0.5111953775686261
+greedy policy
+Solving LP
+Matches 0.45619591836734696, Utilities 0.5428695931817231
+omniscient_optimal policy
+Solving LP
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+offer_everything policy
+Matches 0.46393469387755104, Utilities 0.5464318058453281
+omniscient_optimal policy
+Solving LP
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+Matches 0.5629387755102041, Utilities 0.5981954411667992
+Solving LP
+Matches 0.5675428571428571, Utilities 0.5106142987629797
+greedy policy
+Solving LP
+Matches 0.5576489795918368, Utilities 0.5961378824259171
+Solving LP
+offer_everything policy
+Matches 0.45675102040816323, Utilities 0.5422093290163541
+omniscient_optimal policy
+Solving LP
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+Solving LP
+offer_everything policy
+Solving LP
+Solving LP
+Matches 0.5676408163265306, Utilities 0.5076195271521199
+greedy policy
+Solving LP
+Matches 0.5677061224489797, Utilities 0.5089024263518026
+greedy policy
+Solving LP
+Matches 0.47771428571428576, Utilities 0.5548713236984002
+omniscient_optimal policy
+Solving LP
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+Matches 0.4720326530612245, Utilities 0.5532730738013727
+omniscient_optimal policy
+Solving LP
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Matches 0.5714285714285714, Utilities 0.7127476400498375
+lp policy
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Matches 0.5713959183673469, Utilities 0.5485660442708248
+greedy_justified policy
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Matches 0.5707428571428571, Utilities 0.6088168498170985
+greedy_justified_new policy
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Matches 0.5714285714285714, Utilities 0.7133587805443492
+lp policy
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Matches 0.5714285714285714, Utilities 0.7153306842261371
+lp policy
+Matches 0.5714285714285714, Utilities 0.547437866559762
+greedy_justified policy
+Solving LP
+Solving LP
+Matches 0.5712, Utilities 0.6097647898338522
+greedy_justified_new policy
+Solving LP
+Matches 0.5714285714285714, Utilities 0.7107828116198714
+lp policy
+Matches 0.5714285714285714, Utilities 0.7090083760248282
+lp policy
+Matches 0.5714285714285714, Utilities 0.7092536021325335
+lp policy
+Matches 0.5714285714285714, Utilities 0.7116331918231615
+lp policy
+Matches 0.5714285714285714, Utilities 0.5506334174674611
+greedy_justified policy
+Matches 0.5714285714285714, Utilities 0.712771490002422
+lp policy
+Matches 0.5714285714285714, Utilities 0.7159156109651068
+lp policy
+Matches 0.5691428571428572, Utilities 0.6109830078185068
+greedy_justified_new policy
+Matches 0.571330612244898, Utilities 0.5474612045721529
+greedy_justified policy
+Matches 0.5707755102040817, Utilities 0.6053348019436972
+greedy_justified_new policy
+Matches 0.5664, Utilities 0.5472518901004204
+greedy_justified policy
+Matches 0.5705795918367347, Utilities 0.5498276927117173
+greedy_justified policy
+Matches 0.5713959183673469, Utilities 0.5505903168887739
+greedy_justified policy
+Matches 0.5687510204081633, Utilities 0.6040862907997401
+greedy_justified_new policy
+Matches 0.5702204081632652, Utilities 0.6046462299568064
+greedy_justified_new policy
+Matches 0.5714285714285714, Utilities 0.5506363835407415
+greedy_justified policy
+Matches 0.5705795918367347, Utilities 0.606271868367793
+greedy_justified_new policy
+Matches 0.5714285714285714, Utilities 0.5514352422192156
+greedy_justified policy
+Matches 0.5698938775510204, Utilities 0.6075020701931882
+greedy_justified_new policy
+Matches 0.569730612244898, Utilities 0.6127291030580955
+greedy_justified_new policy
+[700]
+Matches 0.5686204081632653, Utilities 0.6049455181475747
+[700]
+[700]
+Matches 0.564865306122449, Utilities 0.6041308893540477
+Matches 0.568130612244898, Utilities 0.6079192576647496
 [700]
 [700]
 [700]
 [700]
-Matches 0.5305469387755102, Utilities 0.44261059360683486
-Matches 0.5194448979591837, Utilities 0.4260985032248275
-Matches 0.5190530612244898, Utilities 0.42435917016388147
-[700]
-Matches 0.5173551020408164, Utilities 0.4207532528807265
-[700]
-Matches 0.5261714285714285, Utilities 0.43824098918450793
+Matches 0.5652244897959183, Utilities 0.5990854100616431
+Matches 0.5574857142857143, Utilities 0.5961043553129121
 [700]
 [700]
-[700]
-Matches 0.518204081632653, Utilities 0.4259679892931161
-Matches 0.5232653061224489, Utilities 0.4281500412685916
-Matches 0.5237551020408163, Utilities 0.4345254597722623
-Matches 0.5240816326530612, Utilities 0.43557670578266666
+Matches 0.556669387755102, Utilities 0.5951603280226871
+Matches 0.5630367346938776, Utilities 0.5982377473476493
+Matches 0.5594122448979592, Utilities 0.6043422284534632
+Matches 0.5540244897959183, Utilities 0.5960424172546686

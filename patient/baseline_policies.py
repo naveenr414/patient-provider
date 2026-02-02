@@ -66,6 +66,7 @@ def optimal_policy(parameters,fairness_constraint=-1,seed=43):
         provider_capacities: List of integers, how much space each provider has
         
     Returns: List of integers, which providers to show them """
+    print("Solving LP")
     weights = parameters['weights']
     capacities = parameters['capacities']
     online_arrival = parameters['online_arrival']
@@ -76,10 +77,9 @@ def optimal_policy(parameters,fairness_constraint=-1,seed=43):
     if online_arrival:
         lp_solution = solve_linear_program_online(weights,capacities)
     else:
-        lp_solution = solve_linear_program(weights,capacities,fairness_constraint=fairness_constraint,seed=seed)
+        lp_solution = solve_linear_program(weights,capacities)
     assortment = np.zeros((N,M))
     
     for (i,j) in lp_solution:
         assortment[i,j] = 1
-    
     return np.array(assortment)

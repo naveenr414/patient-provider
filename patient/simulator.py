@@ -127,9 +127,6 @@ class Simulator():
             else:
                 theta, workloads,random_patients, random_providers = generate_semi_synthetic_theta_workload(self.num_patients,self.num_providers,comorbidities=True,average_distance=self.average_distance)
                 data = [theta.tolist(),workloads.tolist()]
-                json.dump(data,open("../../data/{}_{}_{}_comorbidity.json".format(self.seed,self.num_patients,self.num_providers),"w"))
-                json.dump(random_patients,open("../../data/patient_data_{}_{}_{}_comorbidity.json".format(self.seed,self.num_patients,self.num_providers),"w"))
-                json.dump(random_providers,open("../../data/provider_data_{}_{}_{}_comorbidity.json".format(self.seed,self.num_patients,self.num_providers),"w"))
             theta = np.hstack([theta, np.full((theta.shape[0], 1), 0.25)])
             for i in range(self.num_patients):
                 utilities = theta[i]  

@@ -1,0 +1,41 @@
+offer_everything policy
+Matches 0.5463510204081632, Utilities 0.44042265439086586
+greedy policy
+Matches 0.4935183673469387, Utilities 0.556955556447663
+omniscient_optimal policy
+Solving LP
+Set parameter Username
+Set parameter LicenseID to value 2709943
+Academic license - for non-commercial use only - expires 2026-09-17
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Solving LP
+Matches 0.5714285714285714, Utilities 0.6748921412565161
+lp policy
+Matches 0.5557551020408162, Utilities 0.5320628197811058
+greedy_justified policy
+Matches 0.5697959183673469, Utilities 0.5703036243062328
+greedy_justified_new policy
+[700]
+Matches 0.5668897959183674, Utilities 0.5691790038171691

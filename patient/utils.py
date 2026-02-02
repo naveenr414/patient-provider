@@ -235,7 +235,7 @@ def solve_linear_program_online(weights,capacities):
     return solution
 
 
-def solve_linear_program(weights,capacities,fairness_constraint=-1,seed=43):
+def solve_linear_program(weights,capacities):
     """Solve a Linear Program which maximizes weights + balance
     
     Arguments:
@@ -244,89 +244,33 @@ def solve_linear_program(weights,capacities,fairness_constraint=-1,seed=43):
         lamb: Weight placed on the balance objective
     
     Returns: List of tuples, pairs of patient-provider matches"""
-    N, M_plus_1 = weights.shape 
+    N, M_plus_1 = weights.shape
     M = M_plus_1 - 1
-
-    if fairness_constraint != -1:
-        patient_data = json.load(open("../../data/patient_data_{}_{}_{}_comorbidity.json".format(seed,N,M)))
-        zipcode_clusters = json.load(open("../../data/ct_zipcode_cluster.json"))
-        clusters = list(zipcode_clusters.values())
-        for i in patient_data:
-            if i['location'] not in zipcode_clusters:
-                zipcode_clusters[i['location']] = random.choice(clusters)
-        cluster_by_patient = [zipcode_clusters[i['location']] for i in patient_data]
 
     m = gp.Model("bipartite_matching")
     m.setParam('OutputFlag', 0)
-    m.Params.Threads = 2  # or even 1 to minimize load
 
-    # Binary variables for matching (decision variables)
-    x = m.addVars(N, M, vtype=GRB.BINARY, name="x")
-    
-    # Auxiliary variables w_i - these are NOT decision variables, they're automatically
-    # determined by the constraints below to be max(matching reward, outside option)
-    w = m.addVars(N, vtype=GRB.CONTINUOUS, name="w", lb=-GRB.INFINITY)
-    
-    # Objective: maximize sum of w_i
-    m.setObjective(gp.quicksum(w[i] for i in range(N)), GRB.MAXIMIZE)
-    
-    # Constraints: w_i >= sum_j weights[i,j] * x[i,j] (matching reward)
-    for i in range(N):
-        m.addConstr(w[i] >= gp.quicksum(weights[i, j] * x[i, j] for j in range(M)), 
-                   name=f"w_match_{i}")
-    
-    # Constraints: w_i >= weights[i,M] (outside option)
-    for i in range(N):
-        m.addConstr(w[i] >= weights[i, M], name=f"w_outside_{i}")
-    
-    # Upper bound: w_i <= sum_j weights[i,j] * x[i,j] + weights[i,M] * (1 - sum_j x[i,j])
-    # This ensures w_i equals the matching reward if matched, or outside option if not matched
-    for i in range(N):
-        m.addConstr(
-            w[i] <= gp.quicksum(weights[i, j] * x[i, j] for j in range(M)) + 
-                    weights[i, M] * (1 - gp.quicksum(x[i, j] for j in range(M))),
-            name=f"w_upper_{i}"
-        )
-    
-    # Provider capacity constraints
+    x = m.addVars(N, M, lb=0.0, ub=1.0, name="x")
+
+    # Objective: outside option + marginal gains
+    obj = gp.quicksum(weights[i, M] for i in range(N))
+    obj += gp.quicksum(
+        (weights[i, j] - weights[i, M]) * x[i, j]
+        for i in range(N)
+        for j in range(M)
+    )
+    m.setObjective(obj, GRB.MAXIMIZE)
+
+    # Provider capacity
     for j in range(M):
-        m.addConstr(gp.quicksum(x[i, j] for i in range(N)) <= capacities[j], 
-                   name=f"provider_{j}_capacity")
-    
-    # Each patient matches with at most one provider
-    for i in range(N):
-        m.addConstr(gp.quicksum(x[i, j] for j in range(M)) <= 1, 
-                   name=f"patient_{i}_single_match")
-    
-    if fairness_constraint != -1:
-        clusters = sorted(set(cluster_by_patient))
-        cluster_indices = {c: [i for i, cl in enumerate(cluster_by_patient) if cl == c] for c in clusters}
-        
-        # Compute average w per cluster using Gurobi linear expressions
-        cluster_avg = {}
-        for c in clusters:
-            idxs = cluster_indices[c]
-            cluster_avg[c] = (1 / len(idxs)) * gp.quicksum(w[i] for i in idxs)
-        
-        # Add fairness constraints for all distinct pairs (c1, c2)
-        for c1 in clusters:
-            for c2 in clusters:
-                if c1 < c2:  # Avoid duplicate pairs and self-comparison
-                    diff_expr = cluster_avg[c1] - cluster_avg[c2]
-                    # Enforce |diff| <= fairness_constraint
-                    m.addConstr(diff_expr <= fairness_constraint, name=f"fairness_pos_{c1}_{c2}")
-                    m.addConstr(-diff_expr <= fairness_constraint, name=f"fairness_neg_{c1}_{c2}")
-    
-    m.optimize()
-    
-    # Extract the solution
-    solution = []
-    for i in range(N):
-        for j in range(M):
-            if x[i, j].X > 0.5:
-                solution.append((i, j))
+        m.addConstr(gp.quicksum(x[i, j] for i in range(N)) <= capacities[j])
 
-    return solution
+    # Each patient chooses at most one provider
+    for i in range(N):
+        m.addConstr(gp.quicksum(x[i, j] for j in range(M)) <= 1)
+
+    m.optimize()
+    return [(i, j) for i in range(N) for j in range(M) if x[i, j].X > 0.5]
 
 
 
