@@ -627,7 +627,6 @@ def greedy_justified(parameters,K=10):
             if marginal_matrix[i, j] > 0:
                 X_sol[i, j] = 1
     return X_sol
-
 def dual_adjusted_menu_fixed_point(
     parameters,
     S=50,             # number of scenarios
@@ -757,7 +756,7 @@ def dual_adjusted_menu_fixed_point(
     return X
 
 
-def optimal_dual_assignment_with_exit(parameters, K=10):
+def optimal_dual_assignment_with_exit_simple(parameters, K=10):
     """
     Exact dual-adjusted assignment using Gurobi.
     
@@ -842,10 +841,9 @@ def optimal_dual_assignment_with_exit(parameters, K=10):
     print([i for i in range(len(duals_accum)) if duals_accum[i] == 0])
     for i in range(len(adjusted_weights)):
         for j in range(len(adjusted_weights[i])):
-            factor = (duals_accum[j]-duals_accum[-1])*z[i,j]
+            factor = (duals_accum[j]-duals_accum[-1])
             average_delta = np.mean([max(w[0][i,j]-w[0][i,-1],0) for w in scenarios])
-            adjusted_weights[i,j] = average_delta - factor
-    
+            adjusted_weights[i,j] = (average_delta - factor)
     # Final assignment: pick top max_shown per patient
     X_sol = np.zeros((N, M), dtype=int)
     for i in range(N):
@@ -855,136 +853,83 @@ def optimal_dual_assignment_with_exit(parameters, K=10):
                 X_sol[i, j] = 1
     return X_sol
 
-# def optimal_dual_assignment_with_exit(parameters, S=10, T=5):
-#     """
-#     Iterative shadow-price-based menu construction with exit option.
 
-#     parameters['weights']: N x (M+1), last column is outside option
-#     parameters['capacities']: length M+1 (outside option ignored)
-#     parameters['max_shown']: menu size
-#     parameters['noise']: epsilon for weight perturbation
-#     """
+def optimal_dual_assignment_with_exit(parameters, K=10):
+    """
+    Exact dual-adjusted assignment using Gurobi.
+    
+    capacities: array of length M+1 (last entry is outside option capacity)
+    weights: N x (M+1)
+    """
+    weights = parameters['weights']
+    capacities = parameters['capacities'].copy()
+    max_shown = parameters['max_shown']
+    epsilon = parameters['noise']
+    
+    N, M_plus1 = weights.shape  # include outside option
+    M = M_plus1-1
+    # Accumulate duals across scenarios
+    duals_accum = np.zeros(M_plus1)
+    scenarios = [(create_random_weights(weights, epsilon), np.random.permutation(N)) for _ in range(K)]
+    z = np.zeros((N,M))
 
-#     weights = parameters['weights']
-#     capacities = parameters['capacities'].copy()
-#     max_shown = parameters['max_shown']
-#     epsilon = parameters['noise']
+    for weights_k, ordering in scenarios:
+        # Build MILP model
+        model = gp.Model()
+        model.Params.OutputFlag = 0  # suppress solver output
+        
+        # Variables: x[i,j] binary
+        x = model.addVars(N, M_plus1, vtype=GRB.CONTINUOUS,lb=0,ub=1)
+        
+        # Objective: maximize total weight
+        model.setObjective(
+            gp.quicksum(weights_k[i,j]*x[i,j] for i in range(N) for j in range(M_plus1)),
+            GRB.MAXIMIZE
+        )
+        
+        # Constraints
+        # 1. Each patient assigned to exactly one option
+        for i in range(N):
+            model.addConstr(gp.quicksum(x[i,j] for j in range(M_plus1)) == 1)
+        
+        # 2. Provider capacities (including outside option)
+        capacity_constraints = []
+        for j in range(M_plus1):
+            constr = model.addConstr(gp.quicksum(x[i,j] for i in range(N)) <= capacities[j])
+            capacity_constraints.append(constr)
+        
+        # Solve MILP
+        model.optimize()
 
-#     N, M_plus1 = weights.shape
-#     M = M_plus1 - 1  # exclude outside option
+        solution = np.zeros((N,M))
+        for i in range(N):
+            for j in range(M):
+                solution[i,j] = x[i, j].X
+                z[i, j] += x[i, j].X/len(scenarios)
 
-#     # Precompute base deltas
-#     Delta_base = weights[:, :M] - weights[:, [M]]
+                
+        # Extract duals for capacity constraints
+        # Note: for MILP, Gurobi reports duals of the LP relaxation
+        lambdas = np.array([constr.Pi for constr in capacity_constraints])
+        duals_accum += lambdas/len(scenarios)
 
-#     # --- initialize menus: top-K by base Delta ---
-#     X = np.zeros((N, M), dtype=int)
-#     for i in range(N):
-#         idx = np.argsort(-Delta_base[i])[:max_shown]
-#         for j in idx:
-#             if Delta_base[i, j] > 0:
-#                 X[i, j] = 1
+    # Adjust original weights by averaged duals
+    adjusted_weights = np.zeros(weights[:,:-1].shape)
 
-#     # --- helper: simulate sequential value under menus ---
-#     def simulate_value(weights_k, ordering, caps, X):
-#         Delta_k = weights_k[:, :M] - weights_k[:, [M]]
-#         remaining = caps.copy()
-#         total = 0.0
-
-#         for i in ordering:
-#             best_val = 0.0
-#             best_j = None
-#             for j in range(M):
-#                 if X[i, j] == 0 or remaining[j] <= 0:
-#                     continue
-#                 if Delta_k[i, j] > best_val:
-#                     best_val = Delta_k[i, j]
-#                     best_j = j
-#             if best_j is not None:
-#                 remaining[best_j] -= 1
-#                 total += best_val
-
-#         return total
-
-#     # === outer fixed-point loop ===
-#     for _ in range(T):
-#         print("On {}".format(_))
-
-#         # --- sample scenarios ---
-#         scenarios = [
-#             (create_random_weights(weights, epsilon), np.random.permutation(N))
-#             for _ in range(S)
-#         ]
-
-#         # --- Step 1: compute m and z under current menus ---
-#         m = np.zeros((N, M))
-#         z = np.zeros((N, M))
-
-#         for weights_k, ordering in scenarios:
-#             Delta_k = weights_k[:, :M] - weights_k[:, [M]]
-#             remaining = capacities.copy()
-
-#             for i in ordering:
-#                 # available providers in menu
-#                 avail = [
-#                     j for j in range(M)
-#                     if X[i, j] == 1 and remaining[j] > 0 and Delta_k[i, j] > 0
-#                 ]
-#                 if not avail:
-#                     continue
-
-#                 # exposure contribution: top-K available
-#                 top = sorted(
-#                     avail,
-#                     key=lambda j: Delta_k[i, j],
-#                     reverse=True
-#                 )[:max_shown]
-#                 for j in top:
-#                     m[i, j] += Delta_k[i, j]
-
-#                 # actual consumption
-#                 j_star = max(avail, key=lambda j: Delta_k[i, j])
-#                 remaining[j_star] -= 1
-#                 z[i, j_star] += 1
-
-#         m /= S
-#         z /= S
-
-#         # --- Step 2: estimate shadow prices via marginal system value ---
-#         lambda_j = np.zeros(M)
-
-#         for j in range(M):
-#             delta = 0.0
-#             for weights_k, ordering in scenarios:
-#                 V_base = simulate_value(
-#                     weights_k, ordering, capacities, X
-#                 )
-#                 caps_plus = capacities.copy()
-#                 caps_plus[j] += 1
-#                 V_plus = simulate_value(
-#                     weights_k, ordering, caps_plus, X
-#                 )
-#                 delta += (V_plus - V_base)
-
-#             lambda_j[j] = delta / S
-
-#         # --- Step 3: capacity-adjusted scores ---
-#         m_net = m - lambda_j[None, :] * z
-
-#         # --- Step 4: update menus ---
-#         X_new = np.zeros_like(X)
-#         for i in range(N):
-#             idx = np.argsort(-m_net[i])[:max_shown]
-#             for j in idx:
-#                 if m_net[i, j] > 0:
-#                     X_new[i, j] = 1
-
-#         # convergence check
-#         if np.array_equal(X_new, X):
-#             break
-
-#         X = X_new
-
-#     return X
+    print([i for i in range(len(duals_accum)) if duals_accum[i] == 0])
+    for i in range(len(adjusted_weights)):
+        for j in range(len(adjusted_weights[i])):
+            factor = (duals_accum[j]-duals_accum[-1])*z[i,j]
+            average_delta = np.mean([max(w[0][i,j]-w[0][i,-1],0) for w in scenarios])
+            adjusted_weights[i,j] = (average_delta - factor)
+    # Final assignment: pick top max_shown per patient
+    X_sol = np.zeros((N, M), dtype=int)
+    for i in range(N):
+        top_idx = np.argsort(-adjusted_weights[i])[:max_shown]
+        for j in top_idx:
+            if adjusted_weights[i, j] > 0:
+                X_sol[i, j] = 1
+    return X_sol
 
 def greedy_justified_fair(parameters, eta, K=10, seed=0):
     """

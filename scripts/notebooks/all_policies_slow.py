@@ -42,8 +42,8 @@ is_jupyter = 'ipykernel' in sys.modules
 # %%
 if is_jupyter: 
     seed        = 43
-    num_patients = 1225
-    num_providers = 700
+    num_patients = 10
+    num_providers = 5
     provider_capacity = 1
     noise = 0.25
     fairness_constraint = -1
@@ -54,7 +54,7 @@ if is_jupyter:
     new_provider = False 
     out_folder = "dynamic"
     average_distance = 20.2
-    max_shown = 25
+    max_shown = 2
     online_scale = 1
     num_samples = 10
     verbose = True 
@@ -96,7 +96,6 @@ else:
     online_scale = args.online_scale
     out_folder = args.out_folder
     verbose = args.verbose 
-    num_samples = args.num_samples
     
 assert not(online_arrival and new_provider)
 save_name = secrets.token_hex(4)  
@@ -117,8 +116,7 @@ results['parameters'] = {'seed'      : seed,
         'new_provider': new_provider,
         'fairness_constraint': fairness_constraint,
         'online_scale': online_scale, 
-        'verbose': verbose, 
-        'num_samples': num_samples} 
+        'verbose': verbose} 
 
 # %% [markdown]
 # ## Baselines
@@ -189,6 +187,30 @@ if not online_arrival:
     print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
 
 # %%
+policy = one_shot_policy
+per_epoch_function = full_milp_policy
+name = "full_milp_policy"
+print("{} policy".format(name))
+
+rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+
+for key in rewards:
+    results['{}_{}'.format(name,key)] = rewards[key]
+print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
+
+# %%
+policy = one_shot_policy
+per_epoch_function = full_lp_policy
+name = "full_lp_policy"
+print("{} policy".format(name))
+
+rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+
+for key in rewards:
+    results['{}_{}'.format(name,key)] = rewards[key]
+print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
+
+# %%
 if fairness_constraint == -1:
     policy = one_shot_policy
     per_epoch_function = lambda m: greedy_justified(m,K=10)
@@ -204,7 +226,7 @@ if fairness_constraint == -1:
 # %%
 if fairness_constraint == -1:
     policy = one_shot_policy
-    per_epoch_function = lambda m: optimal_dual_assignment_with_exit(m,K=num_samples)
+    per_epoch_function = optimal_dual_assignment_with_exit
     name = "greedy_justified_new"
     print("{} policy".format(name))
 

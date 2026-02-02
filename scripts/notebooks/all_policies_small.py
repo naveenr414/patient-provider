@@ -122,8 +122,8 @@ restrict_resources()
 
 if fairness_constraint == -1:
     policy = one_shot_policy
-    per_epoch_function = lambda m: greedy_justified(m,K=num_samples)
-    name = "greedy_justified"
+    per_epoch_function = lambda m: optimal_dual_assignment_with_exit(m,K=num_samples)
+    name = "greedy_justified_new"
     print("{} policy".format(name))
 
     rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)

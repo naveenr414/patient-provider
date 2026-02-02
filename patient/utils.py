@@ -69,7 +69,7 @@ def get_results_matching_parameters(folder_name,result_name,parameters):
         first_few = first_few.split("}")[0]+"}}"
         load_file = json.loads(first_few)
         for p in parameters:
-            if (p not in load_file['parameters'] and parameters[p] != False) or (p in load_file['parameters'] and load_file['parameters'][p] != parameters[p]):
+            if (p not in load_file['parameters'] and parameters[p] != None) or (p in load_file['parameters'] and load_file['parameters'][p] != parameters[p]):
                 break 
         else:
             load_file = json.load(open(file_name,"r"))
