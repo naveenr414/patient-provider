@@ -83,7 +83,7 @@ print(np.mean(rewards['patient_utilities']))
 #### Re-Running Experiments 
 All bash scripts for experiments can be found in the `scripts/bash_scripts/main_scripts` folder. 
 To run all the experiments, run `bash scripts/bash_scripts/main_scripts/run_all_policies.sh`
-All the data can be found at `https://drive.google.com/file/d/10AgSKFnE2uegNUwvGzhEhQWKHKCgNudf/view?usp=sharing`
+All the data can be found [here](https://drive.google.com/file/d/10AgSKFnE2uegNUwvGzhEhQWKHKCgNudf/view?usp=sharing).
 
 #### Running custom policies
 To run custom policies, define a function that takes in a simulator, and returns a matrix of assortments
