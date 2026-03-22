@@ -204,23 +204,8 @@ def full_milp_policy(parameters,fairness_threshold=None,cluster_by_patient=None)
                 z_sol[i,j] = float(z[i,j].X)
         objective_value = model.ObjVal
     return X_sol
+def full_lp_policy(parameters, fairness_threshold=None, cluster_by_patient=None):
 
-def full_lp_policy(parameters,fairness_threshold=None,cluster_by_patient=None):
-    """
-    Find optimal assortment policy by optimizing over multiple random orderings.
-    
-    Arguments:
-        weights: N x M matrix where weights[i,j] is reward for person i choosing option j
-                 Last column (M-1) is the outside option with infinite capacity
-        max_per_provider: Capacity for each of the first M-1 options
-        threshold: Threshold parameter (unused for now)
-        ordering: Type of ordering ("uniform" for random permutations)
-        num_permutations: Number of random orderings to consider
-    
-    Returns:
-        assortment: N x (M-1) binary matrix indicating which options to show each person
-        objective_value: Expected reward across all orderings
-    """
     weights = parameters['weights']
     capacities = parameters['capacities']
     max_shown = parameters['max_shown']
@@ -228,106 +213,113 @@ def full_lp_policy(parameters,fairness_threshold=None,cluster_by_patient=None):
 
     N, M_plus1 = weights.shape
     M = M_plus1 - 1
+    K = 10  # number of scenarios
 
-    # For simplicity: single scenario
-    K = 10  
     weights_list = []
     orderings = []
-    for i in range(K):
-        np.random.seed(i)
-        weights_list.append(create_random_weights(weights,epsilon))
+    for k in range(K):
+        np.random.seed(k)
+        weights_list.append(create_random_weights(weights, epsilon))
         orderings.append(np.random.permutation(N))
-    
-    model = gp.Model("assortment_sequential")
+
+    model = gp.Model("assortment_sequential_lp")
     model.Params.LogToConsole = 0
 
-    # --- Variables ---
-    X = model.addVars(N, M, vtype=GRB.CONTINUOUS, name="X")            # shared assortment
-    y = model.addVars(N, M_plus1, K, vtype=GRB.CONTINUOUS, name="y")   # selection per scenario
-    z = model.addVars(N, K, vtype=GRB.CONTINUOUS, name="z")        # utility per scenario
-    c = model.addVars(N, M, K, vtype=GRB.CONTINUOUS, name="c")     # remaining capacity per timestep
+    # --------------------
+    # Variables
+    # --------------------
+    X = model.addVars(N, M, lb=0, ub=1, vtype=GRB.CONTINUOUS, name="X")
+    y = model.addVars(N, M_plus1, K, lb=0, ub=1, vtype=GRB.CONTINUOUS, name="y")
+    z = model.addVars(N, K, vtype=GRB.CONTINUOUS, name="z")
+    c = model.addVars(N, M, K, vtype=GRB.CONTINUOUS, name="c")
 
-    # --- Constraints ---
+    bigM = 1.0  # safe since utilities are normalized
+
+    # --------------------
+    # Constraints
+    # --------------------
     for k in range(K):
         weights_k = weights_list[k]
         ordering = orderings[k]
 
-        # 1. One selection per patient
+        # 1. One choice per patient
         for i in range(N):
-            model.addConstr(gp.quicksum(y[i,j,k] for j in range(M_plus1)) == 1)
+            model.addConstr(gp.quicksum(y[i, j, k] for j in range(M_plus1)) == 1)
 
-        # 2. Max_shown per patient
+        # 2. Max shown
         for i in range(N):
-            model.addConstr(gp.quicksum(X[i,j] for j in range(M)) <= max_shown)
+            model.addConstr(gp.quicksum(X[i, j] for j in range(M)) <= max_shown)
 
-        # 3. Initialize capacities at timestep 0
+        # 3. Capacity dynamics
         for j in range(M):
-            model.addConstr(c[0,j,k] == capacities[j])
+            model.addConstr(c[0, j, k] == capacities[j])
 
-        # 5. Cannot pick unavailable providers (offered + available capacity)
         for t in range(N):
             patient = ordering[t]
+
             for j in range(M):
-                if t == 0:
-                    model.addConstr(c[t,j,k] == capacities[j])
-                else:
-                    prev_patient = ordering[t-1]
-                    model.addConstr(c[t,j,k] == c[t-1,j,k] - y[prev_patient,j,k])
+                if t > 0:
+                    prev_patient = ordering[t - 1]
+                    model.addConstr(
+                        c[t, j, k] == c[t - 1, j, k] - y[prev_patient, j, k]
+                    )
 
-                # Availability constraint
-                model.addConstr(y[patient,j,k] <= X[patient,j])
-                model.addConstr(y[patient,j,k] <= c[t,j,k])
+                # feasibility
+                model.addConstr(y[patient, j, k] <= X[patient, j])
+                model.addConstr(y[patient, j, k] <= c[t, j, k])
 
-        # 6. Link utility
+        # 4. Utility definition
         for i in range(N):
-            model.addConstr(z[i,k] == gp.quicksum(weights_k[i,j]*y[i,j,k] for j in range(M_plus1)))
+            model.addConstr(
+                z[i, k] == gp.quicksum(weights_k[i, j] * y[i, j, k]
+                                       for j in range(M_plus1))
+            )
 
-        # 7. Rationality constraints (best among available)
-        bigM = 1
+        # 5. Rationality (O(NMS))
         for t in range(N):
             patient = ordering[t]
-            for j in range(M_plus1):
-                for l in range(M_plus1):
-                    if j == l:
-                        continue
-                    if l < M:
-                        # only enforce if l is offered
-                        model.addConstr(
-                                                        z[patient,k] >= weights_k[patient,l]
-                                                                    - bigM*(1 - y[patient,j,k])
-                                                                    - bigM*(1 - X[patient,l])
-                                                                    - bigM*(1 - c[t,l,k])   # effectively disables if capacity = 0
-                                                    )                    
-                    else:
-                        # exit option always available
-                        model.addConstr(z[patient,k] >= weights_k[patient,l] - bigM*(1 - y[patient,j,k]))
 
-    # --- Objective ---
-    model.setObjective(gp.quicksum(z[i,k] for i in range(N) for k in range(K)), GRB.MAXIMIZE)
+            # real providers
+            for l in range(M):
+                model.addConstr(
+                    z[patient, k] >= weights_k[patient, l]
+                                    - bigM * (1 - X[patient, l])
+                                    - bigM * (1 - c[t, l, k])
+                )
 
-    # --- Solve ---
+            # outside option (always available)
+            model.addConstr(
+                z[patient, k] >= weights_k[patient, M]
+            )
+
+    # --------------------
+    # Objective
+    # --------------------
+    model.setObjective(
+        gp.quicksum(z[i, k] for i in range(N) for k in range(K)),
+        GRB.MAXIMIZE
+    )
+
+    # --------------------
+    # Solve
+    # --------------------
     model.optimize()
 
-    # --- Extract solution ---
-    X_sol = np.zeros((N,M), dtype=int)
-    z_sol = np.zeros((N,K))
-    y_sol = np.zeros((N,M,K))
-    c_sol = np.zeros((N,M,K))
-    objective_value = None
+    # --------------------
+    # Extract solution
+    # --------------------
+    X_sol = np.zeros((N, M))
     if model.status == GRB.OPTIMAL:
         for i in range(N):
             for j in range(M):
-                X_sol[i,j] = int(X[i,j].X)
-                for k in range(K):
-                    y_sol[i,j,k] = float(y[i,j,k].X)
-                    c_sol[i,j,k] = float(c[i,j,k].X)
-            for j in range(K):
-                z_sol[i,j] = float(z[i,j].X)
-        objective_value = model.ObjVal
-    print(objective_value/(K*N)) 
-    res = simulate_assortment(X_sol, weights_list, capacities=[1]*M, permutations=orderings)
-    print(np.mean(res)/20)    
-    
+                X_sol[i, j] = X[i, j].X
+
+    print(model.ObjVal / (K * N))
+    res = simulate_assortment(X_sol, weights_list,
+                              capacities=[1] * M,
+                              permutations=orderings)
+    print(np.mean(res) / 20)
+
     return X_sol
 
 
