@@ -180,42 +180,18 @@ if not online_arrival:
         results['{}_{}'.format(name,key)] = rewards[key]
     print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
 
-# %%
-# policy = one_shot_policy
-# per_epoch_function = full_milp_policy
-# name = "full_milp_policy"
-# print("{} policy".format(name))
-
-# rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
-
-# for key in rewards:
-#     results['{}_{}'.format(name,key)] = rewards[key]
-# print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
 
 # %%
-# policy = one_shot_policy
-# per_epoch_function = full_lp_policy
-# name = "full_lp_policy"
-# print("{} policy".format(name))
+policy = one_shot_policy
+per_epoch_function = lambda p: scenario_averaged_marginals(p,K=num_samples)
+name = "sam"
+print("{} policy".format(name))
 
-# rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
 
-# for key in rewards:
-#     results['{}_{}'.format(name,key)] = rewards[key]
-# print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
-
-# %%
-if fairness_constraint == -1:
-    policy = one_shot_policy
-    per_epoch_function = scenario_averaged_marginals
-    name = "sam"
-    print("{} policy".format(name))
-
-    rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
-
-    for key in rewards:
-        results['{}_{}'.format(name,key)] = rewards[key]
-    print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
+for key in rewards:
+    results['{}_{}'.format(name,key)] = rewards[key]
+print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
 
 # %% [markdown]
 # ## Save Data

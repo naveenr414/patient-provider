@@ -152,9 +152,6 @@ if not online_arrival and fairness_constraint == -1:
     print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
 
 # %%
-results.keys()
-
-# %%
 if not online_arrival and fairness_constraint == -1:
     policy = one_shot_policy
     per_epoch_function = optimal_policy
