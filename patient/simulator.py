@@ -3,7 +3,6 @@ import random
 from copy import deepcopy 
 import time 
 from patient.utils import safe_min, safe_max, safe_var, one_shot_policy
-from patient.ordering_policies import compute_optimal_order
 from patient.semi_synthetic import generate_semi_synthetic_theta_workload
 import os
 import json
@@ -27,24 +26,36 @@ class Patient:
         self.provider_rewards = provider_rewards
         self.idx = idx 
     
-    def get_random_outcome(self, menu):
+    def get_random_outcome(self, menu, gamma=None):
         """Given a menu, get a random outcome; either match or exit
 
         Arguments:
-            menu: List of providers who are available/presented
+            menu: 0-1 vector of length M+1 (last entry = exit option)
+            gamma: If provided, use linear-proportional MNL with this exit utility;
+                   if None, use deterministic argmax
 
-        Returns: Integer, -1 is exit
-            And other numbers signify a particular provider"""
+        Returns: Integer index of chosen option (M = exit)"""
 
-        provider_probs = np.where(menu == 1, self.provider_rewards, -1)
-        max_loc = np.argmax(provider_probs)
-        return max_loc 
+        if gamma is None:
+            provider_probs = np.where(menu == 1, self.provider_rewards, -1)
+            return np.argmax(provider_probs)
+
+        M = len(menu) - 1
+        # P(j) ∝ θ_ij for offered providers, P(exit) ∝ gamma
+        probs = np.where(menu[:M] == 1, self.provider_rewards[:M], 0.0)
+        probs = np.append(probs, gamma)
+        probs = np.maximum(probs, 0.0)
+        total = probs.sum()
+        if total == 0:
+            return M
+        probs = probs / total
+        return np.random.choice(M + 1, p=probs)
 
 class Simulator():
     """Simulator class that allows for evaluation of policies
         Both with and without re-entry"""
 
-    def __init__(self,num_patients,num_providers,provider_capacity,num_trials,utility_function,order,noise,online_arrival,new_provider,average_distance,max_shown,online_scale,seed):
+    def __init__(self,num_patients,num_providers,provider_capacity,num_trials,utility_function,order,noise,online_arrival,new_provider,average_distance,max_shown,online_scale,seed,policy_noise=None,gamma=None):
         self.num_patients = num_patients
         self.num_providers = num_providers
         self.provider_max_capacity = provider_capacity
@@ -52,15 +63,17 @@ class Simulator():
         poisson_caps = rng.poisson(provider_capacity, num_providers).tolist()
         self.provider_max_capacities = poisson_caps + [num_patients]
         self.utility_function = utility_function
-        self.order = order 
+        self.order = order
         self.num_trials = num_trials
         self.seed = seed
-        self.noise = noise 
+        self.noise = noise
+        self.policy_noise = policy_noise if policy_noise is not None else noise
         self.online_arrival = online_arrival
         self.new_provider = new_provider
         self.average_distance = average_distance
-        self.max_shown = max_shown 
+        self.max_shown = max_shown
         self.online_scale = online_scale
+        self.gamma = gamma
 
     def step(self,patient_num,provider_list):
         """Update the workload by provider, after a patient receives a menu
@@ -72,7 +85,7 @@ class Simulator():
         Returns: List of provider workloads, the available providers, 
             and an integer for the chosen provider"""
 
-        chosen_provider = self.all_patients[patient_num].get_random_outcome(provider_list)
+        chosen_provider = self.all_patients[patient_num].get_random_outcome(provider_list, gamma=self.gamma)
         self.provider_capacities[chosen_provider] -= 1
 
         return chosen_provider
@@ -187,11 +200,11 @@ def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=No
     weights_noisy = np.array(weights_noisy)
 
     if per_epoch_function is not None and not online_arrival and not use_real:
-        parameters = {'weights': weights_noisy, 
-                        'capacities': env.provider_capacities, 
+        parameters = {'weights': weights_noisy,
+                        'capacities': env.provider_capacities,
                         'online_arrival': env.online_arrival,
                         'max_shown': env.max_shown,
-                        'noise': env.noise}
+                        'noise': env.policy_noise}
         per_epoch_results = per_epoch_function(parameters)
     
     new_provider_mode = env.new_provider
@@ -204,12 +217,14 @@ def run_heterogenous_policy(env, policy, seed, num_trials, per_epoch_function=No
             print("On trial {}".format(trial_num))
         env.num_providers = M 
         env.num_patients = N
-        env.reset_patient_order(trial_num)
         env.reset_initial()
-        noise = env.noise 
+        noise = env.noise
         np.random.seed(trial_num)
-        weights = create_random_weights(weights_noisy,noise)
-        env.patient_order = np.random.permutation(N)
+        weights = create_random_weights(weights_noisy, noise)
+        if env.order == "uniform":
+            env.patient_order = np.random.permutation(N)
+        else:
+            env.reset_patient_order(trial_num)
         weights = np.clip(weights,0,1)
         all_weights.append(weights.tolist())
 
@@ -381,9 +396,11 @@ def run_multi_seed(seed_list,policy,parameters,per_epoch_function=None,use_real=
     max_shown = parameters['max_shown']
     online_scale = parameters['online_scale']
     verbose = parameters['verbose']
+    policy_noise = parameters.get('policy_noise', None)
+    gamma = parameters.get('gamma', None)
 
     for seed in seed_list:
-        simulator = Simulator(num_patients,num_providers,provider_capacity,num_trials,utility_function,order,noise,online_arrival,new_provider,average_distance,max_shown,online_scale,seed)
+        simulator = Simulator(num_patients,num_providers,provider_capacity,num_trials,utility_function,order,noise,online_arrival,new_provider,average_distance,max_shown,online_scale,seed,policy_noise=policy_noise,gamma=gamma)
         patient_results, patient_orders, new_providers, assortment, options, weights = run_heterogenous_policy(simulator,policy,seed,num_trials,per_epoch_function=per_epoch_function,use_real=use_real) 
 
         if new_provider:
