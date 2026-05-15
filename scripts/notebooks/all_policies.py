@@ -45,7 +45,7 @@ if is_jupyter:
     num_patients = 1225
     num_providers = 700
     provider_capacity = 1
-    noise = 0.25
+    noise = 0.5
     fairness_constraint = -1
     num_trials = 25
     utility_function = "semi_synthetic_comorbidity"
@@ -57,7 +57,7 @@ if is_jupyter:
     max_shown = 25
     online_scale = 1
     num_samples = 10
-    verbose = True 
+    verbose = False 
 else:
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', help='Random Seed', type=int, default=42)
@@ -96,7 +96,6 @@ else:
     online_scale = args.online_scale
     out_folder = args.out_folder
     verbose = args.verbose 
-    num_samples = args.num_samples
     
 assert not(online_arrival and new_provider)
 save_name = secrets.token_hex(4)  
@@ -117,8 +116,7 @@ results['parameters'] = {'seed'      : seed,
         'new_provider': new_provider,
         'fairness_constraint': fairness_constraint,
         'online_scale': online_scale, 
-        'verbose': verbose, 
-        'num_samples': num_samples} 
+        'verbose': verbose} 
 
 # %% [markdown]
 # ## Baselines
@@ -154,9 +152,6 @@ if not online_arrival and fairness_constraint == -1:
     print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
 
 # %%
-results.keys()
-
-# %%
 if not online_arrival and fairness_constraint == -1:
     policy = one_shot_policy
     per_epoch_function = optimal_policy
@@ -175,10 +170,7 @@ if not online_arrival and fairness_constraint == -1:
 # %%
 if not online_arrival:
     policy = one_shot_policy
-    if fairness_constraint != -1:
-        per_epoch_function = lambda p: lp_policy(p,fairness_constraint=fairness_constraint)
-    else:
-        per_epoch_function = lp_policy
+    per_epoch_function = lp_policy
     name = "lp"
     print("{} policy".format(name))
 
@@ -189,23 +181,34 @@ if not online_arrival:
     print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
 
 # %%
-if fairness_constraint == -1:
-    policy = one_shot_policy
-    per_epoch_function = lambda m: greedy_justified(m,K=10)
-    name = "greedy_justified"
-    print("{} policy".format(name))
+# policy = one_shot_policy
+# per_epoch_function = full_milp_policy
+# name = "full_milp_policy"
+# print("{} policy".format(name))
 
-    rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+# rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
 
-    for key in rewards:
-        results['{}_{}'.format(name,key)] = rewards[key]
-    print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
+# for key in rewards:
+#     results['{}_{}'.format(name,key)] = rewards[key]
+# print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
+
+# %%
+# policy = one_shot_policy
+# per_epoch_function = full_lp_policy
+# name = "full_lp_policy"
+# print("{} policy".format(name))
+
+# rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+
+# for key in rewards:
+#     results['{}_{}'.format(name,key)] = rewards[key]
+# print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
 
 # %%
 if fairness_constraint == -1:
     policy = one_shot_policy
-    per_epoch_function = lambda m: optimal_dual_assignment_with_exit(m,K=num_samples)
-    name = "greedy_justified_new"
+    per_epoch_function = scenario_averaged_marginals
+    name = "sam"
     print("{} policy".format(name))
 
     rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)

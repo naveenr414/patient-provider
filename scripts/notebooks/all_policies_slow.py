@@ -211,30 +211,16 @@ for key in rewards:
 print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
 
 # %%
-if fairness_constraint == -1:
-    policy = one_shot_policy
-    per_epoch_function = lambda m: greedy_justified(m,K=10)
-    name = "greedy_justified"
-    print("{} policy".format(name))
+policy = one_shot_policy
+per_epoch_function = scenario_averaged_marginals
+name = "sam"
+print("{} policy".format(name))
 
-    rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
+rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
 
-    for key in rewards:
-        results['{}_{}'.format(name,key)] = rewards[key]
-    print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
-
-# %%
-if fairness_constraint == -1:
-    policy = one_shot_policy
-    per_epoch_function = optimal_dual_assignment_with_exit
-    name = "greedy_justified_new"
-    print("{} policy".format(name))
-
-    rewards, simulator = run_multi_seed(seed_list,policy,results['parameters'],per_epoch_function)
-
-    for key in rewards:
-        results['{}_{}'.format(name,key)] = rewards[key]
-    print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
+for key in rewards:
+    results['{}_{}'.format(name,key)] = rewards[key]
+print("Matches {}, Utilities {}".format(np.mean(results['{}_num_matches'.format(name)])/num_patients,np.mean(results['{}_patient_utilities'.format(name)])))
 
 # %% [markdown]
 # ## Save Data

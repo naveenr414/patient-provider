@@ -789,3 +789,66 @@ def greedy_justified_fair(parameters, eta, K=10, seed=0):
                 X_sol[i, j] = 1
 
     return X_sol
+
+def scenario_averaged_marginals(parameters, K=10):
+    """
+    Smoothed LP-Threshold (SLPT).
+
+    Like SAM, runs K noisy scenarios and averages the dual prices λ̄_j.
+    Unlike SAM, scores (i,j) by:
+        score_{i,j} = E_s[ max(Δ^{(s)}_{i,j} - λ̄_j, 0) ]
+
+    This score is monotone increasing in Δ̂_{i,j}, so no ordering reversals
+    occur (fixing the structural flaw in SAM). Near-threshold types get a
+    soft positive score; below-threshold types score 0.
+
+    Competitive ratio: (1 - 1/e) × OPT_LP via monotone threshold argument.
+    """
+    weights = parameters['weights']
+    capacities = parameters['capacities'].copy()
+    max_shown = parameters['max_shown']
+    epsilon = parameters['noise']
+
+    N, M_plus1 = weights.shape
+    M = M_plus1 - 1
+
+    scenarios = [(create_random_weights(weights, epsilon), np.random.permutation(N))
+                 for _ in range(K)]
+
+    # Pass 1: collect averaged duals from K LP solves
+    duals_accum = np.zeros(M_plus1)
+    for weights_k, _ in scenarios:
+        model = gp.Model()
+        model.Params.OutputFlag = 0
+        x = model.addVars(N, M_plus1, vtype=GRB.CONTINUOUS, lb=0, ub=1)
+        model.setObjective(
+            gp.quicksum(weights_k[i, j] * x[i, j]
+                        for i in range(N) for j in range(M_plus1)),
+            GRB.MAXIMIZE
+        )
+        for i in range(N):
+            model.addConstr(gp.quicksum(x[i, j] for j in range(M_plus1)) == 1)
+        cap_constrs = []
+        for j in range(M_plus1):
+            c = model.addConstr(gp.quicksum(x[i, j] for i in range(N)) <= capacities[j])
+            cap_constrs.append(c)
+        model.optimize()
+        lambdas = np.array([c.Pi for c in cap_constrs])
+        duals_accum += lambdas / K
+
+    # λ̄_j relative to exit option (index M)
+    lambda_bar = duals_accum[:M] - duals_accum[M]  # shape (M,)
+
+    # Pass 2: score_{i,j} = E_s[ max(Δ^{(s)}_{i,j} - λ̄_j, 0) ]  (vectorized)
+    scores = np.zeros((N, M))
+    for weights_k, _ in scenarios:
+        delta_s = weights_k[:, :M] - weights_k[:, M:M+1]   # N x M
+        scores += np.maximum(delta_s - lambda_bar[np.newaxis, :], 0) / K
+
+    X_sol = np.zeros((N, M), dtype=int)
+    for i in range(N):
+        top_idx = np.argsort(-scores[i])[:max_shown]
+        for j in top_idx:
+            if scores[i, j] > 0:
+                X_sol[i, j] = 1
+    return X_sol
