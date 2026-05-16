@@ -13,9 +13,9 @@ do
     tmux send-keys -t patient_basic_${seed} "export PYTHONWARNINGS='ignore'" ENTER
     tmux send-keys -t patient_basic_${seed} "export GYMNASIUM_DISABLE_WARNINGS=1" ENTER
 
-    : > runs/logs/error_basic_${seed}.txt
-    tmux send-keys -t patient_basic_${seed} "conda activate ${environment}; python -u all_policies.py --verbose --seed ${seed} --n_patients ${N} --n_providers ${M} --provider_capacity 1 --noise 0.25 --num_trials 25 --utility_function semi_synthetic_comorbidity --order uniform --out_folder baseline >> ../../runs/logs/error_basic_${seed}.txt 2>&1" ENTER
+    # : > runs/logs/error_basic_${seed}.txt
+    # tmux send-keys -t patient_basic_${seed} "conda activate ${environment}; python -u all_policies.py --verbose --seed ${seed} --n_patients ${N} --n_providers ${M} --provider_capacity 1 --noise 0.25 --num_trials 25 --utility_function semi_synthetic_comorbidity --order uniform --out_folder baseline >> ../../runs/logs/error_basic_${seed}.txt 2>&1" ENTER
 
     : > runs/logs/error_proportional_${seed}.txt
-    tmux send-keys -t patient_basic_${seed} "conda activate ${environment}; python -u all_policies.py --verbose --seed ${seed} --n_patients ${N} --n_providers ${M} --provider_capacity 1 --noise 0.25 --num_trials 25 --utility_function semi_synthetic_comorbidity --order proportional --out_folder proportional >> ../../runs/logs/error_proportional_${seed}.txt 2>&1" ENTER
+    tmux send-keys -t patient_basic_${seed} "conda activate ${environment}; python -u all_policies.py --seed ${seed} --n_patients ${N} --n_providers ${M} --provider_capacity 1 --noise 0.25 --num_trials 25 --utility_function semi_synthetic_comorbidity --order proportional --out_folder proportional >> ../../runs/logs/error_proportional_${seed}.txt 2>&1" ENTER
 done

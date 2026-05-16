@@ -125,6 +125,7 @@ def full_milp_policy(parameters,fairness_threshold=None,cluster_by_patient=None)
     y = model.addVars(N, M_plus1, K, vtype=GRB.BINARY, name="y")   # selection per scenario
     z = model.addVars(N, K, vtype=GRB.CONTINUOUS, name="z")        # utility per scenario
     c = model.addVars(N, M, K, vtype=GRB.CONTINUOUS, name="c")     # remaining capacity per timestep
+    b = model.addVars(N, M, K, lb=0, ub=1, vtype=GRB.CONTINUOUS, name="b")  # capacity indicator (min(c,1))
 
     # --- Constraints ---
     for k in range(K):
@@ -153,6 +154,9 @@ def full_milp_policy(parameters,fairness_threshold=None,cluster_by_patient=None)
                     prev_patient = ordering[t-1]
                     model.addConstr(c[t,j,k] == c[t-1,j,k] - y[prev_patient,j,k])
 
+                # b[t,j,k] = min(c[t,j,k], 1): capacity indicator for rationality constraint
+                model.addConstr(b[t,j,k] <= c[t,j,k])
+
                 # Availability constraint
                 model.addConstr(y[patient,j,k] <= X[patient,j])
                 model.addConstr(y[patient,j,k] <= c[t,j,k])
@@ -175,7 +179,7 @@ def full_milp_policy(parameters,fairness_threshold=None,cluster_by_patient=None)
                                                         z[patient,k] >= weights_k[patient,l]
                                                                     - bigM*(1 - y[patient,j,k])
                                                                     - bigM*(1 - X[patient,l])
-                                                                    - bigM*(1 - c[t,l,k])   # effectively disables if capacity = 0
+                                                                    - bigM*(1 - b[t,l,k])   # effectively disables if capacity = 0
                                                     )                    
                     else:
                         # exit option always available
@@ -232,8 +236,9 @@ def full_lp_policy(parameters, fairness_threshold=None, cluster_by_patient=None)
     y = model.addVars(N, M_plus1, K, lb=0, ub=1, vtype=GRB.CONTINUOUS, name="y")
     z = model.addVars(N, K, vtype=GRB.CONTINUOUS, name="z")
     c = model.addVars(N, M, K, vtype=GRB.CONTINUOUS, name="c")
+    b = model.addVars(N, M, K, lb=0, ub=1, vtype=GRB.CONTINUOUS, name="b")
 
-    bigM = 1.0  # safe since utilities are normalized
+    bigM = 1.0  # safe since utilities are normalized and b is capped at 1
 
     # --------------------
     # Constraints
@@ -264,6 +269,9 @@ def full_lp_policy(parameters, fairness_threshold=None, cluster_by_patient=None)
                         c[t, j, k] == c[t - 1, j, k] - y[prev_patient, j, k]
                     )
 
+                # b[t,j,k] = min(c[t,j,k], 1): capacity indicator for rationality constraint
+                model.addConstr(b[t, j, k] <= c[t, j, k])
+
                 # feasibility
                 model.addConstr(y[patient, j, k] <= X[patient, j])
                 model.addConstr(y[patient, j, k] <= c[t, j, k])
@@ -284,7 +292,7 @@ def full_lp_policy(parameters, fairness_threshold=None, cluster_by_patient=None)
                 model.addConstr(
                     z[patient, k] >= weights_k[patient, l]
                                     - bigM * (1 - X[patient, l])
-                                    - bigM * (1 - c[t, l, k])
+                                    - bigM * (1 - b[t, l, k])
                 )
 
             # outside option (always available)
@@ -309,16 +317,18 @@ def full_lp_policy(parameters, fairness_threshold=None, cluster_by_patient=None)
     # Extract solution
     # --------------------
     X_sol = np.zeros((N, M))
+    print(model.status,GRB.OPTIMAL)
     if model.status == GRB.OPTIMAL:
         for i in range(N):
             for j in range(M):
                 X_sol[i, j] = X[i, j].X
 
     print(model.ObjVal / (K * N))
-    res = simulate_assortment(X_sol, weights_list,
-                              capacities=[1] * M,
+    X_rounded = (X_sol >= 0.5).astype(int)
+    res = simulate_assortment(X_rounded, weights_list,
+                              capacities=list(capacities[:M]),
                               permutations=orderings)
-    print(np.mean(res) / 20)
+    print(np.mean(res) / N)
 
     return X_sol
 
