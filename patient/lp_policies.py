@@ -109,7 +109,7 @@ def full_milp_policy(parameters,fairness_threshold=None,cluster_by_patient=None)
     M = M_plus1 - 1
 
     # For simplicity: single scenario
-    K = 10  
+    K = 10
     weights_list = []
     orderings = []
     for i in range(K):
@@ -125,7 +125,7 @@ def full_milp_policy(parameters,fairness_threshold=None,cluster_by_patient=None)
     y = model.addVars(N, M_plus1, K, vtype=GRB.BINARY, name="y")   # selection per scenario
     z = model.addVars(N, K, vtype=GRB.CONTINUOUS, name="z")        # utility per scenario
     c = model.addVars(N, M, K, vtype=GRB.CONTINUOUS, name="c")     # remaining capacity per timestep
-    b = model.addVars(N, M, K, lb=0, ub=1, vtype=GRB.CONTINUOUS, name="b")  # capacity indicator (min(c,1))
+    b = model.addVars(N, M, K, vtype=GRB.BINARY, name="b")  # capacity indicator: 1 iff c[t,j,k] > 0
 
     # --- Constraints ---
     for k in range(K):
@@ -140,10 +140,6 @@ def full_milp_policy(parameters,fairness_threshold=None,cluster_by_patient=None)
         for i in range(N):
             model.addConstr(gp.quicksum(X[i,j] for j in range(M)) <= max_shown)
 
-        # 3. Initialize capacities at timestep 0
-        for j in range(M):
-            model.addConstr(c[0,j,k] == capacities[j])
-
         # 5. Cannot pick unavailable providers (offered + available capacity)
         for t in range(N):
             patient = ordering[t]
@@ -154,8 +150,9 @@ def full_milp_policy(parameters,fairness_threshold=None,cluster_by_patient=None)
                     prev_patient = ordering[t-1]
                     model.addConstr(c[t,j,k] == c[t-1,j,k] - y[prev_patient,j,k])
 
-                # b[t,j,k] = min(c[t,j,k], 1): capacity indicator for rationality constraint
+                # b[t,j,k] = 1 iff c[t,j,k] > 0: binary capacity indicator
                 model.addConstr(b[t,j,k] <= c[t,j,k])
+                model.addConstr(c[t,j,k] <= capacities[j] * b[t,j,k])
 
                 # Availability constraint
                 model.addConstr(y[patient,j,k] <= X[patient,j])
@@ -269,8 +266,10 @@ def full_lp_policy(parameters, fairness_threshold=None, cluster_by_patient=None)
                         c[t, j, k] == c[t - 1, j, k] - y[prev_patient, j, k]
                     )
 
-                # b[t,j,k] = min(c[t,j,k], 1): capacity indicator for rationality constraint
+                # b[t,j,k] = 1 iff c[t,j,k] > 0: capacity indicator for rationality constraint
                 model.addConstr(b[t, j, k] <= c[t, j, k])
+                cap_j = max(capacities[j], 1)  # avoid div-by-zero for 0-capacity providers
+                model.addConstr(b[t, j, k] >= c[t, j, k] / cap_j)
 
                 # feasibility
                 model.addConstr(y[patient, j, k] <= X[patient, j])
@@ -818,6 +817,7 @@ def scenario_averaged_marginals(parameters, K=10):
     capacities = parameters['capacities'].copy()
     max_shown = parameters['max_shown']
     epsilon = parameters['noise']
+    print("Epsilon is {}".format(epsilon))
 
     N, M_plus1 = weights.shape
     M = M_plus1 - 1

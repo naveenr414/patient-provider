@@ -108,14 +108,50 @@ class Simulator():
 
         if self.utility_function == 'uniform':
             for i in range(self.num_patients):
-                utilities = [np.random.random() for j in range(self.num_providers+1)]       
+                utilities = [np.random.random() for j in range(self.num_providers+1)]
+                utilities[-1] = 0.25     
                 self.all_patients.append(Patient(utilities,i))
         elif self.utility_function == 'normal':
             means = [np.random.random() for i in range(self.num_providers+1)]
             for i in range(self.num_patients):
                 std = 0.1
-                utilities = [np.clip(np.random.normal(means[j],std),0,1) for j in range(self.num_providers+1)]     
+                utilities = [np.clip(np.random.normal(means[j],std),0,1) for j in range(self.num_providers+1)]  
+                utilities[-1] = 0.25   
                 self.all_patients.append(Patient(utilities,i))
+        elif 'normal_' in self.utility_function:
+            means = [np.random.random() for i in range(self.num_providers+1)]
+            for i in range(self.num_patients):
+                std = float(self.utility_function.replace("normal_",""))
+                utilities = [np.clip(np.random.normal(means[j],std),0,1) for j in range(self.num_providers+1)]     
+                utilities[-1] = 0.25
+                self.all_patients.append(Patient(utilities,i))
+        elif self.utility_function == 'latent':
+            k = 5
+            patient_vecs = np.random.randn(self.num_patients, k)
+            provider_vecs = np.random.randn(self.num_providers, k)
+            scores = patient_vecs @ provider_vecs.T  # N x M
+            # normalize to [0,1]
+            scores = (scores - scores.min()) / (scores.max() - scores.min())
+            noise = np.random.normal(0, 0.05, scores.shape)
+            scores = np.clip(scores + noise, 0, 1)
+            for i in range(self.num_patients):
+                utilities = list(scores[i])
+                utilities.append(0.25)
+                self.all_patients.append(Patient(utilities, i))
+        elif 'latent_' in self.utility_function:
+            std = float(self.utility_function.replace("latent_",""))
+            k = 5
+            patient_vecs = np.random.randn(self.num_patients, k)
+            provider_vecs = np.random.randn(self.num_providers, k)
+            scores = patient_vecs @ provider_vecs.T  # N x M
+            # normalize to [0,1]
+            scores = (scores - scores.min()) / (scores.max() - scores.min())
+            noise = np.random.normal(0, std, scores.shape)
+            scores = np.clip(scores + noise, 0, 1)
+            for i in range(self.num_patients):
+                utilities = list(scores[i])
+                utilities.append(0.25)
+                self.all_patients.append(Patient(utilities, i))
         elif self.utility_function == 'semi_synthetic':
             if os.path.exists("../../data/{}_{}_{}.json".format(self.seed,self.num_patients,self.num_providers)) and self.average_distance == 20.2:
                 data = json.load(open("../../data/{}_{}_{}.json".format(self.seed,self.num_patients,self.num_providers)))

@@ -50,32 +50,65 @@ def delete_duplicate_results(folder_name,result_name,data):
         except Exception as e:
             print(f"An error occurred: {e}")
 
-def get_results_matching_parameters(folder_name,result_name,parameters):
-    """Get a list of dictionaries, with data, which match some set of parameters
-    
-    Arguments:
-        folder_name: String, which folder the data is located in
-        result_name: String, what the suffix is for the dataset
-        parameters: Dictionary with key,values representing some known parameters
-        
-    Returns: List of Dictionaries"""
+cache_files = {}
+import time 
 
-    all_results = glob.glob("../../results/{}/{}*.json".format(folder_name,result_name))
+def get_results_matching_parameters(folder_name, result_name, parameters):
+    """
+    Return all result dictionaries whose stored parameters match `parameters`.
+    Any parameter with value None is treated as a wildcard.
+    """
+    
+    pattern = f"../../results/{folder_name}/{result_name}*.json"
     ret_results = []
 
-    for file_name in all_results:
-        f = open(file_name)
-        first_few = f.read(1000)
-        first_few = first_few.split("}")[0]+"}}"
-        load_file = json.loads(first_few)
-        for p in parameters:
-            if (p not in load_file['parameters'] and parameters[p] != None) or (p in load_file['parameters'] and load_file['parameters'][p] != parameters[p]):
-                break 
-        else:
-            load_file = json.load(open(file_name,"r"))
-            ret_results.append(load_file)
-    return ret_results
+    start = time.time()
+    only_read_time = 0
+    for i,file_name in enumerate(glob.iglob(pattern)):
+        try:
+            temp = time.time()
+            if file_name not in cache_files:
+                with open(file_name, "r") as f:
+                    prefix = f.read(1000)  # enough to capture parameter metadata
 
+                    # Find the end of the "parameters" object
+                    param_start = prefix.find('"parameters"')
+                    if param_start == -1:
+                        continue
+
+                    brace_start = prefix.find("{", param_start)
+                    if brace_start == -1:
+                        continue
+
+                    depth = 0
+                    brace_end = None
+                    for i in range(brace_start, len(prefix)):
+                        if prefix[i] == "{":
+                            depth += 1
+                        elif prefix[i] == "}":
+                            depth -= 1
+                            if depth == 0:
+                                brace_end = i
+                                break
+
+                    if brace_end is None:
+                        continue
+
+                    # Parse just the parameters object
+                    param_text = prefix[brace_start:brace_end+1]
+                    file_params = json.loads(param_text)
+                    cache_files[file_name] = file_params
+            else:
+                file_params = cache_files[file_name]
+            check = all(v is None or file_params.get(k) == v for k, v in parameters.items())
+            only_read_time += (time.time()-temp)
+
+            if check:
+                ret_results.append(json.load(open(file_name)))
+
+        except (OSError, json.JSONDecodeError):
+            continue
+    return ret_results
 def restrict_resources():
     """Set the system to only use a fraction of the memory/CPU/GPU available
     

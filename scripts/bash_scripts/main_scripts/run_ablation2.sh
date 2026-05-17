@@ -11,28 +11,28 @@ do
     tmux send-keys -t patient_ablation2_${seed} "export PYTHONWARNINGS='ignore'" ENTER
     tmux send-keys -t patient_ablation2_${seed} "export GYMNASIUM_DISABLE_WARNINGS=1" ENTER
 
-    for noise in 0.01 0.1 0.2 0.3 0.4 0.5
-    do
-        : > runs/logs/error_ablation_${seed}_noise_${noise}.txt
-        tmux send-keys -t patient_ablation2_${seed} "conda activate ${environment}; python -u all_policies.py --seed ${seed} --n_patients 1225 --n_providers 700 --provider_capacity 1 --noise ${noise} --num_trials 25 --utility_function semi_synthetic_comorbidity --order uniform --out_folder ablations >> ../../runs/logs/error_ablation_${seed}_noise_${noise}.txt 2>&1" ENTER
-    done
+    # for noise in 0.01 0.1 0.2 0.3 0.4 0.5
+    # do
+    #     : > runs/logs/error_ablation_${seed}_noise_${noise}.txt
+    #     tmux send-keys -t patient_ablation2_${seed} "conda activate ${environment}; python -u all_policies.py --seed ${seed} --n_patients 1225 --n_providers 700 --provider_capacity 1 --noise ${noise} --num_trials 25 --utility_function semi_synthetic_comorbidity --order uniform --out_folder ablations >> ../../runs/logs/error_ablation_${seed}_noise_${noise}.txt 2>&1" ENTER
+    # done
 
-    for max_shown in 5 10 25 50 100
-    do
-        : > runs/logs/error_ablation_${seed}_maxshown_${max_shown}.txt
-        tmux send-keys -t patient_ablation2_${seed} "conda activate ${environment}; python -u all_policies.py --seed ${seed} --n_patients 1225 --n_providers 700 --max_shown ${max_shown} --provider_capacity 1 --noise 0.25 --num_trials 25 --utility_function semi_synthetic_comorbidity --order uniform --out_folder ablations >> ../../runs/logs/error_ablation_${seed}_maxshown_${max_shown}.txt 2>&1" ENTER
-    done
+    # for max_shown in 5 10 25 50 100
+    # do
+    #     : > runs/logs/error_ablation_${seed}_maxshown_${max_shown}.txt
+    #     tmux send-keys -t patient_ablation2_${seed} "conda activate ${environment}; python -u all_policies.py --seed ${seed} --n_patients 1225 --n_providers 700 --max_shown ${max_shown} --provider_capacity 1 --noise 0.25 --num_trials 25 --utility_function semi_synthetic_comorbidity --order uniform --out_folder ablations >> ../../runs/logs/error_ablation_${seed}_maxshown_${max_shown}.txt 2>&1" ENTER
+    # done
 
-    for eps in 0.01 0.2 0.4
-    do
-        for k in 5 10 25
-        do
-            : > runs/logs/error_ablation_${seed}_eps_${eps}_k_${k}.txt
-            tmux send-keys -t patient_ablation2_${seed} "conda activate ${environment}; python -u all_policies.py --seed ${seed} --n_patients 1225 --n_providers 700 --provider_capacity 1 --noise ${eps} --max_shown ${k} --num_trials 25 --utility_function semi_synthetic_comorbidity --order uniform --out_folder ablations >> ../../runs/logs/error_ablation_${seed}_eps_${eps}_k_${k}.txt 2>&1" ENTER
-        done
-    done
+    # for eps in 0.01 0.2 0.4
+    # do
+    #     for k in 5 10 25
+    #     do
+    #         : > runs/logs/error_ablation_${seed}_eps_${eps}_k_${k}.txt
+    #         tmux send-keys -t patient_ablation2_${seed} "conda activate ${environment}; python -u all_policies.py --seed ${seed} --n_patients 1225 --n_providers 700 --provider_capacity 1 --noise ${eps} --max_shown ${k} --num_trials 25 --utility_function semi_synthetic_comorbidity --order uniform --out_folder ablations >> ../../runs/logs/error_ablation_${seed}_eps_${eps}_k_${k}.txt 2>&1" ENTER
+    #     done
+    # done
 
-    for utility_function in uniform normal
+    for utility_function in normal_0.001 normal_0.05 normal_0.1 normal_0.2 normal_0.3 latent_0.001 latent_0.05 latent_0.1 latent_0.2 latent_0.3 uniform normal latent 
     do
         : > runs/logs/error_ablation_${seed}_dist_${utility_function}.txt
         tmux send-keys -t patient_ablation2_${seed} "conda activate ${environment}; python -u all_policies.py --seed ${seed} --n_patients 1225 --n_providers 700 --provider_capacity 1 --noise 0.25 --num_trials 25 --utility_function ${utility_function} --order uniform --out_folder ablations >> ../../runs/logs/error_ablation_${seed}_dist_${utility_function}.txt 2>&1" ENTER
